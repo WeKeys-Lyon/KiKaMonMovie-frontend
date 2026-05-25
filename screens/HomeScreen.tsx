@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {Buttons} from '../components/buttons';
 import {
   Image,
   ImageBackground,
@@ -42,9 +43,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Text style={styles.subtitle}>Prêt à partager un film ?</Text>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleSignIn} style={styles.button}>
+         {/* <TouchableOpacity onPress={handleSignIn} style={styles.button}>
             <Text style={styles.buttonText}>Se connecter</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <Buttons title='Se connecter' onPress={handleSignIn}/>
           <TouchableOpacity onPress={handleSignUp} style={styles.button}>
             <Text style={styles.buttonText}>S'inscrire</Text>
           </TouchableOpacity>
