@@ -48,7 +48,7 @@ interface ButtonProps {
 }
 
 // Main Button component using functional component with destructured props
-export const Button: React.FC<ButtonProps> = ({
+export const Buttons: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
