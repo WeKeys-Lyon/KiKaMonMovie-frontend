@@ -15,6 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 
 
+
+
 type HomeScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
