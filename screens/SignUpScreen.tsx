@@ -26,7 +26,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const BACKEND_URL = process.env.BACKEND_URL;
+  const BACKEND_URL = 'http://192.168.1.36:8081';
 
   const handleSubmit = async () => {
     setError('');
