@@ -47,9 +47,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={styles.buttonText}>Se connecter</Text>
           </TouchableOpacity> */}
           <Buttons title='Se connecter' onPress={handleSignIn}/>
-          <TouchableOpacity onPress={handleSignUp} style={styles.button}>
+          {/*<TouchableOpacity onPress={handleSignUp} style={styles.button}>
             <Text style={styles.buttonText}>S'inscrire</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <Buttons title="S'inscrire" onPress={handleSignUp}/>
         </View>
 
       </KeyboardAvoidingView>
