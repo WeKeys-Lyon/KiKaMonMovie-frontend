@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../components/header';
+
 
 type SignUpScreenProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -49,7 +51,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           username,
           password,
         }),
-        });
+      });
       const data = await response.json();
       if (data.result) {
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
@@ -62,13 +64,20 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
     }
   };
 
+  const handleReturn = () => {
+    navigation.navigate('Home');
+  };
+
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
+      <Header title="Inscription" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
         <View style={styles.formContainer}>
+
           <Text style={styles.title}>Créer un compte</Text>
           <Text style={styles.subtitle}>Rentrez les informations ci-dessous pour créer votre collection et commencer à partager vos films</Text>
           <View style={styles.inputContainer}>
@@ -109,7 +118,10 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           {error ?
             <Text style={styles.error}>{error}</Text>
             : null}
-          <Buttons title="Valider" onPress={handleSubmit} />
+          <View style={styles.buttonContainer}>
+            <Buttons title="Valider" onPress={handleSubmit} style={styles.actionButton} />
+            <Buttons title="Retour" onPress={handleReturn} style={styles.actionButton}/>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>
@@ -168,6 +180,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 20,
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
   },
   buttonText: {
     color: '#fff',
