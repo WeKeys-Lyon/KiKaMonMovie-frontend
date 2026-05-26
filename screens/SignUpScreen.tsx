@@ -26,7 +26,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const BACKEND_URL = 'http://192.168.1.36:8081';
+  const BACKEND_URL = 'http://192.168.1.23:3000';
 
   const handleSubmit = async () => {
     setError('');
@@ -49,8 +49,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           username,
           password,
         }),
-      });
-      const data = await response.json()
+        });
+      const data = await response.json();
       if (data.result) {
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
       } else {
