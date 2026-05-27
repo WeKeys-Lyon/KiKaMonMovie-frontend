@@ -28,7 +28,9 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const BACKEND_URL = 'http://192.168.1.23:3000';
+  const BACKEND_URL = process.env.BACKEND_URL;
+  
+
 
   const handleSubmit = async () => {
     setError('');
@@ -119,8 +121,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
             <Text style={styles.error}>{error}</Text>
             : null}
           <View style={styles.buttonContainer}>
-            <Buttons title="Valider" onPress={handleSubmit} style={styles.actionButton} />
-            <Buttons title="Retour" onPress={handleReturn} style={styles.actionButton}/>
+            <Buttons title="Retour" onPress={handleReturn} variant="actionButton"/>
+            <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
   formContainer: {
     marginHorizontal: 20,
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)', // Fond semi-transparent pour la lisibilité
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     borderRadius: 15,
     alignItems: 'center',
   },
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
+    width: '85%',
     marginTop: 20,
     gap: 10,
   },

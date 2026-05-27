@@ -46,11 +46,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
          {/* <TouchableOpacity onPress={handleSignIn} style={styles.button}>
             <Text style={styles.buttonText}>Se connecter</Text>
           </TouchableOpacity> */}
-          <Buttons title='Se connecter' onPress={handleSignIn} style={styles.actionButton} textStyle={{width: '100%', textAlign: 'center'}}/>
+          <Buttons title='Se connecter' onPress={handleSignIn} variant="actionButton" textStyle={{width: '100%'}}/>
           {/*<TouchableOpacity onPress={handleSignUp} style={styles.button}>
             <Text style={styles.buttonText}>S'inscrire</Text>
           </TouchableOpacity> */}
-          <Buttons title="S'inscrire" onPress={handleSignUp} style={styles.actionButton} textStyle={{width: '100%', textAlign: 'center'}}/>
+          <Buttons title="S'inscrire" onPress={handleSignUp} variant="actionButton" textStyle={{width: '100%'}}/>
         </View>
 
       </KeyboardAvoidingView>
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   actionButton: {
-    width: '60%',
+    width: '80%',
   },
   button: {
     backgroundColor: '#1c2942',
