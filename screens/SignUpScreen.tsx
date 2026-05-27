@@ -63,13 +63,21 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         }),
       });
       const data = await response.json();
+      console.log("RÉPONSE DU BACKEND :", data);
       if (data.result) {
+        const userMovies = data.answer.movies || [];
+
         dispatch(login({
           email: email, 
           username: username, 
-          token: data.answer.token
+          token: data.answer.token,
+          movies: userMovies
         }));
+        if (data.answer.movies.length === 0) {
+          navigation.navigate('TabNavigator', { screen: 'AddAMovie' });
+        } else {
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        } 
       } else {
         setError(data.answer);
       }
