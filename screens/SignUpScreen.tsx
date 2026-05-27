@@ -16,6 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/header';
 
 
+import { useDispatch } from 'react-redux';
+import { login } from '../reducers/user';
+
+
 type SignUpScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
@@ -28,9 +32,9 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const BACKEND_URL = process.env.BACKEND_URL;
-  
+  const dispatch = useDispatch();
 
+  const BACKEND_URL = process.env.BACKEND_URL;
 
   const handleSubmit = async () => {
     setError('');
@@ -56,6 +60,11 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       });
       const data = await response.json();
       if (data.result) {
+        dispatch(login({
+          email: email, 
+          username: username, 
+          token: data.user.token
+        }));
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
       } else {
         setError(data.message);
