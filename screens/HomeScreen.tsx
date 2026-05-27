@@ -15,13 +15,11 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-
 type HomeScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-
 
   const handleSignUp = () => 
       navigation.navigate('SignUp');

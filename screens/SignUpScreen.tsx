@@ -35,8 +35,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
   const dispatch = useDispatch();
 
-        const BACKEND_URL = process.env.BACKEND_URL;
-      console.log(BACKEND_URL)
+  const BACKEND_URL = process.env.BACKEND_URL;
+
 
   const handleSubmit = async () => {
     setError('');
@@ -67,11 +67,11 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         dispatch(login({
           email: email, 
           username: username, 
-          token: data.user.token
+          token: data.answer.token
         }));
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
       } else {
-        setError(data.message);
+        setError(data.answer);
       }
     } catch (error) {
       console.error(error);
