@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BACKEND_IP from '@env';
+
  
 type SignInScreenProps = {
   navigation: NavigationProp<ParamListBase>;
