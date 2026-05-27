@@ -22,7 +22,7 @@ interface ButtonProps {
   onPress: (event: GestureResponderEvent) => void;
 
   // Visual style variant - determines colors and borders
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'actionButton';
 
   // Size affects padding and font size
   size?: 'small' | 'medium' | 'large';
@@ -168,6 +168,8 @@ const styles = StyleSheet.create({
   text: {
     fontWeight: '600',
     textAlign: 'center',
+    color: '#FFFFFF',
+    
   },
 
   // Text variant colors
@@ -198,4 +200,11 @@ const styles = StyleSheet.create({
   disabledText: {
     color: '#8E8E93',
   },
+
+  actionButton: {
+    backgroundColor: '#1C2942',
+    borderWidth: 0,
+    width: '60%',
+  
+  }
 });
