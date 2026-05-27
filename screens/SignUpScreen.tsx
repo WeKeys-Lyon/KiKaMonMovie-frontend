@@ -14,6 +14,10 @@ import {
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useDispatch } from 'react-redux';
+import { login } from '../reducers/user';
+
+
 type SignUpScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
@@ -25,6 +29,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+
+  const dispatch = useDispatch();
 
   const BACKEND_URL = 'http://192.168.1.36:8081';
 
@@ -52,6 +58,11 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       });
       const data = await response.json()
       if (data.result) {
+        dispatch(login({
+          email: email, 
+          username: username, 
+          token: data.user.token
+        }));
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
       } else {
         setError(data.message);
