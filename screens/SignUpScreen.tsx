@@ -20,6 +20,7 @@ import { useDispatch } from 'react-redux';
 import { login } from '../reducers/user';
 
 
+
 type SignUpScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
@@ -34,7 +35,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
   const dispatch = useDispatch();
 
-  const BACKEND_URL = process.env.BACKEND_URL;
+        const BACKEND_URL = process.env.BACKEND_URL;
+      console.log(BACKEND_URL)
 
   const handleSubmit = async () => {
     setError('');
@@ -47,7 +49,9 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       return;
     }
     try {
-      const response = await fetch(`${BACKEND_URL}/users/signup`, {
+
+      const myURL = `${BACKEND_URL}/users/signup`
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +135,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
             : null}
           <View style={styles.buttonContainer}>
             <Buttons title="Retour" onPress={handleReturn} variant="actionButton"/>
-            <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
+            <Buttons title="Valider" onPress={() => handleSubmit()} variant="actionButton" />
           </View>
         </View>
       </KeyboardAvoidingView>

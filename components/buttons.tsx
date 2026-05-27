@@ -61,7 +61,6 @@ export const Buttons: React.FC<ButtonProps> = ({
   textStyle,
   accessibilityLabel,
 }) => {
-  console.log(style)
   // Determine if button should be non-interactive
   const isDisabled = disabled || loading;
 
