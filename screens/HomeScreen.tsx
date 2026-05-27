@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDispatch } from 'react-redux';
 
 
 type HomeScreenProps = {
@@ -21,7 +20,6 @@ type HomeScreenProps = {
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-
 
   const handleSignUp = () => 
       navigation.navigate('SignUp');
@@ -46,10 +44,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
          {/* <TouchableOpacity onPress={handleSignIn} style={styles.button}>
             <Text style={styles.buttonText}>Se connecter</Text>
           </TouchableOpacity> */}
-          <Buttons title='Se connecter' onPress={handleSignIn}/>
-          <TouchableOpacity onPress={handleSignUp} style={styles.button}>
+          <Buttons title='Se connecter' onPress={handleSignIn} variant="actionButton" textStyle={{width: '100%'}}/>
+          {/*<TouchableOpacity onPress={handleSignUp} style={styles.button}>
             <Text style={styles.buttonText}>S'inscrire</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <Buttons title="S'inscrire" onPress={handleSignUp} variant="actionButton" textStyle={{width: '100%'}}/>
         </View>
 
       </KeyboardAvoidingView>
@@ -88,13 +87,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100 %',
     paddingHorizontal: 20,
     marginTop: 30,
-
+    gap: 10,
+  },
+  actionButton: {
+    width: '80%',
   },
   button: {
     backgroundColor: '#1c2942',
@@ -111,6 +113,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     },
+   
   buttonText: {
     color: 'white',
     fontSize: 18,
