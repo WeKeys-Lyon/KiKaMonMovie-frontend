@@ -15,6 +15,8 @@ type AddAMovieScreenProps = {
 export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps) {
 
   const user = useSelector((state: any) => state.user.value);
+  const dispatch = useDispatch();
+
 
 
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -81,7 +83,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   };
 
   const handleAddMovie = async () => {
-    const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+    const BACKEND_URL = process.env.BACKEND_URL;
 
     try {
       const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
@@ -95,8 +97,9 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
       const data = await response.json();
       if (data.result) {
+        dispatch(addMovieToStore(selectedMovie));
         setIsModalVisible(false);
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('MyCollection' );
       } else {
         console.log("Erreur lors de l'ajout", data.error);
       }
@@ -145,8 +148,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                 onSubmitEditing={launchSearch}
               />
               <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="actionButton" />
-                <Buttons title="Chercher" onPress={launchSearch} variant="actionButton" />
+                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
+                <Buttons title="Chercher" onPress={launchSearch} variant="primary" />
               </View>
             </View>
 
@@ -161,8 +164,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                 style={styles.input}
               />
               <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="actionButton" />
-                <Buttons title="Chercher" onPress={() => console.log("À connecter ! ")} variant="actionButton" />
+                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
+                <Buttons title="Chercher" onPress={() => console.log("À connecter ! ")} variant="primary" />
               </View>
             </View>
           </View>
@@ -229,10 +232,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
               <View style={styles.modalButtonsRow}>
                 <View style={{ flex: 1 }}>
-                  <Buttons title="Retour" onPress={() => setIsModalVisible(false)} variant="actionButton" />
+                  <Buttons title="Retour" onPress={() => setIsModalVisible(false)} variant="primary" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Buttons title="Ajouter" onPress={handleAddMovie} variant="actionButton" />
+                  <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
                 </View>
               </View>
 
@@ -364,10 +367,9 @@ const styles = StyleSheet.create({
   },
   modalButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    width: '90%',
-    gap: 10,
+    width: '100%',
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,

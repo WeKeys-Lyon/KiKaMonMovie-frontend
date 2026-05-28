@@ -27,9 +27,13 @@ export const userSlice = createSlice({
       state.value.username = action.payload.username;
       state.value.movies = action.payload.movies;
       /* state.value.linkingCode = action.payload.linkingCode; */
-    }
+    },
+    addMovieToStore: (state, action: PayloadAction<string>) => {
+      state.value.movies.push(action.payload);
+    },
+
   },
 });
 
-export const { login } = userSlice.actions;
+export const { login, addMovieToStore } = userSlice.actions;
 export default userSlice.reducer;
