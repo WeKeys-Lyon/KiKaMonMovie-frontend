@@ -7,8 +7,8 @@ import HomeScreen from './screens/HomeScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import SignInScreen from './screens/SignInScreen';
 import MyCollection from './screens/MyCollection';
-/* import AddAMovie from './screens/AddAMovie';
-import MyShares from './screens/MyShares'; */
+import AddAMovie from './screens/AddAMovie';
+/*import MyShares from './screens/MyShares'; */
 
 // redux imports
 import { Provider } from 'react-redux';
@@ -54,8 +54,8 @@ const TabNavigator = () => {
       headerShown: false,
     })}>
       <Tab.Screen name="MyCollection" component={MyCollection} />
-      {/* <Tab.Screen name="AddAMovie" component={AddAMovie} />
-      <Tab.Screen name="MyShares" component={MyShares} /> */}
+      <Tab.Screen name="AddAMovie" component={AddAMovie} />
+      {/*<Tab.Screen name="MyShares" component={MyShares} /> */}
     </Tab.Navigator>
   );
 };
@@ -70,6 +70,7 @@ export default function App() {
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="TabNavigator" component={TabNavigator} />
+          <Stack.Screen name="OnboardingAddAMovie" component={AddAMovie} />
         </Stack.Navigator>
       </NavigationContainer>
       </PersistGate>

@@ -38,10 +38,13 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
 
 
+
   const handleSubmit = async () => {
     setError('');
+    
     if (!email || !username || !password || !confirmPassword) {
       setError('Veuillez remplir tous les champs');
+    
       return;
     }
     if (password !== confirmPassword) {
@@ -63,13 +66,24 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         }),
       });
       const data = await response.json();
+      
       if (data.result) {
+        
+        const userMovies = (data.answer.movies) ? data.answer.movies : [];
+
         dispatch(login({
           email: email, 
           username: username, 
-          token: data.answer.token
+          token: data.answer.token,
+          movies: userMovies
         }));
+        if (userMovies.length < 1) {
+          
+          navigation.navigate('OnboardingAddAMovie');
+        } else {
+          
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        } 
       } else {
         setError(data.answer);
       }
