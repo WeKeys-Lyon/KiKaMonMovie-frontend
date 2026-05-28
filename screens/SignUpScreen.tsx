@@ -36,7 +36,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const dispatch = useDispatch();
 
   const BACKEND_URL = process.env.BACKEND_URL;
-console.log(BACKEND_URL);
+
 
 
   const handleSubmit = async () => {
@@ -52,7 +52,7 @@ console.log(BACKEND_URL);
       return;
     }
     try {
-console.log('je suis entré')
+
       const myURL = `${BACKEND_URL}/users/signup`
       const response = await fetch(encodeURI(myURL), {
         method: 'POST',
@@ -79,7 +79,7 @@ console.log('je suis entré')
         }));
         if (userMovies.length < 1) {
           
-          navigation.navigate('AddAMovie');
+          navigation.navigate('OnboardingAddAMovie');
         } else {
           
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });

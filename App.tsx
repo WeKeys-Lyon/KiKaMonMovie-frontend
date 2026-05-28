@@ -54,7 +54,7 @@ const TabNavigator = () => {
       headerShown: false,
     })}>
       <Tab.Screen name="MyCollection" component={MyCollection} />
-      {/*<Tab.Screen name="AddAMovie" component={AddAMovie} />*/}
+      <Tab.Screen name="AddAMovie" component={AddAMovie} />
       {/*<Tab.Screen name="MyShares" component={MyShares} /> */}
     </Tab.Navigator>
   );
@@ -70,7 +70,7 @@ export default function App() {
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="TabNavigator" component={TabNavigator} />
-          <Stack.Screen name="AddAMovie" component={AddAMovie} />
+          <Stack.Screen name="OnboardingAddAMovie" component={AddAMovie} />
         </Stack.Navigator>
       </NavigationContainer>
       </PersistGate>
