@@ -13,23 +13,60 @@ import {
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
+import {login} from '../reducers/user';
 
- 
 type SignInScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
 export default function SignInScreen({ navigation }: SignInScreenProps) {
 
-  const [login, setLogin] = useState<string>('');
+  const [mylogin, setLogin] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  
-  const handleSubmit = () => {
+  const [error, setError] = useState('');
+  const BACKEND_URL = process.env.BACKEND_URL;
+  const dispatch = useDispatch();
+
+  const handleSubmit =  async () => {
+
+   
+        setError('');
+        if (!mylogin || !password ) {
+          setError('Veuillez remplir tous les champs');
+          return;
+        }
+        try {
     
-    const BACKEND_IP = process.env.BACKEND_IP
-    console.log(BACKEND_IP);
+          const myURL = `${BACKEND_URL}/users/signin`
+          const response = await fetch(encodeURI(myURL), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              mylogin,
+              password,
+            }),
+          });
+          const data = await response.json();
+
+          if (data.result) {
+           dispatch(login({
+                     email: data.answer.email, 
+                     username: data.answer.username, 
+                     token: data.answer.token
+                   }));
+           navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+          } else {
+            setError(data.answer);
+          }
+        } catch (error) {
+          console.error(error);
+          setError('Une erreur est survenue lors de la création du compte');
+        }
+      };
     /* navigation.navigate('TabNavigator', { screen: 'MyCollection' }); */
-  };
   return (
         <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
           <KeyboardAvoidingView
@@ -47,7 +84,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
             textContentType="none" // https://reactnative.dev/docs/textinput#textcontenttype-ios
             autoComplete="username" // https://reactnative.dev/docs/textinput#autocomplete-android
             onChangeText={(value) => setLogin(value)}
-            value={login}
+            value={mylogin}
             style={styles.loginInput}
           />
       </View>
