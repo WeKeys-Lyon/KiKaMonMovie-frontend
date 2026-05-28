@@ -36,12 +36,15 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const dispatch = useDispatch();
 
   const BACKEND_URL = process.env.BACKEND_URL;
+console.log(BACKEND_URL);
 
 
   const handleSubmit = async () => {
     setError('');
+    
     if (!email || !username || !password || !confirmPassword) {
       setError('Veuillez remplir tous les champs');
+    
       return;
     }
     if (password !== confirmPassword) {
@@ -49,7 +52,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       return;
     }
     try {
-
+console.log('je suis entré')
       const myURL = `${BACKEND_URL}/users/signup`
       const response = await fetch(encodeURI(myURL), {
         method: 'POST',
@@ -73,7 +76,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           token: data.answer.token,
           movies: userMovies
         }));
-        if (data.answer.movies.length === 0) {
+        if (data.answer.movies.length < 1) {
           navigation.navigate('TabNavigator', { screen: 'AddAMovie' });
         } else {
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
