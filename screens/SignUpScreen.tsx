@@ -65,17 +65,20 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       const data = await response.json();
       console.log("RÉPONSE DU BACKEND :", data);
       if (data.result) {
-        const userMovies = data.answer.movies || [];
-
+        console.log(data)
+        const userMovies = (data.answer.movies) ? data.answer.movies : [];
+console.log(userMovies)
         dispatch(login({
           email: email, 
           username: username, 
           token: data.answer.token,
           movies: userMovies
         }));
-        if (data.answer.movies.length === 0) {
-          navigation.navigate('TabNavigator', { screen: 'AddAMovie' });
+        if (userMovies.length < 1) {
+          console.log('tout est bon')
+          navigation.navigate('AddAMovie');
         } else {
+          console.log(userMovies)
         navigation.navigate('TabNavigator', { screen: 'MyCollection' });
         } 
       } else {

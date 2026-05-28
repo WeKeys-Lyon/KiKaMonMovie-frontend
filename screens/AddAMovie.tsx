@@ -13,18 +13,18 @@ import {
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type CollectionScreenProps = {
+type AddAMovieScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-export default function MyCollectionScreen({ navigation }: CollectionScreenProps) {
+export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps) {
 
   const handleSubmit = () => {
     navigation.navigate('Home');
   };
   return (
     <SafeAreaView style={styles.container}>
-        <Text>Bienvenue sur mon App</Text>
+        <Text>Ajouter un film</Text>
         <TouchableOpacity onPress={() => handleSubmit()}>
             <Text> Allez au menu HOME</Text>
         </TouchableOpacity>
