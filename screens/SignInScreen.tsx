@@ -23,13 +23,43 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
   const [login, setLogin] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  
-  const handleSubmit = () => {
+  const [error, setError] = useState('');
+  const BACKEND_URL = process.env.BACKEND_URL
+
+  const handleSubmit =  async () => {
+
+   
+        setError('');
+        if (!login || !password ) {
+          setError('Veuillez remplir tous les champs');
+          return;
+        }
+        try {
     
-    const BACKEND_IP = process.env.BACKEND_IP
-    console.log(BACKEND_IP);
+          const myURL = `${BACKEND_URL}/users/signin`
+          const response = await fetch(encodeURI(myURL), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              login,
+              password,
+            }),
+          });
+          const data = await response.json();
+          console.log(data)
+          if (data.result) {
+           console.log('Bienvenue')
+          } else {
+            setError(data.answer);
+          }
+        } catch (error) {
+          console.error(error);
+          setError('Une erreur est survenue lors de la création du compte');
+        }
+      };
     /* navigation.navigate('TabNavigator', { screen: 'MyCollection' }); */
-  };
   return (
         <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
           <KeyboardAvoidingView
