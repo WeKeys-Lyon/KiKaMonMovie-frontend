@@ -56,7 +56,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              // 👈 ICI LA MAGIE DU COMPOSANT :
+              
               <MovieCard 
                 movie={item} 
                 columns={columns} 
