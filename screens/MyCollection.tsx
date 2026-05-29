@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
+import MovieCard from '../components/MovieCard';
+
 
 type MyCollectionProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -11,12 +13,19 @@ type MyCollectionProps = {
 
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width * 0.9) / 2 - 10; 
+const COLUMN_WIDTH = (width * 0.9) / 3 - 10; 
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
   
 
   const movies = useSelector((state: any) => state.user.value.movies);
+  const [columns, setColumns] = useState(3);
+
+  const getCardWidth = () => {
+    if (columns === 1) return '100%';
+    return (width * 0.9) / columns - 10;
+  };
+  const cardWidth = getCardWidth();
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -40,37 +49,22 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           
           /*VUE B : AFFICHAGE DE LA GRILLE DE FILMS */
           <FlatList
+            key={`flatlist-columns-${columns}`} 
             data={movies}
-            keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
-            numColumns={2} // 👈 Force l'affichage sur 2 colonnes
-            columnWrapperStyle={styles.row}
+            numColumns={columns}
+            columnWrapperStyle={columns > 1 ? styles.row : null}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => {
-              
-              const imageUrl = item.poster_path 
-                ? `https://image.tmdb.org/t/p/w500${item.poster_path}` 
-                : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
-              
-              
-              const year = item.release_date ? item.release_date.substring(0, 4) : '';
-
-              return (
-                <TouchableOpacity 
-                  style={styles.movieCard}
-                  onPress={() => console.log('Clic sur le film :', item.title_fr || item.original_title)}
-                  activeOpacity={0.8}
-                >
-                  <Image source={{ uri: imageUrl }} style={styles.poster} />
-                  <View style={styles.infoContainer}>
-                    <Text style={styles.movieTitle} numberOfLines={1}>
-                      {item.title_fr || item.original_title}
-                    </Text>
-                    {year ? <Text style={styles.movieYear}>{year}</Text> : null}
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
+            renderItem={({ item }) => (
+              // 👈 ICI LA MAGIE DU COMPOSANT :
+              <MovieCard 
+                movie={item} 
+                columns={columns} 
+                cardWidth={cardWidth} 
+                onPress={() => console.log('Clic sur le film :', item.title_fr || item.original_title)}
+              />
+            )
+            }
           />
         )}
       </View>
@@ -79,6 +73,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 }
 
 const styles = StyleSheet.create({
+  // --- Layout Principal ---
   background: {
     flex: 1,
     resizeMode: 'cover',
@@ -90,7 +85,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   
-  // Styles de l'écran vide
+  // --- Styles de l'écran vide ---
   emptyContainer: {
     padding: 30,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
@@ -118,7 +113,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Styles de la Grille (FlatList)
+  // --- Styles du conteneur de la liste (FlatList) ---
   listContainer: {
     paddingHorizontal: '5%',
     paddingTop: 15,
@@ -128,32 +123,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: width * 0.9,
     marginBottom: 15,
-  },
-  movieCard: {
-    width: COLUMN_WIDTH,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  poster: {
-    width: '100%',
-    height: COLUMN_WIDTH * 1.45, // Ratio d'une affiche cinéma standard
-    backgroundColor: '#1a1a1a',
-  },
-  infoContainer: {
-    padding: 10,
-  },
-  movieTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  movieYear: {
-    fontSize: 12,
-    color: '#e8be4b', // Couleur dorée
-    fontWeight: '600',
   },
 });
