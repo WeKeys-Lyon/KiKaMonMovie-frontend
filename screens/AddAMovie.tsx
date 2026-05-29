@@ -99,7 +99,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         dispatch(addMovieToStore(selectedMovie));
         setIsModalVisible(false);
-        navigation.navigate('MyCollection' );
+        navigation.navigate('TabNavigator', { screen: 'MyCollection'} );
       } else {
         console.log("Erreur lors de l'ajout", data.error);
       }
