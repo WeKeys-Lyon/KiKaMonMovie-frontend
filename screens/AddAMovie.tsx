@@ -59,7 +59,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         setMovieData(data.answer);
         setShowResults(true);
       } else {
-        console.log("Erreur backend", data.answer);
+        console.log("Erreur backend", data.error);
       }
     } catch (error) {
       console.error("Erreur réseau :", error);
