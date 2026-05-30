@@ -5,22 +5,34 @@ import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useEffect } from 'react';
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
   clickable: boolean,
   moviedata: any,
-  setIsModalVisible: any
+  setIsModalVisible: any,
+  drawStyle: boolean
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle }: MovieCardScreenProps) {
+    const BACKEND_URL = process.env.BACKEND_URL;
 
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const setModalVisible = () => {
       setIsModalVisible(false)
     }
+
+/*     useEffect(() => {
+      async () => {
+        if (drawStyle) {
+          const myURL = `${BACKEND_URL}/movie/`
+      }
+      }
+
+    }, []) */
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;
   
