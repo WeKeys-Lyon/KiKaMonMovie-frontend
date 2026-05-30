@@ -29,7 +29,6 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const dispatch = useDispatch();
 
   const handleSubmit =  async () => {
-      console.log(mylogin + ' ' + password)
    
         setError('');
         if (!mylogin || !password ) {
