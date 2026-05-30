@@ -5,7 +5,7 @@ export type UserState = {
     email: string | null;
     token: string | null;
     username: string | null;
-    movies: string[];
+    movies: string[] | null;
     /* linkingCode: string | null; */
   };
 };
@@ -29,7 +29,7 @@ export const userSlice = createSlice({
       /* state.value.linkingCode = action.payload.linkingCode; */
     },
     addMovieToStore: (state, action: PayloadAction<string>) => {
-      state.value.movies.push(action.payload);
+      state.value.movies?.push(action.payload);
     },
 
   },
