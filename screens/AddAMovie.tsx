@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TextInput, FlatList, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import {
+  View, Text, StyleSheet, ImageBackground, TextInput, FlatList,
+  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity
+} from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { addMovieToStore } from '../reducers/user';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 
@@ -10,11 +14,18 @@ type AddAMovieScreenProps = {
 
 export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps) {
 
+  const user = useSelector((state: any) => state.user.value);
+  const dispatch = useDispatch();
+
+
+
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [queryTitle, setQueryTitle] = useState('');
   const [queryPerson, setQueryPerson] = useState('');
   const [movieData, setMovieData] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<any>(null);
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -46,15 +57,15 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   };
 
 
- const launchSearch = async () => {
+  const launchSearch = async () => {
     if (!queryTitle) return;
-    
+
     console.log('Recherche lancée pour :', queryTitle);
-    
+
     try {
       const response = await fetch(`${BACKEND_URL}/movies/search/${queryTitle}`);
       const data = await response.json();
-      
+
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
@@ -66,6 +77,37 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     }
   };
 
+  const handleOpenModal = (movie: any) => {
+    setSelectedMovie(movie);
+    setIsModalVisible(true);
+  };
+
+  const handleAddMovie = async () => {
+    const BACKEND_URL = process.env.BACKEND_URL;
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          movie: selectedMovie,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.result) {
+        dispatch(addMovieToStore(selectedMovie));
+        setIsModalVisible(false);
+        navigation.navigate('MyCollection' );
+      } else {
+        console.log("Erreur lors de l'ajout", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
 
 
   return (
@@ -73,7 +115,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       <Header title="Ajouter un film" />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-        
+
         {/* VUE 1 : LES CHOIX DE DÉPART */}
         {!isSearchMode && (
           <View style={styles.card}>
@@ -85,7 +127,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             <View style={styles.buttonContainer}>
               <Buttons title="📷 Scanner un code-barre" onPress={handleBarcodeSearch} variant="actionButton" />
               <View style={styles.spacer} />
-              <Buttons title="🔍 Recherche manuelle" onPress={handleManualSearch} variant="actionButton"/>
+              <Buttons title="🔍 Recherche manuelle" onPress={handleManualSearch} variant="actionButton" />
             </View>
           </View>
         )}
@@ -93,7 +135,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
           <View style={styles.searchContainer}>
-            
+
             {/* Box Recherche par Titre */}
             <View style={styles.searchBox}>
               <Text style={styles.titleBox}>Titre du film</Text>
@@ -103,11 +145,11 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                 value={queryTitle}
                 onChangeText={setQueryTitle}
                 style={styles.input}
-                onSubmitEditing={launchSearch} 
+                onSubmitEditing={launchSearch}
               />
               <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="actionButton" />
-                <Buttons title="Chercher" onPress={launchSearch} variant="actionButton" />
+                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
+                <Buttons title="Chercher" onPress={launchSearch} variant="primary" />
               </View>
             </View>
 
@@ -122,50 +164,90 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                 style={styles.input}
               />
               <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="actionButton" />
-                <Buttons title="Chercher" onPress={() => console.log("À connecter ! ")} variant="actionButton" />
+                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
+                <Buttons title="Chercher" onPress={() => console.log("À connecter ! ")} variant="primary" />
               </View>
             </View>
           </View>
         )}
 
-            {/* VUE 3 : les resultats */}
-            {isSearchMode && showResults && (
+        {/* VUE 3 : les resultats */}
+        {isSearchMode && showResults && (
           <View style={styles.resultsContainer}>
             <View style={styles.backButtonContainer}>
               <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" />
             </View>
-
+            {/* Faire un type export typescript pour qu'il n'y ait pas d'erreurs */}
             <FlatList
               data={movieData}
               keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
               style={styles.list}
               renderItem={({ item }) => {
-                const imageUrl = item.poster_path 
-                  ? `https://image.tmdb.org/t/p/w500${item.poster_path}` 
+                const imageUrl = item.poster_path
+                  ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
                   : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
                 const year = item.release_date ? item.release_date.substring(0, 4) : 'N/A';
-                const director = item.DirectedBy && item.DirectedBy.length > 0 
-                  ? item.DirectedBy[0].name 
+                const director = item.DirectedBy && item.DirectedBy.length > 0
+                  ? item.DirectedBy[0].name
                   : 'Réalisateur inconnu';
 
                 return (
-                  <View style={styles.movieCard}>
-                    <Image source={{ uri: imageUrl }} style={styles.poster} />
-                    <View style={styles.movieInfo}>
-                      <Text style={styles.movieTitle} numberOfLines={2}>
-                        {item.title_fr || item.original_title}
-                      </Text>
-                      <Text style={styles.movieYear}>{year}</Text>
-                      <Text style={styles.movieDirector}>{director}</Text>
+                  <TouchableOpacity onPress={() => handleOpenModal(item)}>
+                    <View style={styles.movieCard}>
+                      <Image source={{ uri: imageUrl }} style={styles.poster} />
+                      <View style={styles.movieInfo}>
+                      {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
+                        <Text style={styles.movieTitle} numberOfLines={2}>
+                          {item.title_fr || item.original_title}
+                        </Text>
+                        <Text style={styles.movieYear}>{year}</Text>
+                        <Text style={styles.movieDirector}>{director}</Text>
+                      </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               }}
             />
-
           </View>
         )}
+        {/* modale */}
+        <Modal visible={isModalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
+
+                <Image
+                  source={{ uri: selectedMovie?.poster_path ? `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}` : 'https://via.placeholder.com/500' }}
+                  style={styles.modalPoster}
+                />
+                {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
+                <Text style={styles.modalTitle}>{selectedMovie?.title_fr || selectedMovie?.original_title}</Text>
+
+                <View style={styles.modalInfoGrid}>
+                  {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
+                  <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{selectedMovie?.release_date}</Text></Text>
+                  <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{selectedMovie?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
+                  <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{selectedMovie?.genre?.map((g: any) => g.name).join(', ')}</Text></Text>
+                  {/* TODO Ajouter le compositeur*/}
+                  {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
+                  <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{selectedMovie?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalButtonsRow}>
+                {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
+                <View style={{ flex: 1 }}>
+                  <Buttons title="Retour" onPress={() => setIsModalVisible(false)} variant="primary" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+                </View>
+              </View>
+
+
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>
   );
@@ -174,7 +256,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 const styles = StyleSheet.create({
   background: { flex: 1, resizeMode: 'cover' },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  
+
   // Vue 1
   card: { marginHorizontal: 20, padding: 30, backgroundColor: 'rgba(0, 0, 0, 0.75)', borderRadius: 15, alignItems: 'center', width: '90%' },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 15, textAlign: 'center' },
@@ -193,12 +275,12 @@ const styles = StyleSheet.create({
 
   // FlatList (Résultats de recherche)
   list: { width: '90%', flex: 1 },
-  movieCard: { 
+  movieCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', 
-    padding: 10, 
-    borderRadius: 10, 
-    marginBottom: 10, 
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -214,15 +296,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  movieTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
+  movieTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#fff',
     marginBottom: 4,
   },
   movieYear: {
     fontSize: 14,
-    color: '#e8be4b', 
+    color: '#e8be4b',
     marginBottom: 2,
     fontWeight: 'bold',
   },
@@ -240,5 +322,62 @@ const styles = StyleSheet.create({
   backButtonContainer: {
     width: '90%',
     marginBottom: 15,
+  },
+  // Styles de la Modale
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e8be4b',
+  },
+  modalScroll: {
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  modalPoster: {
+    width: 200,
+    height: 300,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  modalInfoGrid: {
+    width: '100%',
+    marginBottom: 25,
+  },
+  modalLabel: {
+    color: '#e8be4b',
+    fontWeight: 'bold',
+    marginBottom: 8,
+    fontSize: 16,
+  },
+  modalText: {
+    color: '#fff',
+    fontWeight: 'normal',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
