@@ -79,8 +79,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setIsModalVisible(true);
   };
 
- 
-
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -157,7 +155,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
               renderItem={({ item }) => {
                 const imageUrl = item.poster_path
                   ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                  : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+                  : require('../assets/nomovie.jpg');
                 const year = item.release_date ? item.release_date.substring(0, 4) : 'N/A';
                 const director = item.DirectedBy && item.DirectedBy.length > 0
                   ? item.DirectedBy[0].name
@@ -169,9 +167,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                       <Image source={{ uri: imageUrl }} style={styles.poster} />
                       <View style={styles.movieInfo}>
                       {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
-                        <Text style={styles.movieTitle} numberOfLines={2}>
-                          {item.title_fr || item.original_title}
+                        <Text style={styles.movieTitle} numberOfLines={1}>
+                          {(item.title_fr !== item.original_title) ? (item.title_fr + '\n' + item.original_title): (item.title_fr)}
                         </Text>
+                        <Text style={styles.movieVOTitle}>{(item.title_fr !== item.original_title) ? item.original_title : ''}</Text>
                         <Text style={styles.movieYear}>{year}</Text>
                         <Text style={styles.movieDirector}>{director}</Text>
                       </View>
@@ -238,6 +237,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 4,
+  },
+  movieVOTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#d2d2d2ff',
     marginBottom: 4,
   },
   movieYear: {
