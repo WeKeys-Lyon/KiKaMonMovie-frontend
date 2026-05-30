@@ -29,7 +29,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const dispatch = useDispatch();
 
   const handleSubmit =  async () => {
-
+      console.log(mylogin + ' ' + password)
    
         setError('');
         if (!mylogin || !password ) {
@@ -53,10 +53,11 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
           if (data.result) {
            dispatch(login({
-                     email: data.answer.email, 
-                     username: data.answer.username, 
-                     token: data.answer.token
-                   }));
+             email: data.answer.email,
+             username: data.answer.username,
+             token: data.answer.token,
+             movies: data.answer.movies
+           }));
            navigation.navigate('TabNavigator', { screen: 'MyCollection' });
           } else {
             setError(data.answer);
