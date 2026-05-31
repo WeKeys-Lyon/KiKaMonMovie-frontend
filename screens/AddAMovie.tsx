@@ -26,7 +26,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
 
   const BACKEND_URL = process.env.BACKEND_URL;
-  console.log(BACKEND_URL)
 
 
 
