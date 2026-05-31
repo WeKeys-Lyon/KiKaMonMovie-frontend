@@ -26,6 +26,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
 
   const BACKEND_URL = process.env.BACKEND_URL;
+  console.log(BACKEND_URL)
 
 
 
@@ -210,7 +211,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         )}
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={() => setIsModalVisible(false)}/>
+          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={() => setIsModalVisible(false)} drawStyle={drawStyle}/>
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>

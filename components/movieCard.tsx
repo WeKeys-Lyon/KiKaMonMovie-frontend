@@ -5,7 +5,7 @@ import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -17,6 +17,7 @@ type MovieCardScreenProps = {
 
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle }: MovieCardScreenProps) {
+
     const BACKEND_URL = process.env.BACKEND_URL;
 
     const user = useSelector((state: any) => state.user.value);
@@ -24,15 +25,26 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     const setModalVisible = () => {
       setIsModalVisible(false)
     }
+    const [datas, setDatas] = useState(moviedata)
 
-/*     useEffect(() => {
-      async () => {
-        if (drawStyle) {
-          const myURL = `${BACKEND_URL}/movie/`
-      }
-      }
+    useEffect(() => {
+        const init = async () => {
+                
+                const myURL = `${BACKEND_URL}/movies/searchid/${moviedata.tmdb_id}`
+                const response = await fetch(encodeURI(myURL));
+                const data = await response.json();
+                if (data.result) {
+                  setDatas(data.answer);
+                } else {
+                  setDatas(moviedata);
+                }
+                
+        }
+        init()
+    }, [])
+     
 
-    }, []) */
+
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;
   
@@ -42,14 +54,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             token: user.token,
-            movie: moviedata,
+            movie: datas,
           }),
         });
   
         const data = await response.json();
         if (data.result) {
           setIsModalVisible(false);
-          dispatch(addMovieToStore(moviedata));
+          dispatch(addMovieToStore(datas));
           navigation.navigate('MyCollection' );
         } else {
           console.log("Erreur lors de l'ajout", data.error);
@@ -65,20 +77,20 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
         
                         <Image
-                          source={{ uri: moviedata?.poster_path ? `https://image.tmdb.org/t/p/w500${moviedata.poster_path}` : 'https://via.placeholder.com/500' }}
+                          source={{ uri: datas?.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500' }}
                           style={styles.modalPoster}
                         />
                         {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
-                        <Text style={styles.modalTitle}>{moviedata?.title_fr || moviedata?.original_title}</Text>
+                        <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
         
                         <View style={styles.modalInfoGrid}>
                           {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
-                          <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{moviedata?.release_date}</Text></Text>
-                          <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{moviedata?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
-                          <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{moviedata?.genre?.map((g: any) => g.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
+                          <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{datas?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{datas?.Genres?.map((g: any) => g.name).join(', ')}</Text></Text>
                           {/* TODO Ajouter le compositeur*/}
                           {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
-                          <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{moviedata?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{datas?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
                         </View>
                       </ScrollView>
         
