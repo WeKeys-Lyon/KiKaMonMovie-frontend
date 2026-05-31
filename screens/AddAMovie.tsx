@@ -23,8 +23,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [showResults, setShowResults] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
+  const [drawStyle, setDrawStyle] = useState<boolean>(false);
 
   const BACKEND_URL = process.env.BACKEND_URL;
+  console.log(BACKEND_URL)
 
 
 
@@ -73,11 +75,33 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       console.error("Erreur réseau :", error);
     }
   };
+  const launchSearchPeople = async () => {
+
+    if (!queryPerson) return;
+
+    console.log('Recherche de personnalité lancée pour :', queryPerson);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/movies/searchpeople/${queryPerson}`);
+      const data = await response.json();
+
+      if (data.result) {
+        setMovieData(data.answer);
+        setShowResults(true);
+        setDrawStyle(true)
+      } else {
+        console.log("Erreur backend", data.error);
+      }
+    } catch (error) {
+      console.error("Erreur réseau :", error);
+    }
+  };
 
   const handleOpenModal = (movie: any) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
+
 
 
   return (
@@ -135,7 +159,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
               />
               <View style={styles.searchButtonsRow}>
                 <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
-                <Buttons title="Chercher" onPress={() => console.log("À connecter ! ")} variant="primary" />
+                <Buttons title="Chercher" onPress={launchSearchPeople} variant="primary" />
               </View>
             </View>
           </View>
@@ -166,13 +190,17 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                     <View style={styles.movieCard}>
                       <Image source={{ uri: imageUrl }} style={styles.poster} />
                       <View style={styles.movieInfo}>
-                      {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
-                        <Text style={styles.movieTitle} numberOfLines={1}>
-                          {(item.title_fr !== item.original_title) ? (item.title_fr + '\n' + item.original_title): (item.title_fr)}
+                        <Text style={{
+                              fontSize: 18,
+                              fontWeight: 'bold',
+                              color: '#fff',
+                              marginBottom: (drawStyle) ? 18 : 4,
+                        }} numberOfLines={2}>
+                          {(item.title_fr) ? item.title_fr: item.original_title}
                         </Text>
-                        <Text style={styles.movieVOTitle}>{(item.title_fr !== item.original_title) ? item.original_title : ''}</Text>
+                         {(drawStyle == false) ? (<Text style={styles.movieVOTitle}>{(item.title_fr) ? ((item.title_fr !== item.original_title) ? item.original_title : '') : ''}</Text>) : '' }
                         <Text style={styles.movieYear}>{year}</Text>
-                        <Text style={styles.movieDirector}>{director}</Text>
+                        {(drawStyle == false) ? (<Text style={styles.movieDirector}>{director}</Text>) : '' } 
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -183,7 +211,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         )}
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={() => setIsModalVisible(false)}/>
+          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={() => setIsModalVisible(false)} drawStyle={drawStyle}/>
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>

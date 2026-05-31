@@ -29,7 +29,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const dispatch = useDispatch();
 
   const handleSubmit =  async () => {
-   
+        
         setError('');
         if (!mylogin || !password ) {
           setError('Veuillez remplir tous les champs');
