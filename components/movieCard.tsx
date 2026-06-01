@@ -16,10 +16,11 @@ type MovieCardScreenProps = {
   mode?: 'add' | 'collection';
   onFilterClick?: (type: string, value: string) => void;
   onLendClick?: () => void;
+  onDeleteClick?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick}: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick }: MovieCardScreenProps) {
 
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -72,23 +73,27 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       }
     };
 
-    const renderClickableNames = (items: any[], type: string) => {
+    const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
       if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
       const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {items.map((item: any, index: number) => (
-            <TouchableOpacity 
-              key={index} 
-              
-              disabled={mode === 'add'} 
-              onPress={() => onFilterClick && onFilterClick(type, item.name)}
-            >
-              <Text style={[styles.modalText, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
-                {item.name}{index < items.length - 1 ? ', ' : ''}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
+          {displayedItems.map((item: any, index: number) => (
+          <TouchableOpacity 
+            key={index} 
+            disabled={mode === 'add'} 
+            onPress={() => onFilterClick && onFilterClick(type, item.name)}
+          >
+            <Text style={[styles.modalText, {fontSize: 16, lineHeight: 24}, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
+              {item.name}{index < displayedItems.length - 1 ? ', ' : ''}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        {maxItems && items.length > maxItems && (
+          <Text style={[styles.modalText, { color: '#aaa', fontStyle: 'italic', fontSize: 16}]}>
+            {` (+ ${items.length - maxItems} autres)`}
+          </Text>
+        )}
         </View>
       );
     };
@@ -113,11 +118,19 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           {renderClickableNames(datas?.Genres, 'genre')}
                           <Text style={styles.modalLabel}>Compositeur : </Text>
                           {renderClickableNames(datas?.MusicBy, 'composer')}
-                          {console.log(datas?.MusicBy)}
-                          {/* TODO Ajouter le compositeur*/}
-                          {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
+                          
                           <Text style={styles.modalLabel}>Casting :</Text>
-                          {renderClickableNames(datas?.Cast, 'actor')}
+                          {renderClickableNames(datas?.Cast, 'actor', 15)}
+                          {mode === 'collection' && (
+                          <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
+                            <Buttons 
+                              title="🗑️ Supprimer le film" 
+                              onPress={onDeleteClick} 
+                              variant="primary" 
+                              style={{ backgroundColor: '#d9534f', width: '80%' }} 
+                            />
+                          </View>  
+                          )}
                         </View>
                       </ScrollView>
         
@@ -181,7 +194,7 @@ const styles = StyleSheet.create({
     color: '#e8be4b',
     fontWeight: 'bold',
     marginBottom: 8,
-    fontSize: 16,
+    fontSize: 18,
   },
   modalText: {
     color: '#fff',
@@ -192,6 +205,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+    gap: 10,
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,

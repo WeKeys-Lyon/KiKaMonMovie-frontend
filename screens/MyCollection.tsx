@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
+import { removedMovieFromStore } from '../reducers/user';
+import { useDispatch } from 'react-redux';
+
 
 
 type MyCollectionProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
+const BACKEND_URL = process.env.BACKEND_URL;
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width * 0.9) / 3 - 10; 
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
   
+  const dispatch = useDispatch();
+  const user = useSelector((state: any) => state.user.value);
   const movies = useSelector((state: any) => state.user.value.movies);
   const [columns, setColumns] = useState(3);
   const getCardWidth = () => {
@@ -123,6 +129,50 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             onLendClick={() => {
               console.log('Ouvrir la modale de prêt pour :', selectedMovie.title_fr);
             }}
+            onDeleteClick={() => {
+              Alert.alert(
+                'Supprimer le film',
+                `Êtes-vous sûr de vouloir supprimer "${selectedMovie.title_fr || selectedMovie.original_title}" de votre collection ?`,
+                [
+                  {
+                    text: 'Annuler',
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'Supprimer',
+                    style: 'destructive',
+                    onPress: async () => {
+                      console.log("On lance la suppression ! Token présent", !!user.token, selectedMovie?.tmdb_id );
+                      try {
+                        const response = await fetch(`${BACKEND_URL}/users/delete-movie`, {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            token: user.token,
+                            tmdb_id: selectedMovie.tmdb_id,
+                          }),
+                        });
+                        const data = await response.json();
+                        if (data.result) {
+                          setIsModalVisible(false);
+                          dispatch(removedMovieFromStore(selectedMovie));
+                        } else {
+                          console.log("Erreur lors de la suppression", data.error);
+                        }
+                      } catch (error) {
+                        console.error(error);
+                      }
+                      
+                      setIsModalVisible(false); // On ferme la modale
+                    } 
+                  }
+                ]
+              );
+            }}
+            
+            drawStyle={false}
+            clickable={false}
+            navigation={navigation}
             
           />
         )}

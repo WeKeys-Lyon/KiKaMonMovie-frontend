@@ -5,7 +5,7 @@ export type UserState = {
     email: string | null;
     token: string | null;
     username: string | null;
-    movies: string[] | null;
+    movies: any[] | null;
     /* linkingCode: string | null; */
   };
 };
@@ -28,12 +28,19 @@ export const userSlice = createSlice({
       state.value.movies = action.payload.movies;
       /* state.value.linkingCode = action.payload.linkingCode; */
     },
-    addMovieToStore: (state, action: PayloadAction<string>) => {
+    addMovieToStore: (state, action: PayloadAction<any>) => {
       state.value.movies?.push(action.payload);
+    },
+    removedMovieFromStore: (state, action: PayloadAction<any>) => {
+      if (state.value.movies) {
+      state.value.movies = state.value.movies.filter(
+          (movie: any) => String(movie.tmdb_id) !== String(action.payload)
+        );
+      }
     },
 
   },
 });
 
-export const { login, addMovieToStore } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore } = userSlice.actions;
 export default userSlice.reducer;
