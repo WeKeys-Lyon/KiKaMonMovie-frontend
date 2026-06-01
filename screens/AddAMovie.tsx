@@ -70,7 +70,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         setMovieData(data.answer);
         setShowResults(true);
       } else {
-        console.log("Erreur backend", data.answer);
+        console.log("Erreur backend", data.error);
       }
     } catch (error) {
       console.error("Erreur réseau :", error);
@@ -177,7 +177,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             <View style={styles.backButtonContainer}>
               <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" />
             </View>
-
+            {/* Faire un type export typescript pour qu'il n'y ait pas d'erreurs */}
             <FlatList
               data={movieData}
               keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
@@ -196,6 +196,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                     <View style={styles.movieCard}>
                       <Image source={{ uri: imageUrl }} style={styles.poster} />
                       <View style={styles.movieInfo}>
+                      {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
                         <Text style={styles.movieTitle} numberOfLines={2}>
                           {item.title_fr || item.original_title}
                         </Text>
@@ -219,18 +220,22 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                   source={{ uri: selectedMovie?.poster_path ? `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}` : 'https://via.placeholder.com/500' }}
                   style={styles.modalPoster}
                 />
-
+                {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
                 <Text style={styles.modalTitle}>{selectedMovie?.title_fr || selectedMovie?.original_title}</Text>
 
                 <View style={styles.modalInfoGrid}>
+                  {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
                   <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{selectedMovie?.release_date}</Text></Text>
                   <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{selectedMovie?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
                   <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{selectedMovie?.genre?.map((g: any) => g.name).join(', ')}</Text></Text>
+                  {/* TODO Ajouter le compositeur*/}
+                  {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
                   <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{selectedMovie?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
                 </View>
               </ScrollView>
 
               <View style={styles.modalButtonsRow}>
+                {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
                 <View style={{ flex: 1 }}>
                   <Buttons title="Retour" onPress={() => setIsModalVisible(false)} variant="primary" />
                 </View>

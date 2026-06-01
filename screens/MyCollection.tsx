@@ -17,10 +17,8 @@ const COLUMN_WIDTH = (width * 0.9) / 3 - 10;
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
   
-
   const movies = useSelector((state: any) => state.user.value.movies);
   const [columns, setColumns] = useState(3);
-
   const getCardWidth = () => {
     if (columns === 1) return '100%';
     return (width * 0.9) / columns - 10;
