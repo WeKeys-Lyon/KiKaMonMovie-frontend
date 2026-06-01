@@ -29,7 +29,12 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
-      <Header title="Ma Collection" />
+      <Header title="Ma Collection" 
+      leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
+        onPressLeft={() => console.log('Aller vers le profil')}
+      rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
+        onPressRight={() => console.log('Ouvrir les options')}
+      />
 
       <View style={styles.container}>
         
