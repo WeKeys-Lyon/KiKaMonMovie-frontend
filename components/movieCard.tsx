@@ -74,7 +74,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
     const renderClickableNames = (items: any[], type: string) => {
       if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
-      const displayedItems = maxItems ? items.slice(0, maxItems) : items;
+      //const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {items.map((item: any, index: number) => (

@@ -53,7 +53,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           token: data.answer.token,
           movies: data.answer.movies
         }));
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('TabNavigator', { screen: 'MyCollection', loadmovies: true });
       } else {
         setError(data.answer);
       }
