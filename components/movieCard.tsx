@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
@@ -13,10 +13,13 @@ type MovieCardScreenProps = {
   moviedata: any,
   setIsModalVisible: any,
   drawStyle: boolean
+  mode?: 'add' | 'collection';
+  onFilterClick?: (type: string, value: string) => void;
+  onLendClick?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick}: MovieCardScreenProps) {
 
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -60,13 +63,34 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         if (data.result) {
           setIsModalVisible(false);
           dispatch(addMovieToStore(datas));
-          navigation.navigate('MyCollection' );
+          navigation.navigate('TabNavigator', { screen: 'MyCollection' });
         } else {
           console.log("Erreur lors de l'ajout", data.error);
         }
       } catch (error) {
         console.error(error);
       }
+    };
+
+    const renderClickableNames = (items: any[], type: string) => {
+      if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
+      const displayedItems = maxItems ? items.slice(0, maxItems) : items;
+    return (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {items.map((item: any, index: number) => (
+            <TouchableOpacity 
+              key={index} 
+              
+              disabled={mode === 'add'} 
+              onPress={() => onFilterClick && onFilterClick(type, item.name)}
+            >
+              <Text style={[styles.modalText, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
+                {item.name}{index < items.length - 1 ? ', ' : ''}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
     };
 
     return (
@@ -83,11 +107,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         <View style={styles.modalInfoGrid}>
                           {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
                           <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
-                          <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{datas?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
-                          <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{datas?.Genres?.map((g: any) => g.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Réalisé par :</Text>
+                          {renderClickableNames(datas?.DirectedBy, 'director')}
+                          <Text style={styles.modalLabel}>Genre :</Text>
+                          {renderClickableNames(datas?.Genres, 'genre')}
+                          <Text style={styles.modalLabel}>Compositeur : </Text>
+                          {renderClickableNames(datas?.MusicBy, 'composer')}
+                          {console.log(datas?.MusicBy)}
                           {/* TODO Ajouter le compositeur*/}
                           {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
-                          <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{datas?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Casting :</Text>
+                          {renderClickableNames(datas?.Cast, 'actor')}
                         </View>
                       </ScrollView>
         
@@ -97,7 +127,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
                         </View>
                         <View style={{ flex: 1 }}>
+                          {mode === 'add' ? (
                           <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+                          ) : (
+                          <Buttons title="Prêter" onPress={onLendClick} variant="primary" />
+                          )}
                         </View>
                       </View>
                     </View>

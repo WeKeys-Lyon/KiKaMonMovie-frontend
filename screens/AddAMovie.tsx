@@ -7,6 +7,8 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieCard  from '../components/movieCard';
+import { UseDispatch, useSelector } from 'react-redux';
+
 
 type AddAMovieScreenProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -25,6 +27,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
+  const user = useSelector((state: any) => state.user.value);
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -103,32 +106,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const handleOpenModal = (movie: any) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
-  };
-
-  const handleAddMovie = async () => {
-    const BACKEND_URL = process.env.BACKEND_URL;
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: user.token,
-          movie: selectedMovie,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.result) {
-        dispatch(addMovieToStore(selectedMovie));
-        setIsModalVisible(false);
-        navigation.navigate('TabNavigator', { screen: 'MyCollection'} );
-      } else {
-        console.log("Erreur lors de l'ajout", data.error);
-      }
-    } catch (error) {
-      console.error(error);
-    }
   };
 
 
@@ -238,7 +215,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         )}
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={() => setIsModalVisible(false)} drawStyle={drawStyle}/>
+          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add"/>
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>
