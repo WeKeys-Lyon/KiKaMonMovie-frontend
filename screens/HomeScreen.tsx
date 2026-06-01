@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {Buttons} from '../components/buttons';
 import {
   Image,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 
 type HomeScreenProps = {
@@ -20,7 +21,13 @@ type HomeScreenProps = {
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-
+  const user = useSelector((state: any) => state.user.value);
+  //Mettre ce useEffect en sourdine si on veut travailler sur la page SignIn ou SignUp
+  useEffect(() => {
+    if (user.token) {
+      navigation.navigate('TabNavigator' );
+    }
+  }, [])
   const handleSignUp = () => 
       navigation.navigate('SignUp');
 
