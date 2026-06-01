@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
-import MovieCard from '../components/MovieCard';
+import MovieGrid from '../components/MovieGrid';
 
 
 type MyCollectionProps = {

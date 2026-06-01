@@ -4,14 +4,14 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'rea
 const { width } = Dimensions.get('window');
 
 
-interface MovieCardProps {
+interface MovieGridProps {
   movie: any;
   columns: number;
   cardWidth: number | string;
   onPress: () => void;
 }
 
-export default function MovieCard({ movie, columns, cardWidth, onPress }: MovieCardProps) {
+export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieGridProps) {
   
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
