@@ -45,6 +45,7 @@ export default function MovieCard({ movie, columns, cardWidth, onPress }: MovieC
   );
 }
 
+
 const styles = StyleSheet.create({
   // --- Styles Communs ---
   infoContainer: { padding: 5 },
