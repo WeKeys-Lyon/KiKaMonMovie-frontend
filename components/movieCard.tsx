@@ -29,16 +29,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
     useEffect(() => {
         const init = async () => {
-                
+                if (drawStyle){
                 const myURL = `${BACKEND_URL}/movies/searchid/${moviedata.tmdb_id}`
                 const response = await fetch(encodeURI(myURL));
                 const data = await response.json();
                 if (data.result) {
                   setDatas(data.answer);
-                } else {
-                  setDatas(moviedata);
                 }
-                
+                }
         }
         init()
     }, [])
@@ -75,9 +73,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                       <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-        
                         <Image
-                          source={{ uri: datas?.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500' }}
+                          source={datas?.poster_path ? { uri: `https://image.tmdb.org/t/p/w500${datas.poster_path}`} : require('../assets/nomovie.jpg')}
                           style={styles.modalPoster}
                         />
                         {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}

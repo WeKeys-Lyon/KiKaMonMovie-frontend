@@ -19,6 +19,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [queryTitle, setQueryTitle] = useState('');
   const [queryPerson, setQueryPerson] = useState('');
+  const [queryAsked, setQueryAsked] = useState('');
   const [movieData, setMovieData] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -67,6 +68,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
+        setQueryAsked(queryTitle)
       } else {
         console.log("Erreur backend", data.error);
       }
@@ -81,6 +83,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log('Recherche de personnalité lancée pour :', queryPerson);
 
     try {
+
       const response = await fetch(`${BACKEND_URL}/movies/searchpeople/${queryPerson}`);
       const data = await response.json();
 
@@ -88,6 +91,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         setMovieData(data.answer);
         setShowResults(true);
         setDrawStyle(true)
+        setQueryAsked(data.people)
       } else {
         console.log("Erreur backend", data.error);
       }
@@ -169,6 +173,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
           <View style={styles.resultsContainer}>
             <View style={styles.backButtonContainer}>
               <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" />
+              <Text style={styles.text}>Résultats pour {queryAsked}</Text>
             </View>
             {/* Faire un type export typescript pour qu'il n'y ait pas d'erreurs */}
             <FlatList
@@ -176,9 +181,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
               keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
               style={styles.list}
               renderItem={({ item }) => {
-                const imageUrl = item.poster_path
-                  ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                  : require('../assets/nomovie.jpg');
                 const year = item.release_date ? item.release_date.substring(0, 4) : 'N/A';
                 const director = item.DirectedBy && item.DirectedBy.length > 0
                   ? item.DirectedBy[0].name
@@ -187,7 +189,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
                 return (
                   <TouchableOpacity onPress={() => handleOpenModal(item)}>
                     <View style={styles.movieCard}>
-                      <Image source={{ uri: imageUrl }} style={styles.poster} />
+                      <Image source={item.poster_path ? { uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` } : require('../assets/nomovie.jpg')} style={styles.poster} />
                       <View style={styles.movieInfo}>
                         <Text style={{
                               fontSize: 18,
@@ -236,9 +238,11 @@ const styles = StyleSheet.create({
   input: { width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.3)', borderRadius: 8, paddingHorizontal: 15, height: 50, color: '#fff', marginBottom: 15, fontSize: 16 },
   searchButtonsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '60%', gap: 20 },
   smallButton: { flex: 1 },
+  
 
   // FlatList (Résultats de recherche)
   list: { width: '90%', flex: 1 },
+  text: { color: '#fff', textAlign: 'center', marginTop: 15, fontSize: 20},
   movieCard: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
