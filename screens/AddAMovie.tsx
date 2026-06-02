@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ImageBackground, TextInput, FlatList,
-  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity
+  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity, Alert
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieCard  from '../components/movieCard';
 import { UseDispatch, useSelector } from 'react-redux';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 
 type AddAMovieScreenProps = {
@@ -28,16 +29,14 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
   const user = useSelector((state: any) => state.user.value);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedTitle, setScannedTitle] = useState<string | null>(null);
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
 
-
-
-  const handleBarcodeSearch = () => {
-    {/*navigation.navigate('BarecodeSearch');*/ }
-    console.log("Ouverture de la page de scan");
-  };
 
   const handleManualSearch = () => {
     setIsSearchMode(true);
@@ -116,7 +115,58 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setIsSearchMode(false);
   };
 
+ //Gestion de la camera: 
+ const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
+  if (!isScanning) return;
+  setIsScanning(false);
+  console.log(`code barre: ${data}`)
 
+  try {
+    const response = await fetch(`${BACKEND_URL}/movies/scan-google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ barcode: data }),
+      });
+      const json = await response.json();
+
+      if (json.result && json.title) {
+        setScannedTitle(json.title); 
+      } else {
+        Alert.alert("Mince !", "Aucun film trouvé pour ce code-barres.");
+        setIsScanning(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setIsScanning(true);
+    }
+  };
+  
+  // bouton relancer scan
+  const handleRescan = () => {
+    setScannedTitle(null);
+    setIsScanning(true);
+  }
+
+  //bouton ajouter, rechercher sur tmdb et ouvrir la modale
+  const handleConfirmScannedMovie = async () => {
+    if (!scannedTitle) return;
+    try {
+      const response = await fetch(`${BACKEND_URL}/movies/search/${scannedTitle}`);
+      const data = await response.json();
+
+      if (data.result && data.answer.length > 0) {
+        const tmdbMovie = data.answer[0];
+        setSelectedMovie(tmdbMovie)
+        setIsModalVisible(true);
+        setIsCameraActive(false);
+        handleRescan();
+      } else {
+        Alert.alert("Erreur, impossible de récupérer le détail de ce film");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -125,7 +175,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
 
         {/* VUE 1 : LES CHOIX DE DÉPART */}
-        {!isSearchMode && (
+        {!isSearchMode && !isCameraActive && (
           <View style={styles.card}>
             <Text style={styles.title}>Ajouter un film</Text>
             <Text style={styles.subtitle}>
@@ -133,14 +183,56 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             </Text>
 
             <View style={styles.buttonContainer}>
-              <Buttons title="📷 Scanner un code-barre" onPress={handleBarcodeSearch} variant="actionButton" />
+              <Buttons title="📷 Scanner un code-barre" onPress={async () => {if (!permission?.granted) await requestPermission(); setIsCameraActive(true)}} variant="actionButton" />
               <View style={styles.spacer} />
               <Buttons title="🔍 Recherche manuelle" onPress={handleManualSearch} variant="actionButton" />
             </View>
           </View>
         )}
 
-        {/* VUE 2 : LE MODE RECHERCHE MANUELLE */}
+         {/* VUE 2.1 : La camera */}
+         {isCameraActive && permission?.granted && (
+          <View style={styles.cameraContainer}>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"], // Codes barres DVD standards
+              }}
+              onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+            >
+              {/* L'OVERLAY QUI APPARAIT QUAND LE FILM EST TROUVÉ */}
+              {scannedTitle && (
+                <View style={styles.scanOverlay}>
+                  <Text style={styles.overlayText}>
+                    J'ai trouvé :{"\n"}
+                    <Text style={{ fontWeight: 'bold', color: '#e8be4b' }}>{scannedTitle}</Text>
+                  </Text>
+                  
+                  <View style={styles.overlayButtons}>
+                    <Buttons title="🔄 Relancer" onPress={handleRescan} variant="secondary" />
+                    <Buttons title="✅ Ajouter" onPress={handleConfirmScannedMovie} variant="primary" />
+                  </View>
+                </View>
+              )}
+              
+              {/* BOUTON CROIX POUR FERMER LA CAMERA ET RETOURNER AUX CHOIX */}
+              <TouchableOpacity 
+                style={styles.closeCameraButton} 
+                onPress={() => { 
+                  setIsCameraActive(false); 
+                  handleRescan(); 
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>X</Text>
+              </TouchableOpacity>
+            </CameraView>
+          </View>
+        )}
+
+
+
+        {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
           <View style={styles.searchContainer}>
 
@@ -307,6 +399,53 @@ const styles = StyleSheet.create({
   backButtonContainer: {
     width: '90%',
     marginBottom: 15,
+  },
+  // --- STYLES CAMERA ---
+  cameraContainer: {
+    width: '90%',
+    height: '60%', // Ajuste selon la taille que tu souhaites
+    borderRadius: 20,
+    overflow: 'hidden', // Empêche la caméra de dépasser des bords arrondis
+    borderWidth: 2,
+    borderColor: '#e8be4b',
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+    justifyContent: 'flex-end', // Aligne l'overlay vers le bas
+  },
+  closeCameraButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  scanOverlay: {
+    width: '100%',
+    backgroundColor: 'rgba(28, 41, 66, 0.95)', 
+    padding: 20,
+    borderTopWidth: 2,
+    borderColor: '#e8be4b',
+    alignItems: 'center',
+  },
+  overlayText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  overlayButtons: {
+    flexDirection: 'row',
+    gap: 15,
+    justifyContent: 'center',
+    width: '100%',
   },
   
 });
