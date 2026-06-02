@@ -39,9 +39,10 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
+  const safeMovies = movies || [];
 
   const filtredMovies = activeFilter
-    ? movies.filter(movie => {
+    ? safeMovies.filter(movie => {
       if (activeFilter.type === 'genre') {
         return movie.Genres.some((genre: any) => genre.name === activeFilter.value);
       } else if (activeFilter.type === 'director') {
@@ -53,7 +54,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       }
       return false;
     })
-    : movies;
+    : safeMovies;
 
 
   
@@ -155,7 +156,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
                         const data = await response.json();
                         if (data.result) {
                           setIsModalVisible(false);
-                          dispatch(removedMovieFromStore(selectedMovie));
+                          dispatch(removedMovieFromStore(selectedMovie.tmdb_id));
                         } else {
                           console.log("Erreur lors de la suppression", data.error);
                         }

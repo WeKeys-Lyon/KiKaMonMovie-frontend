@@ -108,6 +108,14 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setIsModalVisible(true);
   };
 
+  const clearSearch = () => {
+    setQueryTitle('');
+    setQueryPerson('');
+    setMovieData([]);
+    setShowResults(false);
+    setIsSearchMode(false);
+  };
+
 
 
   return (
@@ -215,7 +223,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         )}
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add"/>
+          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch}/>
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>

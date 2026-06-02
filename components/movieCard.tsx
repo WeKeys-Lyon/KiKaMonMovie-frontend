@@ -6,6 +6,8 @@ import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
+import { CameraView, useCameraPermission } from 'expo-camera';
+
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -17,10 +19,11 @@ type MovieCardScreenProps = {
   onFilterClick?: (type: string, value: string) => void;
   onLendClick?: () => void;
   onDeleteClick?: () => void;
+  onAddSuccess?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
 
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -30,6 +33,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       setIsModalVisible(false)
     }
     const [datas, setDatas] = useState(moviedata)
+    
 
     useEffect(() => {
         const init = async () => {
@@ -49,6 +53,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;
+      console.log(datas?.title_fr || datas?.original_title)
   
       try {
         const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
@@ -61,9 +66,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         });
   
         const data = await response.json();
+        console.log(data)
         if (data.result) {
           setIsModalVisible(false);
           dispatch(addMovieToStore(datas));
+          if (onAddSuccess) onAddSuccess();
           navigation.navigate('TabNavigator', { screen: 'MyCollection' });
         } else {
           console.log("Erreur lors de l'ajout", data.error);
