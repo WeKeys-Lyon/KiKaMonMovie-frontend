@@ -230,7 +230,8 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 10,
     width: width * 0.9,
     marginBottom: 15,
   },

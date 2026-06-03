@@ -39,27 +39,45 @@ export default function BarcodeScanner({
     const BACKEND_URL = process.env.BACKEND_URL;
 
 
-      const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
-        console.log("code barre détecté", data, "de type", type)
-        if (!isScanning) return;
-        setIsScanning(false);
-        console.log(`code barre: ${data}`)
+      const handleBarCodeScanned = async ({ type, data }: { type: string, data: string }) => {
+    console.log("Code-barres détecté :", data, "de type", type);
     
-        try {
-          const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
-          const json = await response.json();
-    
-          if (json.result && json.answer) {
-            setScannedTitle(json.answer);
-          } else {
-            Alert.alert("Mince !", json.error || "Aucun film trouvé pour ce code-barres.");
-            setIsScanning(true);
-          }
-        } catch (error) {
-          console.error(error);
-          setIsScanning(true);
+    if (!isScanning) return;
+    setIsScanning(false);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
+      const json = await response.json();
+
+      if (json.result && json.answer) {
+        
+        let rawTitle = json.answer; 
+        
+        let cleanTitle = rawTitle;
+        
+        if (cleanTitle.includes('-')) {
+          cleanTitle = cleanTitle.split('-')[0]; 
         }
-      };
+        cleanTitle = cleanTitle.replace(/dvd|blu-ray|bleu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr/gi, '');
+        cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
+        cleanTitle = cleanTitle.trim();
+        
+        console.log("Titre nettoyé prêt pour l'affichage :", cleanTitle);
+
+        
+        setScannedTitle(cleanTitle);
+
+      } else {
+        Alert.alert("Mince !", json.error || "Aucun film trouvé pour ce code-barres.");
+        
+        setIsScanning(true); 
+      }
+    } catch (error) {
+      console.error("Erreur de scan :", error);
+      // On relance la caméra en cas d'erreur serveur
+      setIsScanning(true); 
+    }
+  };
   return (
     <View style={styles.cameraContainer}>
       <CameraView
@@ -78,10 +96,10 @@ export default function BarcodeScanner({
             <Text style={styles.overlayText}>
               J'ai trouvé :{"\n"}
               <Text style={{ fontWeight: 'bold', color: '#e8be4b' }}>{scannedTitle}</Text>
-              <View>
+            </Text>
+             <View>
                 <Text style={styles.overlayText}>Modifier le titre ?</Text>
               </View>
-            </Text>
 
             {isEditing ? (
             <TextInput
@@ -103,7 +121,7 @@ export default function BarcodeScanner({
             
             <View style={styles.overlayButtons}>
               <Buttons title="🔄 Relancer" onPress={onRescan} variant="secondary" />
-              <Buttons title="✅ Ajouter" onPress={() => onConfirm(scannedTitle as string)} variant="primary" />
+              <Buttons title="✅ Ajouter" onPress={() => onConfirm((editableTitle) ? editableTitle as string : scannedTitle as string)} variant="primary" />
             </View>
           </View>
         )}
