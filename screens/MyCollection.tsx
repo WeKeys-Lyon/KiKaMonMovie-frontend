@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
@@ -6,7 +6,7 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
-import { removedMovieFromStore } from '../reducers/user';
+import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
 
 
@@ -25,6 +25,11 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.value);
   const movies = useSelector((state: any) => state.user.value.movies);
+  useEffect(() => {
+    if (!user.token) {
+      navigation.navigate('Home')
+    }
+  },[]);
   const [columns, setColumns] = useState(3);
   const getCardWidth = () => {
     if (columns === 1) return '100%';
@@ -39,6 +44,12 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
+
+  const handleLogout = () => {
+    console.log('je suis la')
+    dispatch(logout());
+    //navigation.navigate('Home');
+  }
   const safeMovies = movies || [];
 
   const filtredMovies = activeFilter
@@ -64,6 +75,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       <Header title="Ma Collection" 
       leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
         onPressLeft={() => console.log('Aller vers le profil')}
+        onPressLogout={() => handleLogout()}
       rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
         onPressRight={() => console.log('Ouvrir les options')}
       />
