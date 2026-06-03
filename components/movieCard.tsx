@@ -1,11 +1,13 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
+import { CameraView, useCameraPermission } from 'expo-camera';
+
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -13,10 +15,15 @@ type MovieCardScreenProps = {
   moviedata: any,
   setIsModalVisible: any,
   drawStyle: boolean
+  mode?: 'add' | 'collection';
+  onFilterClick?: (type: string, value: string) => void;
+  onLendClick?: () => void;
+  onDeleteClick?: () => void;
+  onAddSuccess?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
 
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -26,6 +33,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       setIsModalVisible(false)
     }
     const [datas, setDatas] = useState(moviedata)
+    
 
     useEffect(() => {
         const init = async () => {
@@ -45,6 +53,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;
+      console.log(datas?.title_fr || datas?.original_title)
   
       try {
         const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
@@ -57,16 +66,43 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         });
   
         const data = await response.json();
+        console.log(data)
         if (data.result) {
           setIsModalVisible(false);
           dispatch(addMovieToStore(datas));
-          navigation.navigate('MyCollection' );
+          if (onAddSuccess) onAddSuccess();
+          navigation.navigate('TabNavigator', { screen: 'MyCollection' });
         } else {
           console.log("Erreur lors de l'ajout", data.error);
         }
       } catch (error) {
         console.error(error);
       }
+    };
+
+    const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
+      if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
+      const displayedItems = maxItems ? items.slice(0, maxItems) : items;
+    return (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
+          {displayedItems.map((item: any, index: number) => (
+          <TouchableOpacity 
+            key={index} 
+            disabled={mode === 'add'} 
+            onPress={() => onFilterClick && onFilterClick(type, item.name)}
+          >
+            <Text style={[styles.modalText, {fontSize: 16, lineHeight: 24}, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
+              {item.name}{index < displayedItems.length - 1 ? ', ' : ''}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        {maxItems && items.length > maxItems && (
+          <Text style={[styles.modalText, { color: '#aaa', fontStyle: 'italic', fontSize: 16}]}>
+            {` (+ ${items.length - maxItems} autres)`}
+          </Text>
+        )}
+        </View>
+      );
     };
 
     return (
@@ -83,11 +119,25 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         <View style={styles.modalInfoGrid}>
                           {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
                           <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
-                          <Text style={styles.modalLabel}>Réalisé par : <Text style={styles.modalText}>{datas?.DirectedBy?.map((d: any) => d.name).join(', ')}</Text></Text>
-                          <Text style={styles.modalLabel}>Genres : <Text style={styles.modalText}>{datas?.Genres?.map((g: any) => g.name).join(', ')}</Text></Text>
-                          {/* TODO Ajouter le compositeur*/}
-                          {/* TODO faire afficher moins d'acteurs, faire un affichage plus aérer pour pouvoir cliquer sur le bon acteur*/}
-                          <Text style={styles.modalLabel}>Casting : <Text style={styles.modalText} numberOfLines={3}>{datas?.Cast?.map((c: any) => c.name).join(', ')}</Text></Text>
+                          <Text style={styles.modalLabel}>Réalisé par :</Text>
+                          {renderClickableNames(datas?.DirectedBy, 'director')}
+                          <Text style={styles.modalLabel}>Genre :</Text>
+                          {renderClickableNames(datas?.Genres, 'genre')}
+                          <Text style={styles.modalLabel}>Compositeur : </Text>
+                          {renderClickableNames(datas?.MusicBy, 'composer')}
+                          
+                          <Text style={styles.modalLabel}>Casting :</Text>
+                          {renderClickableNames(datas?.Cast, 'actor', 15)}
+                          {mode === 'collection' && (
+                          <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
+                            <Buttons 
+                              title="🗑️ Supprimer le film" 
+                              onPress={onDeleteClick} 
+                              variant="primary" 
+                              style={{ backgroundColor: '#d9534f', width: '80%' }} 
+                            />
+                          </View>  
+                          )}
                         </View>
                       </ScrollView>
         
@@ -97,7 +147,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
                         </View>
                         <View style={{ flex: 1 }}>
+                          {mode === 'add' ? (
                           <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+                          ) : (
+                          <Buttons title="Prêter" onPress={onLendClick} variant="primary" />
+                          )}
                         </View>
                       </View>
                     </View>
@@ -147,7 +201,7 @@ const styles = StyleSheet.create({
     color: '#e8be4b',
     fontWeight: 'bold',
     marginBottom: 8,
-    fontSize: 16,
+    fontSize: 18,
   },
   modalText: {
     color: '#fff',
@@ -158,6 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
+    gap: 10,
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
