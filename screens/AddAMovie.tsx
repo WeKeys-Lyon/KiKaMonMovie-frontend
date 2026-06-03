@@ -177,11 +177,21 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       const data = await response.json();
 
       if (data.result && data.answer.length > 0) {
-        const tmdbMovie = data.answer[0];
-        setSelectedMovie(tmdbMovie);
-        setIsModalVisible(true);
+        
+        // 1. On injecte toute la liste de films dans ton state 'movieData'
+        setMovieData(data.answer);
+        
+        // 2. On met à jour le titre recherché (pour que ton composant l'affiche)
+        setQueryAsked(titleToSearch); 
+        
+        // 3. On active les "interrupteurs" pour afficher ta VUE 3
+        setIsSearchMode(true);
+        setShowResults(true);
+        
+        // 4. On ferme la caméra et on la réinitialise en arrière-plan
         setIsCameraActive(false);
         handleRescan();
+
       } else {
         Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
       }
