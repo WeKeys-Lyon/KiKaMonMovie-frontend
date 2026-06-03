@@ -6,7 +6,11 @@ import {
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
-import MovieCard  from '../components/movieCard';
+import MovieCard from '../components/movieCard';
+import SelectionMenu from '../components/selectionMenu';
+import ManualSearch from '../components/manualSearch';
+import SearchResults from '../components/searchResults';
+import BarcodeScanner from '../components/barcodeScanner';
 import { UseDispatch, useSelector } from 'react-redux';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -115,14 +119,14 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setIsSearchMode(false);
   };
 
- //Gestion de la camera: 
- const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
-  if (!isScanning) return;
-  setIsScanning(false);
-  console.log(`code barre: ${data}`)
+  //Gestion de la camera: 
+  const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
+    if (!isScanning) return;
+    setIsScanning(false);
+    console.log(`code barre: ${data}`)
 
-  try {
-    const response = await fetch(`${BACKEND_URL}/movies/scan-google`, {
+    try {
+      const response = await fetch(`${BACKEND_URL}/movies/scan-google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ barcode: data }),
@@ -130,7 +134,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       const json = await response.json();
 
       if (json.result && json.title) {
-        setScannedTitle(json.title); 
+        setScannedTitle(json.title);
       } else {
         Alert.alert("Mince !", "Aucun film trouvé pour ce code-barres.");
         setIsScanning(true);
@@ -140,7 +144,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       setIsScanning(true);
     }
   };
-  
+
   // bouton relancer scan
   const handleRescan = () => {
     setScannedTitle(null);
@@ -176,146 +180,62 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
         {/* VUE 1 : LES CHOIX DE DÉPART */}
         {!isSearchMode && !isCameraActive && (
-          <View style={styles.card}>
-            <Text style={styles.title}>Ajouter un film</Text>
-            <Text style={styles.subtitle}>
-              Comment souhaitez-vous trouver le film à ajouter à votre collection ?
-            </Text>
-
-            <View style={styles.buttonContainer}>
-              <Buttons title="📷 Scanner un code-barre" onPress={async () => {if (!permission?.granted) await requestPermission(); setIsCameraActive(true)}} variant="actionButton" />
-              <View style={styles.spacer} />
-              <Buttons title="🔍 Recherche manuelle" onPress={handleManualSearch} variant="actionButton" />
-            </View>
-          </View>
+          <SelectionMenu
+            onOpenScanner={async () => {
+              if (!permission?.granted) await requestPermission();
+              setIsCameraActive(true);
+            }}
+            onOpenSearch={() => setIsSearchMode(true)}
+          />
         )}
 
-         {/* VUE 2.1 : La camera */}
-         {isCameraActive && permission?.granted && (
-          <View style={styles.cameraContainer}>
-            <CameraView
-              style={styles.camera}
-              facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"], // Codes barres DVD standards
-              }}
-              onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
-            >
-              {/* L'OVERLAY QUI APPARAIT QUAND LE FILM EST TROUVÉ */}
-              {scannedTitle && (
-                <View style={styles.scanOverlay}>
-                  <Text style={styles.overlayText}>
-                    J'ai trouvé :{"\n"}
-                    <Text style={{ fontWeight: 'bold', color: '#e8be4b' }}>{scannedTitle}</Text>
-                  </Text>
-                  
-                  <View style={styles.overlayButtons}>
-                    <Buttons title="🔄 Relancer" onPress={handleRescan} variant="secondary" />
-                    <Buttons title="✅ Ajouter" onPress={handleConfirmScannedMovie} variant="primary" />
-                  </View>
-                </View>
-              )}
-              
-              {/* BOUTON CROIX POUR FERMER LA CAMERA ET RETOURNER AUX CHOIX */}
-              <TouchableOpacity 
-                style={styles.closeCameraButton} 
-                onPress={() => { 
-                  setIsCameraActive(false); 
-                  handleRescan(); 
-                }}
-              >
-                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>X</Text>
-              </TouchableOpacity>
-            </CameraView>
-          </View>
+        {/* VUE 2.1 : La camera */}
+        {isCameraActive && permission?.granted && (
+          <BarcodeScanner
+            isScanning={isScanning}
+            scannedTitle={scannedTitle}
+            onBarcodeScanned={handleBarCodeScanned}
+            onRescan={handleRescan}
+            onConfirm={handleConfirmScannedMovie}
+            onClose={() => {
+              setIsCameraActive(false);
+              handleRescan();
+            }}
+          />
         )}
+
+
 
 
 
         {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
-          <View style={styles.searchContainer}>
-
-            {/* Box Recherche par Titre */}
-            <View style={styles.searchBox}>
-              <Text style={styles.titleBox}>Titre du film</Text>
-              <TextInput
-                placeholder="Ex: Inception..."
-                placeholderTextColor="#ccc"
-                value={queryTitle}
-                onChangeText={setQueryTitle}
-                style={styles.input}
-                onSubmitEditing={launchSearch}
-              />
-              <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
-                <Buttons title="Chercher" onPress={launchSearch} variant="primary" />
-              </View>
-            </View>
-
-            {/* Box Recherche par Personnalité */}
-            <View style={styles.searchBox}>
-              <Text style={styles.titleBox}>Rechercher par personnalité</Text>
-              <TextInput
-                placeholder="Ex: Clint Eastwood..."
-                placeholderTextColor="#ccc"
-                value={queryPerson}
-                onChangeText={setQueryPerson}
-                style={styles.input}
-              />
-              <View style={styles.searchButtonsRow}>
-                <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
-                <Buttons title="Chercher" onPress={launchSearchPeople} variant="primary" />
-              </View>
-            </View>
-          </View>
+          <ManualSearch
+            queryTitle={queryTitle}
+            setQueryTitle={setQueryTitle}
+            queryPerson={queryPerson}
+            setQueryPerson={setQueryPerson}
+            launchSearchTitle={launchSearch}
+            launchSearchPeople={launchSearchPeople}
+            cancelSearch={cancelSearch}
+          />
         )}
 
-        {/* VUE 3 : les resultats */}
+        {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}
         {isSearchMode && showResults && (
-          <View style={styles.resultsContainer}>
-            <View style={styles.backButtonContainer}>
-              <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" />
-              <Text style={styles.text}>Résultats pour {queryAsked}</Text>
-            </View>
-            {/* Faire un type export typescript pour qu'il n'y ait pas d'erreurs */}
-            <FlatList
-              data={movieData}
-              keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
-              style={styles.list}
-              renderItem={({ item }) => {
-                const year = item.release_date ? item.release_date.substring(0, 4) : 'N/A';
-                const director = item.DirectedBy && item.DirectedBy.length > 0
-                  ? item.DirectedBy[0].name
-                  : 'Réalisateur inconnu';
-
-                return (
-                  <TouchableOpacity onPress={() => handleOpenModal(item)}>
-                    <View style={styles.movieCard}>
-                      <Image source={item.poster_path ? { uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` } : require('../assets/nomovie.jpg')} style={styles.poster} />
-                      <View style={styles.movieInfo}>
-                        <Text style={{
-                              fontSize: 18,
-                              fontWeight: 'bold',
-                              color: '#fff',
-                              marginBottom: (drawStyle) ? 18 : 4,
-                        }} numberOfLines={2}>
-                          {(item.title_fr) ? item.title_fr: item.original_title}
-                        </Text>
-                         {(drawStyle == false) ? (<Text style={styles.movieVOTitle}>{(item.title_fr) ? ((item.title_fr !== item.original_title) ? item.original_title : '') : ''}</Text>) : '' }
-                        <Text style={styles.movieYear}>{year}</Text>
-                        {(drawStyle == false) ? (<Text style={styles.movieDirector}>{director}</Text>) : '' } 
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
+          <SearchResults
+            movieData={movieData}
+            queryAsked={queryAsked}
+            drawStyle={drawStyle}
+            backToSearch={backToSearch}
+            handleOpenModal={handleOpenModal}
+          />
         )}
+
+
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch}/>
+          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>
@@ -341,11 +261,11 @@ const styles = StyleSheet.create({
   input: { width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.3)', borderRadius: 8, paddingHorizontal: 15, height: 50, color: '#fff', marginBottom: 15, fontSize: 16 },
   searchButtonsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '60%', gap: 20 },
   smallButton: { flex: 1 },
-  
+
 
   // FlatList (Résultats de recherche)
   list: { width: '90%', flex: 1 },
-  text: { color: '#fff', textAlign: 'center', marginTop: 15, fontSize: 20},
+  text: { color: '#fff', textAlign: 'center', marginTop: 15, fontSize: 20 },
   movieCard: {
     flexDirection: 'row',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -429,7 +349,7 @@ const styles = StyleSheet.create({
   },
   scanOverlay: {
     width: '100%',
-    backgroundColor: 'rgba(28, 41, 66, 0.95)', 
+    backgroundColor: 'rgba(28, 41, 66, 0.95)',
     padding: 20,
     borderTopWidth: 2,
     borderColor: '#e8be4b',
@@ -447,5 +367,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
-  
+
 });
