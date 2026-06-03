@@ -38,9 +38,12 @@ export const userSlice = createSlice({
         );
       }
     },
+    logout:(state) => {
+      state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
+    },
 
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, logout } = userSlice.actions;
 export default userSlice.reducer;

@@ -2,16 +2,19 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight}) {
+export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight, onPressLogout}) {
     const insets = useSafeAreaInsets();
     const displayTitle = title ? title : 'KikaMonMovie'
     return (
         <View style={[styles.headerContainer, { paddingTop: insets.top, paddingBottom: 15 }]}>
             <View style={styles.sideZone}>
-                {leftIcon && (
+                {leftIcon && (<>
                     <TouchableOpacity onPress={onPressLeft} style={styles.iconButton}>
                         {leftIcon}
                     </TouchableOpacity>
+                    <TouchableOpacity onPress={onPressLogout}style={styles.iconButton}>
+                        <Text style={{ fontSize: 20 }}>❌</Text>
+                    </TouchableOpacity></>
                 )}
             </View>
             <View style={styles.titleZone}>
