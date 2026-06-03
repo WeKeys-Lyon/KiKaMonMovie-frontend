@@ -13,6 +13,7 @@ import SearchResults from '../components/searchResults';
 import BarcodeScanner from '../components/barcodeScanner';
 import { UseDispatch, useSelector } from 'react-redux';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { truncate } from 'node:fs';
 
 
 type AddAMovieScreenProps = {
@@ -35,7 +36,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const user = useSelector((state: any) => state.user.value);
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
 
   const BACKEND_URL = process.env.BACKEND_URL;
@@ -121,22 +122,19 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
   //Gestion de la camera: 
   const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
+    console.log("code barre détecté", data, "de type", type)
     if (!isScanning) return;
     setIsScanning(false);
     console.log(`code barre: ${data}`)
 
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/scan-google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ barcode: data }),
-      });
+      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
       const json = await response.json();
 
-      if (json.result && json.title) {
-        setScannedTitle(json.title);
+      if (json.result && json.answer) {
+        setScannedTitle(json.answer);
       } else {
-        Alert.alert("Mince !", "Aucun film trouvé pour ce code-barres.");
+        Alert.alert("Mince !", json.error || "Aucun film trouvé pour ce code-barres.");
         setIsScanning(true);
       }
     } catch (error) {
@@ -152,25 +150,46 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   }
 
   //bouton ajouter, rechercher sur tmdb et ouvrir la modale
-  const handleConfirmScannedMovie = async () => {
-    if (!scannedTitle) return;
+  const handleConfirmScannedMovie = async (titleToSearch: string) => {
+    console.log("👉 Bouton Ajouter cliqué ! Titre REÇU :", titleToSearch);
+
+    if (!titleToSearch) return;
+
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/search/${scannedTitle}`);
+      let cleanTitle = titleToSearch;
+      if (cleanTitle.includes('-')) {
+        cleanTitle = cleanTitle.split('-')[0]; 
+      }
+
+      cleanTitle = cleanTitle.replace(/dvd|blu-ray|bleu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr/gi, '');
+      
+      cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
+      
+      
+      cleanTitle = cleanTitle.trim();
+
+      console.log("Titre nettoyé envoyé à TMDB :", cleanTitle);
+
+      const safeUrlTitle = encodeURIComponent(cleanTitle);
+
+      // 3. LE FETCH
+      const response = await fetch(`${BACKEND_URL}/movies/search/${safeUrlTitle}`);
       const data = await response.json();
 
       if (data.result && data.answer.length > 0) {
         const tmdbMovie = data.answer[0];
-        setSelectedMovie(tmdbMovie)
+        setSelectedMovie(tmdbMovie);
         setIsModalVisible(true);
         setIsCameraActive(false);
         handleRescan();
       } else {
-        Alert.alert("Erreur, impossible de récupérer le détail de ce film");
+        Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Erreur lors de la confirmation :", error);
+      Alert.alert("Erreur", "Le serveur a rencontré un problème avec ce titre.");
     }
-  }
+  };
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -203,10 +222,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             }}
           />
         )}
-
-
-
-
 
         {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
