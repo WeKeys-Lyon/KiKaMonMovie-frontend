@@ -53,7 +53,7 @@ const TabNavigator = () => {
       tabBarInactiveTintColor: '#b2b2b2',
       headerShown: false,
     })}>
-      <Tab.Screen name="MyCollection" component={MyCollection} options={{ headerShown: false }} />
+      <Tab.Screen name="MyCollection" component={MyCollection} />
       <Tab.Screen name="AddAMovie" component={AddAMovie} />
       {/*<Tab.Screen name="MyShares" component={MyShares} /> */}
     </Tab.Navigator>

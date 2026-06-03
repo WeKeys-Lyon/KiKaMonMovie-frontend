@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import {addMovieToStore} from '../reducers/user';
+import { NavigationProp, ParamListBase, useNavigation } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
@@ -11,62 +10,17 @@ import MovieCard from '../components/movieCard';
 
 type MyCollectionProps = {
   navigation: NavigationProp<ParamListBase>,
-  loadmovies: boolean
 };
 
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width * 0.9) / 3 - 10; 
 
-export default function MyCollection({ navigation, loadmovies }: MyCollectionProps) {
+export default function MyCollection({ navigation }: MyCollectionProps) {
   const [error, setError] = useState('');
   const user = useSelector((state: any) => state.user.value);
-  const dispatch = useDispatch();
-  const BACKEND_URL = process.env.BACKEND_URL;
-  console.log(user)
-  useEffect(() => {
-    if (loadmovies) {
-    const loading = async () => {
-          setError('');
-          
-          if (!user.token) {
-            setError('Veuillez remplir tous les champs');
-          
-            return;
-          }
 
-          try {
-            const myToken = user.token;
-            const myURL = `${BACKEND_URL}/users/loadmovies`
-            const response = await fetch(encodeURI(myURL), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                myToken,
-              }),
-            });
-            const data = await response.json();
-            
-            if (data.result) {
-              
-              const userMovies = (data.answer.movieid) ? data.answer.movieid : [];
-      
-              dispatch(addMovieToStore(userMovies));
-             
-            } else {
-              setError(data.answer);
-            }
-          } catch (error) {
-            console.error(error);
-            setError('Une erreur est survenue lors de la création du compte');
-          }
-    };
-    loading()
-    }
-    
-  }, [])
+  const BACKEND_URL = process.env.BACKEND_URL;
 
   const movies = useSelector((state: any) => state.user.value.movies);
   const [columns, setColumns] = useState(3);
@@ -124,7 +78,7 @@ export default function MyCollection({ navigation, loadmovies }: MyCollectionPro
             </TouchableOpacity>
           </View>
         )}
-        {filtredMovies.length === 0 ? (
+        {filtredMovies == undefined ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Votre collection est encore vide...</Text>
             <Text style={styles.emptySubtitle}>Commencez à ajouter vos films préférés dès maintenant !</Text>
