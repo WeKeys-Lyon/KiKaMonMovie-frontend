@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type HeaderProps = {
     title: string,
-    leftIcon?: boolean,
-    rightIcon?: boolean,
+    leftIcon?: any,
+    rightIcon?: any,
     onPressLeft?: () => void,
     onPressRight?: () => void,
     onPressLogout?: () => void

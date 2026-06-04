@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -46,7 +46,9 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
-
+  const handleLoanReturn = () => {
+    setLoanModal(false)
+  }
   const handleLogout = () => {
     console.log('je suis la')
     dispatch(logout());
@@ -74,13 +76,18 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
+      <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  style={{flex: 1}}
+                  >
+                      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <Header title="Ma Collection" 
       leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
         onPressLeft={() => console.log('Aller vers le profil')}
         onPressLogout={() => handleLogout()}
       rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
         onPressRight={() => console.log('Ouvrir les options')}
-      />
+      />                  
 
       <View style={styles.container}>
         
@@ -131,6 +138,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
         )}
       </View>
       {/*LA MODALE DETAIL DE FILM*/}
+
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         {selectedMovie && (
           <MovieCard 
@@ -195,9 +203,11 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
         )}
         {isLoanModal && (<>
 
-        <LoanModal movieName={selectedMovie.title_fr}/>
+        <LoanModal movieName={selectedMovie.title_fr} handleLoanReturn={() => handleLoanReturn()}/>
         </>)}
       </Modal>
+      </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
