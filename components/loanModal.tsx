@@ -20,28 +20,26 @@ export default function LoanModal({movieName, handleLoanReturn}: loanModalProps)
     const [reminder, setReminder] = useState(false);
     const [notes, setNotes] = useState('');
     const headerHeight = useHeaderHeight();
+
     return (
-            
             <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={headerHeight}
-            style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={headerHeight}
+                style={styles.container}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScrollView keyboardShouldPersistTaps='never'  >
-            <View style={styles.box}>
-                
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView keyboardShouldPersistTaps='never'  >
+                <View style={styles.box}>
                     <Text style={styles.title}>Prêter {movieName} ?</Text>
-                
-                <View style={styles.datasctn}>
+                <View>
                     {/* TODO penser à chercher dans la liste des amis */}
                     <TextInput
-                                  placeholder="Prêter à :"
-                                  placeholderTextColor="#000"
-                                  autoCapitalize="none"
-                                  onChangeText={setLoanTo}
-                                  value={loanTo}
-                                  style={styles.input}
+                        placeholder="Prêter à :"
+                        placeholderTextColor="#000"
+                        autoCapitalize="none"
+                        onChangeText={setLoanTo}
+                        value={loanTo}
+                        style={styles.input}
                     />
                     <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                     <Text style={styles.text}>Date du prêt :  </Text>
@@ -57,13 +55,12 @@ export default function LoanModal({movieName, handleLoanReturn}: loanModalProps)
                     <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                         <Text style={styles.text}>Obtenir une notification de rappel</Text>
                         <Checkbox
-                                style={{marginBottom: 15}}
-                                value={reminder}
-                                onValueChange={setReminder}
-                                color={reminder ? '#1C2942' : undefined}
+                            style={{marginBottom: 15}}
+                            value={reminder}
+                            onValueChange={setReminder}
+                            color={reminder ? '#1C2942' : undefined}
                         />
                     </View>
-
                     <TextInput
                         placeholder="Notes :"
                         placeholderTextColor="#000"
@@ -74,11 +71,10 @@ export default function LoanModal({movieName, handleLoanReturn}: loanModalProps)
                         multiline={true}
                         spellCheck={true}
                     />
-                    
                 </View>
                 <View style={styles.btnctn}>
-                    <Buttons title="Retour" onPress={() => handleLoanReturn()}/>
-                    <Buttons title="Valider" onPress={() => console.log('lol')}/>
+                    <Buttons title="Retour" onPress={() => handleLoanReturn()} size='large'/>
+                    <Buttons title="Valider" onPress={() => console.log('lol')} size='large'/>
                 </View>
             </View>
 
@@ -93,7 +89,6 @@ const styles = StyleSheet.create({
 container: {
     flex: 1,
     width: '100%',
-    marginTop: '20%',
     position: 'absolute',
     
 },
@@ -121,13 +116,8 @@ title: {
     width: '100%',
 
 },
-/* inputContainer: {
-    width: '100%',
-}, */
-datasctn: {
-
-},
 input: {
+    fontSize: 17,
     backgroundColor: 'rgb(201, 201, 201)',
     borderWidth: 1,
     borderColor: 'rgb(173, 173, 173)',
@@ -155,9 +145,11 @@ btnctn: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 15,
-    marginBottom: 15
+    marginBottom: 15,
+    height: 60
 },
 notes: {
+    fontSize: 17,
     backgroundColor: 'rgb(201, 201, 201)',
     borderWidth: 1,
     borderColor: 'rgb(173, 173, 173)',

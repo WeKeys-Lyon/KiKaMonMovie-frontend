@@ -6,7 +6,6 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
-import LoanModal from '../components/loanModal';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
 
@@ -38,7 +37,6 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   };
   const cardWidth = getCardWidth();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [isLoanModal, setLoanModal] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
 
@@ -46,9 +44,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
-  const handleLoanReturn = () => {
-    setLoanModal(false)
-  }
+
   const handleLogout = () => {
     console.log('je suis la')
     dispatch(logout());
@@ -76,11 +72,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
-      <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{flex: 1}}
-                  >
-                      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
       <Header title="Ma Collection" 
       leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
         onPressLeft={() => console.log('Aller vers le profil')}
@@ -149,11 +141,6 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
               setActiveFilter({type, value});
               setIsModalVisible(false);
             }}
-            onLendClick={() => {
-              console.log('Ouvrir la modale de prêt pour :', selectedMovie.title_fr);
-              setLoanModal(true);
-              
-            }}
             onDeleteClick={() => {
               Alert.alert(
                 'Supprimer le film',
@@ -201,13 +188,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             
           />
         )}
-        {isLoanModal && (<>
-
-        <LoanModal movieName={selectedMovie.title_fr} handleLoanReturn={() => handleLoanReturn()}/>
-        </>)}
       </Modal>
-      </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }

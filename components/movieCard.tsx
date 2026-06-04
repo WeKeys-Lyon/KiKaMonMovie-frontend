@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal } from 'react-native';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
-
+import LoanModal from '../components/loanModal';
 
 
 type MovieCardScreenProps = {
@@ -16,13 +16,12 @@ type MovieCardScreenProps = {
   drawStyle: boolean
   mode?: 'add' | 'collection';
   onFilterClick?: (type: string, value: string) => void;
-  onLendClick?: () => void;
   onDeleteClick?: () => void;
   onAddSuccess?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
 
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -32,7 +31,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       setIsModalVisible(false)
     }
     const [datas, setDatas] = useState(moviedata)
-    
+    const [isLoanModal, setLoanModal] = useState<boolean>(false);
 
     useEffect(() => {
         const init = async () => {
@@ -48,7 +47,9 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         init()
     }, [])
      
-
+  const handleLoanReturn = () => {
+    (isLoanModal) ? setLoanModal(false) : setLoanModal(true);
+  }
 
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;
@@ -149,12 +150,16 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           {mode === 'add' ? (
                           <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
                           ) : (
-                          <Buttons title="Prêter" onPress={() => onLendClick(moviedata.title_fr)} variant="primary" />
+                          <Buttons title="Prêter" onPress={() => handleLoanReturn()} variant="primary" />
                           )}
                         </View>
                       </View>
                     </View>
+                    {isLoanModal && (<>
+                          <LoanModal movieName={moviedata.title_fr} handleLoanReturn={() => handleLoanReturn()}/>
+                          </>)}
                   </View>
+                  
     );
 }
 
