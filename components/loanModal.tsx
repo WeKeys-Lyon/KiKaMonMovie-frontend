@@ -21,6 +21,8 @@ export default function LoanModal({movieName, handleLoanReturn}: loanModalProps)
     const [notes, setNotes] = useState('');
     const headerHeight = useHeaderHeight();
 
+
+
     return (
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

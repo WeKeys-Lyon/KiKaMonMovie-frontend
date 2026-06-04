@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
+import Poster from '../components/poster';
+import SettingsModal from '../components/settingsModal';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 
@@ -18,10 +21,13 @@ type MyCollectionProps = {
 const BACKEND_URL = process.env.BACKEND_URL;
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width * 0.9) / 3 - 10; 
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
-  
+
+  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [columns, setColumns] = useState(2);
+
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.value);
   const movies = useSelector((state: any) => state.user.value.movies);
@@ -29,8 +35,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     if (!user.token) {
       navigation.navigate('Home')
     }
-  },[]);
-  const [columns, setColumns] = useState(3);
+  }, []);
+
   const getCardWidth = () => {
     if (columns === 1) return '100%';
     return (width * 0.9) / columns - 10;
@@ -38,7 +44,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const cardWidth = getCardWidth();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
-  const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
+  const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
+
 
   const handleOpenMovie = (movie: any) => {
     setSelectedMovie(movie);
@@ -52,45 +59,65 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   }
   const safeMovies = movies || [];
 
-  const filtredMovies = activeFilter
-    ? safeMovies.filter(movie => {
+  const filtredMovies = safeMovies
+
+    .filter((movie: any) => {
+      if (!activeFilter) return true;
+
       if (activeFilter.type === 'genre') {
-        return movie.Genres.some((genre: any) => genre.name === activeFilter.value);
+        return movie.Genres?.some((genre: { name: string; }) => genre.name === activeFilter.value);
       } else if (activeFilter.type === 'director') {
-        return movie.DirectedBy.some((director: any) => director.name === activeFilter.value);
+        return movie.DirectedBy?.some((director: { name: string; }) => director.name === activeFilter.value);
       } else if (activeFilter.type === 'actor') {
-        return movie.Cast.some((actor: any) => actor.name === activeFilter.value);
+        return movie.Cast?.some((actor: { name: string; }) => actor.name === activeFilter.value);
       } else if (activeFilter.type === 'composer') {
-        return movie.MusicBy.some((composer: any) => composer.name === activeFilter.value);
+        return movie.MusicBy?.some((composer: { name: string; }) => composer.name === activeFilter.value);
       }
       return false;
     })
-    : safeMovies;
+    .filter((movie: any) => {
+      if (searchQuery.trim() === '') return true;
+      const title = movie.title_fr || movie.original_title || '';
+      return title.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
 
-  
+
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
-
-      <Header title="Ma Collection" 
-      leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
+      <Header title="Ma Collection"
+        leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>}
         onPressLeft={() => console.log('Aller vers le profil')}
-        onPressLogout={() => handleLogout()}
-      rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
-        onPressRight={() => console.log('Ouvrir les options')}
-      />                  
+        onPressLogout={() => {
+          dispatch(logout());
+          navigation.navigate('Home');
+        }}
+        rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
+        onPressRight={() => setIsSettingsVisible(true)}
+      />
+
 
       <View style={styles.container}>
-        
+        {/*Pastille de recherche actie*/}
+        {searchQuery.length > 0 && (
+          <View style={styles.activeFilterBanner}>
+            <Text style={styles.filterText} numberOfLines={2}>
+              Recherche : <Text style={{ fontWeight: 'bold' }}>{searchQuery}</Text>
+            </Text>
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearFilterText}>
+              <FontAwesome name="times" size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
         {/*VUE A : SI LA COLLECTION EST VIDE*/}
         {activeFilter && (
           <View style={styles.activeFilterBanner}>
             <Text style={styles.filterText}>
               Résultats pour : {activeFilter.value} ({filtredMovies.length})
             </Text>
-            <TouchableOpacity onPress={() => setActiveFilter(null)}>
-              <Text style={styles.clearFilterText}>❌ Effacer</Text>
+            <TouchableOpacity onPress={() => setActiveFilter(null)} style={styles.clearFilterText}>
+              <FontAwesome name="times" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
@@ -98,47 +125,57 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Votre collection est encore vide...</Text>
             <Text style={styles.emptySubtitle}>Commencez à ajouter vos films préférés dès maintenant !</Text>
-            <Buttons 
-              title="🔍 Trouver un film" 
-              onPress={() => navigation.navigate('AddAMovie')} 
-              variant="primary" 
+            <Buttons
+              title="🔍 Trouver un film"
+              onPress={() => navigation.navigate('AddAMovie')}
+              variant="primary"
               style={styles.emptyButton}
             />
           </View>
         ) : (
-          
+
           /*VUE B : AFFICHAGE DE LA GRILLE DE FILMS */
 
           <FlatList
-            key={`flatlist-columns-${columns}`} 
+            key={`flatlist-columns-${columns}`}
             data={filtredMovies}
             numColumns={columns}
             columnWrapperStyle={columns > 1 ? styles.row : null}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              
+
               <MovieGrid
-                movie={item} 
-                columns={columns} 
-                cardWidth={cardWidth} 
+                movie={item}
+                columns={columns}
+                cardWidth={cardWidth}
                 onPress={() => handleOpenMovie(item)}
               />
             )
             }
           />
         )}
+        {/*MODALE SETTINGS*/}
+        <SettingsModal
+          visible={isSettingsVisible}
+          onClose={() => setIsSettingsVisible(false)}
+          columns={columns}
+          setColumns={setColumns}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          movies={filtredMovies}
+        />
       </View>
       {/*LA MODALE DETAIL DE FILM*/}
 
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         {selectedMovie && (
-          <MovieCard 
-            mode="collection" 
-            moviedata={selectedMovie} 
+          <MovieCard
+            mode="collection"
+            moviedata={selectedMovie}
             setIsModalVisible={setIsModalVisible}
             onFilterClick={(type, value) => {
-              setActiveFilter({type, value});
+              setActiveFilter({ type, value });
               setIsModalVisible(false);
             }}
             onDeleteClick={() => {
@@ -154,7 +191,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
                     text: 'Supprimer',
                     style: 'destructive',
                     onPress: async () => {
-                      console.log("On lance la suppression ! Token présent", !!user.token, selectedMovie?.tmdb_id );
+                      console.log("On lance la suppression ! Token présent", !!user.token, selectedMovie?.tmdb_id);
                       try {
                         const response = await fetch(`${BACKEND_URL}/users/delete-movie`, {
                           method: 'DELETE',
@@ -174,18 +211,18 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
                       } catch (error) {
                         console.error(error);
                       }
-                      
+
                       setIsModalVisible(false); // On ferme la modale
-                    } 
+                    }
                   }
                 ]
               );
             }}
-            
+
             drawStyle={false}
             clickable={false}
             navigation={navigation}
-            
+
           />
         )}
       </Modal>
@@ -205,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // --- Styles de l'écran vide ---
   emptyContainer: {
     padding: 30,
@@ -233,7 +270,7 @@ const styles = StyleSheet.create({
   emptyButton: {
     width: '100%',
   },
-  
+
   // --- Styles du conteneur de la liste (FlatList) ---
   listContainer: {
     paddingHorizontal: '5%',
@@ -246,12 +283,16 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     marginBottom: 15,
   },
+
+  //filtre
+
   activeFilterBanner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1C2942',
+    backgroundColor: 'rgba(28, 41, 66, 0.9)',
     width: '90%',
+    alignSelf: 'center',
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
@@ -260,9 +301,11 @@ const styles = StyleSheet.create({
     borderColor: '#e8be4b'
   },
   filterText: {
+    flex: 1,
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
+    marginRight: 15,
   },
   clearFilterText: {
     color: '#ff4d4d',

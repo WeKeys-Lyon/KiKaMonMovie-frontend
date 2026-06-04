@@ -38,6 +38,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState('manual');
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -75,7 +76,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
-        setQueryAsked(queryTitle)
+        setQueryAsked(queryTitle);
+        setSearchOrigin('manual');
       } else {
         console.log("Erreur backend", data.error);
       }
@@ -177,11 +179,22 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       const data = await response.json();
 
       if (data.result && data.answer.length > 0) {
-        const tmdbMovie = data.answer[0];
-        setSelectedMovie(tmdbMovie);
-        setIsModalVisible(true);
+        
+        // 1. On injecte toute la liste de films dans ton state 'movieData'
+        setMovieData(data.answer);
+        
+        // 2. On met à jour le titre recherché (pour que ton composant l'affiche)
+        setQueryAsked(titleToSearch); 
+        setSearchOrigin('barcode');
+        
+        // 3. On active les "interrupteurs" pour afficher ta VUE 3
+        setIsSearchMode(true);
+        setShowResults(true);
+        
+        // 4. On ferme la caméra et on la réinitialise en arrière-plan
         setIsCameraActive(false);
         handleRescan();
+
       } else {
         Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
       }
@@ -190,6 +203,20 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       Alert.alert("Erreur", "Le serveur a rencontré un problème avec ce titre.");
     }
   };
+
+  const handlebackToSearch = () => {
+    setQueryTitle('');
+    setQueryPerson('');
+    setShowResults(false); 
+    if (searchOrigin === 'barcode') {
+      setIsSearchMode(false);
+      setIsCameraActive(true);
+    } else {
+      setIsSearchMode(true);
+    }
+    handleRescan();
+  };
+
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -242,7 +269,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             movieData={movieData}
             queryAsked={queryAsked}
             drawStyle={drawStyle}
-            backToSearch={backToSearch}
+            backToSearch={handlebackToSearch}
             handleOpenModal={handleOpenModal}
           />
         )}
