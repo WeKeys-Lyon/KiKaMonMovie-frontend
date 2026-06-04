@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   movieCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(28, 41, 66, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     borderRadius: 10,
     padding: 10,
     marginBottom: 15,
