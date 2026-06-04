@@ -80,7 +80,7 @@ export default function Poster({ imageUrl, isLoaned, columns = 2 }: PosterProps)
   textCol1: { fontSize: 6 },
 
   // Mode 2 Colonnes (Grand)
-  bannerCol2: { top: 20, left: -40, width: 150, paddingVertical: 5 },
+  bannerCol2: { top: 22, left: -40, width: 150, paddingVertical: 5 },
   textCol2: { fontSize: 10 },
 
   // Mode 3 Colonnes (Moyen)

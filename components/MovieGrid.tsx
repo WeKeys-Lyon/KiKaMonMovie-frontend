@@ -65,7 +65,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieG
   // MODE GRILLE (2 ou 3 colonnes)
   return (
     <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8}>
-      <Poster imageUrl={imageUrl} isLoaned={true} />
+      <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} />
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}

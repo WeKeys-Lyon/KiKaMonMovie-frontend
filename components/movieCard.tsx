@@ -115,7 +115,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           <View style={styles.posterContainer}>
             <Poster
               imageUrl={imageUrl}
-              isLoaned={true}
+              isLoaned={datas.isLoaned}
               columns={2} 
             />
           </View>
