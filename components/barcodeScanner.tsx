@@ -44,11 +44,11 @@ export default function BarcodeScanner({
         let rawTitle = json.answer; 
         let cleanTitle = rawTitle;
         
-        if (cleanTitle.includes('-')) {
-          cleanTitle = cleanTitle.split('-')[0]; 
-        }
-        cleanTitle = cleanTitle.replace(/dvd|blu-ray|bleu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr/gi, '');
+        cleanTitle = cleanTitle.replace(/dvd|blu-ray|bleu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr|vhs/gi, '');
         cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
+        cleanTitle = cleanTitle.replace(/\s*-\s*$/g, '');
+        cleanTitle = cleanTitle.replace(/-/g, ' ');
+        cleanTitle = cleanTitle.replace(/\s{2,}/g, ' ');
         cleanTitle = cleanTitle.trim();
         
         console.log("Titre nettoyé prêt pour l'affichage :", cleanTitle);
@@ -122,8 +122,12 @@ export default function BarcodeScanner({
                 <Text style={styles.pencilIcon}>✏️</Text>
               </TouchableOpacity>
             </View>
+            
+            
           )}
-          
+          <View style={styles.titleRow}>
+              <Text style={styles.overlayText}>Cliquez sur le crayon pour affiner votre recherche</Text>
+              </View>
           <View style={styles.overlayButtons}>
             <Buttons title="🔄 Relancer" onPress={handleLocalRescan} variant="secondary" />
             <Buttons title="✅ Ajouter" onPress={() => onConfirm(editableTitle || scannedTitle)} variant="primary" />

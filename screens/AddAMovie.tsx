@@ -38,6 +38,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState('manual');
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -75,7 +76,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
-        setQueryAsked(queryTitle)
+        setQueryAsked(queryTitle);
+        setSearchOrigin('manual');
       } else {
         console.log("Erreur backend", data.error);
       }
@@ -183,6 +185,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         
         // 2. On met à jour le titre recherché (pour que ton composant l'affiche)
         setQueryAsked(titleToSearch); 
+        setSearchOrigin('barcode');
         
         // 3. On active les "interrupteurs" pour afficher ta VUE 3
         setIsSearchMode(true);
@@ -200,6 +203,20 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       Alert.alert("Erreur", "Le serveur a rencontré un problème avec ce titre.");
     }
   };
+
+  const handlebackToSearch = () => {
+    setQueryTitle('');
+    setQueryPerson('');
+    setShowResults(false); 
+    if (searchOrigin === 'barcode') {
+      setIsSearchMode(false);
+      setIsCameraActive(true);
+    } else {
+      setIsSearchMode(true);
+    }
+    handleRescan();
+  };
+
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -252,7 +269,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             movieData={movieData}
             queryAsked={queryAsked}
             drawStyle={drawStyle}
-            backToSearch={backToSearch}
+            backToSearch={handlebackToSearch}
             handleOpenModal={handleOpenModal}
           />
         )}
