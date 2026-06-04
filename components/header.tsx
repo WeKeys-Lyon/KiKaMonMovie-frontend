@@ -2,7 +2,15 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight, onPressLogout}) {
+type HeaderProps = {
+    title: string,
+    leftIcon?: boolean,
+    rightIcon?: boolean,
+    onPressLeft?: () => void,
+    onPressRight?: () => void,
+    onPressLogout?: () => void
+}
+export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight, onPressLogout}: HeaderProps) {
     const insets = useSafeAreaInsets();
     const displayTitle = title ? title : 'KikaMonMovie'
     return (

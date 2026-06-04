@@ -1,12 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
-import { CameraView, useCameraPermission } from 'expo-camera';
+
 
 
 type MovieCardScreenProps = {
@@ -132,7 +131,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
                             <Buttons 
                               title="🗑️ Supprimer le film" 
-                              onPress={onDeleteClick} 
+                              onPress={() => onDeleteClick} 
                               variant="primary" 
                               style={{ backgroundColor: '#d9534f', width: '80%' }} 
                             />
@@ -150,7 +149,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           {mode === 'add' ? (
                           <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
                           ) : (
-                          <Buttons title="Prêter" onPress={onLendClick} variant="primary" />
+                          <Buttons title="Prêter" onPress={() => onLendClick(moviedata.title_fr)} variant="primary" />
                           )}
                         </View>
                       </View>

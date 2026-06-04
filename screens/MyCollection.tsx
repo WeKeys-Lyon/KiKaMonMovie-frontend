@@ -6,6 +6,7 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
+import LoanModal from '../components/loanModal';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
 
@@ -36,7 +37,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     return (width * 0.9) / columns - 10;
   };
   const cardWidth = getCardWidth();
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isLoanModal, setLoanModal] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
 
@@ -141,6 +143,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             }}
             onLendClick={() => {
               console.log('Ouvrir la modale de prêt pour :', selectedMovie.title_fr);
+              setLoanModal(true);
+              
             }}
             onDeleteClick={() => {
               Alert.alert(
@@ -189,6 +193,10 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             
           />
         )}
+        {isLoanModal && (<>
+
+        <LoanModal movieName={selectedMovie.title_fr}/>
+        </>)}
       </Modal>
     </ImageBackground>
   );
