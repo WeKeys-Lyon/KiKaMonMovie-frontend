@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Buttons } from '../components/buttons';
 import {
   ImageBackground,
@@ -8,11 +8,14 @@ import {
   Text,
   TextInput,
   View,
+  Alert
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { useDispatch } from 'react-redux';
 import { login } from '../reducers/user';
+//import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 
 type SignInScreenProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -25,6 +28,8 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   
   const BACKEND_URL = process.env.BACKEND_URL;
   const dispatch = useDispatch();
+
+  
 
   const handleSubmit = async () => {
     setError('');
@@ -62,6 +67,8 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setError('Une erreur est survenue lors de la connexion');
     }
   };
+
+  
 
   const handleReturn = () => {
     navigation.navigate('Home'); // Remplace 'Home' par le vrai nom de ton écran d'accueil si différent
@@ -107,6 +114,11 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           <View style={styles.buttonContainer}>
               <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
               <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
+          </View>
+          <View style={styles.separatorContainer}>
+            <View style={styles.separatorLine} />
+            <Text style={styles.separatorText}>OU</Text>
+            <View style={styles.separatorLine} />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -168,9 +180,9 @@ const styles = StyleSheet.create({
   },
  buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '85%',
+    width: '80%',
     marginTop: 20,
     gap: 10,
   },
@@ -179,5 +191,26 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   
   },
+  separatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 25,
+    width: '100%',
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  separatorText: {
+    color: '#ccc',
+    marginHorizontal: 10,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  googleButtonWrapper: {
+    width: '100%',
+    alignItems: 'center',
+  }
 
 });

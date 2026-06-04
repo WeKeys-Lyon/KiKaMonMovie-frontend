@@ -6,6 +6,7 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
+import Poster from '../components/poster';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
 
@@ -18,7 +19,7 @@ type MyCollectionProps = {
 const BACKEND_URL = process.env.BACKEND_URL;
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width * 0.9) / 3 - 10; 
+const COLUMN_WIDTH = (width * 0.9) / 2 - 10; 
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
   
@@ -30,7 +31,14 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       navigation.navigate('Home')
     }
   },[]);
-  const [columns, setColumns] = useState(3);
+  const [columns, setColumns] = useState(2);
+  const hangleToggleColumns = () => {
+        setColumns((prev) => {
+            if (prev === 1) return 2;
+            if (prev === 2) return 3;
+            return 1;
+        });
+    };
   const getCardWidth = () => {
     if (columns === 1) return '100%';
     return (width * 0.9) / columns - 10;
@@ -39,6 +47,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
+  
 
   const handleOpenMovie = (movie: any) => {
     setSelectedMovie(movie);
@@ -53,15 +62,15 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const safeMovies = movies || [];
 
   const filtredMovies = activeFilter
-    ? safeMovies.filter(movie => {
+    ? safeMovies.filter((movie: any) => {
       if (activeFilter.type === 'genre') {
-        return movie.Genres.some((genre: any) => genre.name === activeFilter.value);
+        return movie.Genres.some((genre: { name: string; }) => genre.name === activeFilter.value);
       } else if (activeFilter.type === 'director') {
-        return movie.DirectedBy.some((director: any) => director.name === activeFilter.value);
+        return movie.DirectedBy.some((director: { name: string; }) => director.name === activeFilter.value);
       } else if (activeFilter.type === 'actor') {
-        return movie.Cast.some((actor: any) => actor.name === activeFilter.value);
+        return movie.Cast.some((actor: { name: string; }) => actor.name === activeFilter.value);
       } else if (activeFilter.type === 'composer') {
-        return movie.MusicBy.some((composer: any) => composer.name === activeFilter.value);
+        return movie.MusicBy.some((composer: { name: string; }) => composer.name === activeFilter.value);
       }
       return false;
     })
@@ -75,9 +84,12 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       <Header title="Ma Collection" 
       leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
         onPressLeft={() => console.log('Aller vers le profil')}
-        onPressLogout={() => handleLogout()}
+        onPressLogout={() => {
+          dispatch(logout()); 
+          navigation.navigate('Home'); 
+        }}
       rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
-        onPressRight={() => console.log('Ouvrir les options')}
+        onPressRight={hangleToggleColumns}
       />
 
       <View style={styles.container}>
