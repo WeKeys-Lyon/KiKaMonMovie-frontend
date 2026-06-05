@@ -7,6 +7,7 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
 import LoanModal from './loanModal';
+import LoanDetailsModal from './loanDetailsModale';
 
 
 
@@ -33,7 +34,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     setIsModalVisible(false)
   }
   const [datas, setDatas] = useState(moviedata)
-  const [isLoanModalVisible, setIsLoanModalVisible] = useState(true);
+  const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
+  const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
+
+  const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
+    ? datas.pastLoans[datas.pastLoans.length - 1] 
+    : null;
 
 
 
@@ -112,7 +118,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   //aller sur la modale de prêt
   const onLendClick = () => {
     setIsLoanModalVisible(true);
-    setModalVisible();
   };
 
   return (
@@ -163,7 +168,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             {mode === 'add' ? (
               <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
             ) : (
-              <Buttons title="Prêter" onPress={onLendClick} variant="primary" />
+              datas?.isLoaned ? (
+                <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+              ) : (
+                <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
+              )
             )}
           </View>
         </View>
@@ -172,6 +181,16 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         visible={isLoanModalVisible}
         onClose={() => setIsLoanModalVisible(false)}
         movie={datas}
+        movieTmdbId={datas?.tmdb_id}
+        onSuccess={() => setDatas({ ...datas, isLoaned: true })}
+      />
+      <LoanDetailsModal 
+        visible={isLoanDetailsVisible}
+        onClose={() => setIsLoanDetailsVisible(false)}
+        movieName={datas?.title_fr || datas?.original_title || 'ce film'}
+        movieTmdbId={datas?.tmdb_id}
+        currentLoan={currentLoan}
+        onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
       />
     </View>
   );

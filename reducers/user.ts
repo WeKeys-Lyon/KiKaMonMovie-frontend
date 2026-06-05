@@ -38,6 +38,28 @@ export const userSlice = createSlice({
         );
       }
     },
+    setMovieLoaned: (state, action: PayloadAction<any>) => {
+      if (state.value.movies) {
+        
+        const movieIndex = state.value.movies.findIndex(
+          (movie: any) => String(movie.tmdb_id) === String(action.payload)
+        );
+        
+        if (movieIndex !== -1) {
+          state.value.movies[movieIndex].isLoaned = true;
+        }
+      }
+    },
+    setMovieReturned: (state, action: PayloadAction<any>) => {
+      if (state.value.movies) {
+        const movieIndex = state.value.movies.findIndex(
+          (movie: any) => String(movie.tmdb_id) === String(action.payload)
+        );
+        if (movieIndex !== -1) {
+          state.value.movies[movieIndex].isLoaned = false;
+        }
+      }
+    },
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
@@ -45,5 +67,5 @@ export const userSlice = createSlice({
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout } = userSlice.actions;
 export default userSlice.reducer;
