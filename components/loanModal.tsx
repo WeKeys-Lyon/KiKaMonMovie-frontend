@@ -7,7 +7,8 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Checkbox } from 'expo-checkbox';
-import { useHeaderHeight } from '@react-navigation/elements'
+import { useHeaderHeight } from '@react-navigation/elements';
+import {addMovieLoan} from '../reducers/user';
 
 type loanModalProps= {
     movieName: String,
@@ -18,6 +19,7 @@ type loanModalProps= {
 export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: loanModalProps) {
     const BACKEND_URL = process.env.BACKEND_URL;
     const user = useSelector((state: any) => state.user.value);
+    const dispatch = useDispatch();
     let dueDateDefault = new Date();
     dueDateDefault.setDate(dueDateDefault.getDate() + 7);
     const [loanTo, setLoanTo] = useState('');
@@ -26,7 +28,10 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
     const [notes, setNotes] = useState('');
     const [error, setError] = useState('');
     const headerHeight = useHeaderHeight();
-
+    const [loanState, setLoanState] = useState(user.movies.find(movie => movie.tmdb_id == movieTmdbId).isLoaned);
+    
+    const theMovie = user.movies.find(movie => movie.tmdb_id == movieTmdbId);
+    console.log(theMovie)
     const handleLoanData =  async () => {
         const data = {
             token: user.token,
@@ -49,6 +54,9 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
         
         
         if (await answer.result) {
+            const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+            dispatch(addMovieLoan({index: indexMovie, data: answer.answer}));
+            setLoanState(true)
             handleLoanReturn();
         } else {
             setError(answer.error)
@@ -64,7 +72,7 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView keyboardShouldPersistTaps='never'  >
                 <View style={styles.box}>
-                    <Text style={styles.title}>Prêter {movieName} ?</Text>
+                    {loanState ? (<Text style={styles.title}>Détails du pret de {movieName} ?</Text>) : (<Text style={styles.title}>Prêter {movieName} ?</Text>)}
                 <View>
                     {/* TODO penser à chercher dans la liste des amis */}
                     <TextInput

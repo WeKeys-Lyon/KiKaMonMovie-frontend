@@ -46,7 +46,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   };
 
   const handleLogout = () => {
-    console.log('je suis la')
+
     dispatch(logout());
     //navigation.navigate('Home');
   }

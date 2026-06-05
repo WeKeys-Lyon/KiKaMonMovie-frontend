@@ -32,7 +32,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
     const [datas, setDatas] = useState(moviedata)
     const [isLoanModal, setLoanModal] = useState<boolean>(false);
-
+    
     useEffect(() => {
         const init = async () => {
                 if (drawStyle){
@@ -64,9 +64,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         });
   
         const data = await response.json();
-        console.log(data)
+        
         if (data.result) {
           setIsModalVisible(false);
+          datas.isLoaned = false;
+          datas.isLiked = false;
           dispatch(addMovieToStore(datas));
           if (onAddSuccess) onAddSuccess();
           navigation.navigate('TabNavigator', { screen: 'MyCollection' });
@@ -130,7 +132,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
                             <Buttons 
                               title="🗑️ Supprimer le film" 
-                              onPress={() => onDeleteClick} 
+                              onPress={() => onDeleteClick()} 
                               variant="primary" 
                               style={{ backgroundColor: '#d9534f', width: '80%' }} 
                             />
