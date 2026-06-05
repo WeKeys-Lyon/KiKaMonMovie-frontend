@@ -11,16 +11,50 @@ import { useHeaderHeight } from '@react-navigation/elements'
 
 type loanModalProps= {
     movieName: String,
+    movieTmdbId: Number,
     handleLoanReturn: () => void
 }
 
-export default function LoanModal({movieName, handleLoanReturn}: loanModalProps) {
+export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: loanModalProps) {
+    const BACKEND_URL = process.env.BACKEND_URL;
+    const user = useSelector((state: any) => state.user.value);
+    let dueDateDefault = new Date();
+    dueDateDefault.setDate(dueDateDefault.getDate() + 7);
     const [loanTo, setLoanTo] = useState('');
-    const [loanDate, setLoanDate] = useState(new Date);
+    const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(false);
     const [notes, setNotes] = useState('');
+    const [error, setError] = useState('');
     const headerHeight = useHeaderHeight();
 
+    const handleLoanData =  async () => {
+        const data = {
+            token: user.token,
+            tmdb_id: movieTmdbId,
+            isSharedToUser: false, /* pour le moment... 
+           Todo  userid: userid, */
+            borrower: loanTo,
+            dueDate: loanDate,
+            notes: (notes) ? notes : '',
+            Notifications: reminder
+        };
+        
+        const myURL = `${BACKEND_URL}/users/add-loan`;
+        const response = await fetch(encodeURI(myURL), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        const answer = await response.json();
+        
+        
+        if (await answer.result) {
+            handleLoanReturn();
+        } else {
+            setError(answer.error)
+        }
+        
+    } 
     return (
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -72,12 +106,12 @@ export default function LoanModal({movieName, handleLoanReturn}: loanModalProps)
                         spellCheck={true}
                     />
                 </View>
+                <Text style={{color: 'red', textAlign: 'center'}}>{(error) ? error : ''}</Text>
                 <View style={styles.btnctn}>
                     <Buttons title="Retour" onPress={() => handleLoanReturn()} size='large'/>
-                    <Buttons title="Valider" onPress={() => console.log('lol')} size='large'/>
+                    <Buttons title="Valider" onPress={() => handleLoanData()} size='large'/>
                 </View>
             </View>
-
             </ScrollView>
             </TouchableWithoutFeedback>
             </KeyboardAvoidingView>

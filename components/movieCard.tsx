@@ -52,9 +52,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   }
 
    const handleAddMovie = async () => {
-      const BACKEND_URL = process.env.BACKEND_URL;
-      console.log(datas?.title_fr || datas?.original_title)
-  
+      const BACKEND_URL = process.env.BACKEND_URL;  
       try {
         const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
           method: 'POST',
@@ -156,7 +154,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       </View>
                     </View>
                     {isLoanModal && (<>
-                          <LoanModal movieName={moviedata.title_fr} handleLoanReturn={() => handleLoanReturn()}/>
+                          <LoanModal movieName={moviedata.title_fr} movieTmdbId={moviedata.tmdb_id} handleLoanReturn={() => handleLoanReturn()}/>
                           </>)}
                   </View>
                   
