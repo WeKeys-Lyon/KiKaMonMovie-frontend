@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Buttons } from './buttons';
+import {changeOrder} from '../reducers/user';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 type SettingsModalProps = {
     visible: boolean;
@@ -22,6 +25,9 @@ export default function SettingsModal({
     setSearchQuery,
     movies,
 }: SettingsModalProps) {
+    const [order, setOrder] = useState(true);
+
+    const dispatch = useDispatch();
 
     //recherche par suggestions
     const suggestions = searchQuery.length > 1
@@ -31,7 +37,11 @@ export default function SettingsModal({
         }).slice(0, 5)
         : [];
 
-
+    //recherche par ordre alphabetique
+    const changeReducer = () => {
+        setOrder(!order);
+        dispatch(changeOrder(order))
+    }
     return (
         <Modal visible={visible} animationType="slide" transparent={true}>
             <View style={styles.modalOverlay}>
@@ -120,6 +130,7 @@ export default function SettingsModal({
                         <View style={styles.filtersContainer}>
                             <Text style={styles.placeholderText}>⏳ Les filtres (Année, Réalisateur, Genre) arriveront ici...</Text>
                             {/* Ici nous ajouterons des menus déroulants (Pickers) ou des boutons */}
+                            <Buttons title="Changer l'ordre alphabetique des titres" onPress={() => changeReducer()} />
                         </View>
 
                     </ScrollView>

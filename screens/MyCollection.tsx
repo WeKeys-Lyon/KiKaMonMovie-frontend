@@ -57,6 +57,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     dispatch(logout());
     //navigation.navigate('Home');
   }
+  
   const safeMovies = movies || [];
 
   const filtredMovies = safeMovies

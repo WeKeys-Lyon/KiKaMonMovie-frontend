@@ -54,8 +54,11 @@ export const userSlice = createSlice({
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
+    changeOrder: (state, action: PayloadAction<any>) => {
+      (action.payload) ? state.value.movies?.sort((a, b) => a.title_fr.localeCompare(b.title_fr)) : state.value.movies?.sort((a, b) => b.title_fr.localeCompare(a.title_fr))
+    }
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout, changeOrder } = userSlice.actions;
 export default userSlice.reducer;
