@@ -63,7 +63,6 @@ export const userSlice = createSlice({
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
-
   },
 });
 

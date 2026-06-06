@@ -27,6 +27,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
     const [loanTo, setLoanTo] = useState('');
     const [loanDate, setLoanDate] = useState(dueDateDefault);
+    const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(false);
     const [notes, setNotes] = useState('');
 
@@ -95,7 +96,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
             console.error("Erreur lors de la requête :", error);
         }
     };
-    console.log(movie)
+
     return (
         <View style={styles.container}>
             {/* 1. Le fond sombre qui apparait en fondu */}

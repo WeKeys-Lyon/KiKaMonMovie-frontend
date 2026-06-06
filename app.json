@@ -44,7 +44,8 @@
           "recordAudioAndroid": true,
           "barcodeScannerEnabled": true
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

@@ -19,7 +19,7 @@ type MovieCardScreenProps = {
   drawStyle: boolean
   mode?: 'add' | 'collection';
   onFilterClick?: (type: string, value: string) => void;
-  onDeleteClick?: () => void;
+  onDeleteClick: () => void;
   onAddSuccess?: () => void;
 };
 
@@ -36,10 +36,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [datas, setDatas] = useState(moviedata)
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
-
-  const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
+  const currentLoan = user.movies.find(movie => movie.tmdb_id == moviedata.tmdb_id).pastLoans.at(-1);
+  /* const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
     ? datas.pastLoans[datas.pastLoans.length - 1] 
-    : null;
+    : null; */
 
 
 
@@ -59,34 +59,34 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
 
 
-  const handleAddMovie = async () => {
-    const BACKEND_URL = process.env.BACKEND_URL;
-    console.log(datas?.title_fr || datas?.original_title)
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: user.token,
-          movie: datas,
-        }),
-      });
-
-      const data = await response.json();
-      console.log(data)
-      if (data.result) {
-        setIsModalVisible(false);
-        dispatch(addMovieToStore(datas));
-        if (onAddSuccess) onAddSuccess();
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
-      } else {
-        console.log("Erreur lors de l'ajout", data.error);
+   const handleAddMovie = async () => {
+      const BACKEND_URL = process.env.BACKEND_URL;  
+      try {
+        const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            movie: datas,
+          }),
+        });
+  
+        const data = await response.json();
+        
+        if (data.result) {
+          setIsModalVisible(false);
+          datas.isLoaned = false;
+          datas.isLiked = false;
+          dispatch(addMovieToStore(datas));
+          if (onAddSuccess) onAddSuccess();
+          navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        } else {
+          console.log("Erreur lors de l'ajout", data.error);
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    };
 
   const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
     if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
