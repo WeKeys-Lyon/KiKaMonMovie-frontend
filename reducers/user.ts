@@ -57,5 +57,5 @@ export const userSlice = createSlice({
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, logout, addMovieLoan } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, logout, addMovieLoan, setMovieReturned } = userSlice.actions;
 export default userSlice.reducer;

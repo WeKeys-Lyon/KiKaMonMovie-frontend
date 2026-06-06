@@ -33,7 +33,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
     const [datas, setDatas] = useState(moviedata)
     const [isLoanModal, setLoanModal] = useState<boolean>(false);
-    
+    const theMovie = user.movies.find(movie => movie.tmdb_id == moviedata.tmdb_id);
     useEffect(() => {
         const init = async () => {
                 if (drawStyle){
@@ -115,7 +115,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                        <View style={styles.posterContainer}>
                           <Poster
                             imageUrl={imageUrl}
-                            isLoaned={datas.isLoaned}
+                            isLoaned={theMovie.isLoaned}
                             columns={2} 
                           />
                         </View>

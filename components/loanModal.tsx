@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity,TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, Alert,TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Buttons } from '../components/buttons';
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Checkbox } from 'expo-checkbox';
 import { useHeaderHeight } from '@react-navigation/elements';
-import {addMovieLoan} from '../reducers/user';
+import {addMovieLoan, setMovieReturned} from '../reducers/user';
 
 type loanModalProps= {
     movieName: String,
@@ -29,9 +29,9 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
     const [error, setError] = useState('');
     const headerHeight = useHeaderHeight();
     const [loanState, setLoanState] = useState(user.movies.find(movie => movie.tmdb_id == movieTmdbId).isLoaned);
-    
     const theMovie = user.movies.find(movie => movie.tmdb_id == movieTmdbId);
-    console.log(theMovie)
+    const loanInfos = theMovie.pastLoans.at(-1);
+
     const handleLoanData =  async () => {
         const data = {
             token: user.token,
@@ -41,7 +41,7 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
             borrower: loanTo,
             dueDate: loanDate,
             notes: (notes) ? notes : '',
-            Notifications: reminder
+            Notification: reminder
         };
         
         const myURL = `${BACKEND_URL}/users/add-loan`;
@@ -62,7 +62,50 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
             setError(answer.error)
         }
         
-    } 
+    }
+    const handleEndLoan = () => {
+                  Alert.alert(
+                    'Retour du film',
+                    `Validez-vous le fait que "${theMovie.title_fr || theMovie.original_title}" est de retour dans votre collection ?`,
+                    [
+                      {
+                        text: 'Annuler',
+                        style: 'cancel',
+                      },
+                      {
+                        text: 'Valider',
+                        style: 'destructive',
+                        onPress: async () => {
+                          
+                          try {
+                            const myURL = `${BACKEND_URL}/users/remove-loan`
+                            const response = await fetch(encodeURI(myURL), {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                token: user.token,
+                                tmdb_id: movieTmdbId,
+                              }),
+                            });
+                            const data = await response.json();
+                            if (data.result) {
+                              
+                              const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+                              setLoanState(false);
+                              dispatch(setMovieReturned({index: indexMovie}));
+                            } else {
+                              console.log("Erreur lors de la suppression", data.error);
+                            }
+                          } catch (error) {
+                            console.error(error);
+                          }
+                          
+                          handleLoanReturn(); // On ferme la modale
+                        } 
+                      }
+                    ]
+                  );
+                }
     return (
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -72,29 +115,48 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView keyboardShouldPersistTaps='never'  >
                 <View style={styles.box}>
-                    {loanState ? (<Text style={styles.title}>Détails du pret de {movieName} ?</Text>) : (<Text style={styles.title}>Prêter {movieName} ?</Text>)}
+                    {loanState ? (<Text style={styles.title}>Détails du pret de {movieName}</Text>) : (<Text style={styles.title}>Prêter {movieName} ?</Text>)}
                 <View>
                     {/* TODO penser à chercher dans la liste des amis */}
-                    <TextInput
+                    {loanState ? (<View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start'}}>
+                        <Text style={[styles.text, {width: '25%'}]} >Prêté à : </Text>
+                        <Text style={[styles.text, {fontWeight: 600}]}>{loanInfos.borrower}</Text>
+                        </View>) 
+                        : 
+                        (<TextInput
                         placeholder="Prêter à :"
                         placeholderTextColor="#000"
                         autoCapitalize="none"
                         onChangeText={setLoanTo}
                         value={loanTo}
                         style={styles.input}
-                    />
+                    />)}
+
+                    {loanState ? (<View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start'}}>
+                        <Text style={[styles.text, {width: '25%'}]}>Retour prévu le :  </Text>
+                        <Text style={styles.text}>
+                        {new Date(loanInfos.dueDate).toLocaleDateString("fr-FR").split('T')[0]}
+                        </Text>
+                        </View>) 
+                        : 
+                        (
                     <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-                    <Text style={styles.text}>Date du prêt :  </Text>
-                    <DateTimePicker 
+                    <Text style={styles.text}>Retour prévu le :  </Text>
+                        <DateTimePicker 
                         mode="date" 
                         display="default" 
                         onValueChange={(event, selectedDate) => setLoanDate(selectedDate)}
                         value={loanDate} 
                         style={styles.datepicker}
                         minimumDate={new Date()}
-                        />
-                    </View>
-                    <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                        />                    
+                    </View>)}
+                    {loanState ? (<View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                        <Text style={[styles.text,{width: '55%'}]}>Notification de rappel :</Text>
+                        <Text style={styles.text}>{loanInfos.Notification ? 'OUI' : 'NON'}</Text>
+                        </View>) 
+                        : 
+                        (<View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                         <Text style={styles.text}>Obtenir une notification de rappel</Text>
                         <Checkbox
                             style={{marginBottom: 15}}
@@ -102,22 +164,29 @@ export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: lo
                             onValueChange={setReminder}
                             color={reminder ? '#1C2942' : undefined}
                         />
-                    </View>
-                    <TextInput
-                        placeholder="Notes :"
-                        placeholderTextColor="#000"
-                        autoCapitalize="none"
-                        onChangeText={setNotes}
-                        value={notes}
-                        style={styles.notes}
-                        multiline={true}
-                        spellCheck={true}
-                    />
+                        </View>)}
+                    {loanState ? (
+                        loanInfos.notes ? (<View style={{flex: 1, flexDirection: 'row'}}><Text style={[styles.text, {width: '25%'}]}>Notes : </Text>
+                        <Text style={styles.text}>{loanInfos.notes}</Text></View>) : (<></>)
+                        )
+                        :
+                        (
+                        <TextInput
+                            placeholder="Notes :"
+                            placeholderTextColor="#000"
+                            autoCapitalize="none"
+                            onChangeText={setNotes}
+                            value={notes}
+                            style={styles.notes}
+                            multiline={true}
+                            spellCheck={true}
+                        />
+                        )}
                 </View>
                 <Text style={{color: 'red', textAlign: 'center'}}>{(error) ? error : ''}</Text>
                 <View style={styles.btnctn}>
                     <Buttons title="Retour" onPress={() => handleLoanReturn()} size='large'/>
-                    <Buttons title="Valider" onPress={() => handleLoanData()} size='large'/>
+                    {loanState ? (<Buttons title="Retour du film" onPress={() => handleEndLoan()} size='large'/>) : (<Buttons title="Valider" onPress={() => handleLoanData()} size='large'/>)}
                 </View>
             </View>
             </ScrollView>
@@ -168,6 +237,7 @@ input: {
     height: 50,
     color: '#000',
     marginBottom: 15,
+    textAlignVertical: 'center'
 },
 datepicker: {
     flex:1,
