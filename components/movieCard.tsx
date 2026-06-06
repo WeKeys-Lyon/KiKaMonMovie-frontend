@@ -5,6 +5,7 @@ import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
+import Poster from '../components/poster';
 import LoanModal from '../components/loanModal';
 
 
@@ -16,14 +17,14 @@ type MovieCardScreenProps = {
   drawStyle: boolean
   mode?: 'add' | 'collection';
   onFilterClick?: (type: string, value: string) => void;
-  onDeleteClick?: () => void;
+  onDeleteClick: () => void;
   onAddSuccess?: () => void;
 };
 
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
 
-    const BACKEND_URL = process.env.BACKEND_URL;
+  const BACKEND_URL = process.env.BACKEND_URL;
 
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
@@ -80,39 +81,44 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       }
     };
 
-    const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
-      if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
-      const displayedItems = maxItems ? items.slice(0, maxItems) : items;
+  const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
+    if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
+    const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
-          {displayedItems.map((item: any, index: number) => (
-          <TouchableOpacity 
-            key={index} 
-            disabled={mode === 'add'} 
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+        {displayedItems.map((item: any, index: number) => (
+          <TouchableOpacity
+            key={index}
+            disabled={mode === 'add'}
             onPress={() => onFilterClick && onFilterClick(type, item.name)}
           >
-            <Text style={[styles.modalText, {fontSize: 16, lineHeight: 24}, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
+            <Text style={[styles.modalText, { fontSize: 16, lineHeight: 24 }, mode === 'collection' && { color: '#e8be4b', textDecorationLine: 'underline' }]}>
               {item.name}{index < displayedItems.length - 1 ? ', ' : ''}
             </Text>
           </TouchableOpacity>
         ))}
         {maxItems && items.length > maxItems && (
-          <Text style={[styles.modalText, { color: '#aaa', fontStyle: 'italic', fontSize: 16}]}>
+          <Text style={[styles.modalText, { color: '#aaa', fontStyle: 'italic', fontSize: 16 }]}>
             {` (+ ${items.length - maxItems} autres)`}
           </Text>
         )}
-        </View>
-      );
-    };
+      </View>
+    );
+  };
+
+  const imageUrl = datas.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
 
     return (
         <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                       <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-                        <Image
-                          source={datas?.poster_path ? { uri: `https://image.tmdb.org/t/p/w500${datas.poster_path}`} : require('../assets/nomovie.jpg')}
-                          style={styles.modalPoster}
-                        />
+                       <View style={styles.posterContainer}>
+                          <Poster
+                            imageUrl={imageUrl}
+                            isLoaned={datas.isLoaned}
+                            columns={2} 
+                          />
+                        </View>
                         {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
                         <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
         
@@ -159,12 +165,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           <LoanModal movieName={moviedata.title_fr} movieTmdbId={moviedata.tmdb_id} handleLoanReturn={() => handleLoanReturn()}/>
                           </>)}
                   </View>
-                  
     );
 }
 
 const styles = StyleSheet.create({
-   // Styles de la Modale
+  // Styles de la Modale
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -184,11 +189,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 20,
   },
-  modalPoster: {
+  posterContainer: {
     width: 200,
-    height: 300,
+    overflow: 'hidden',
     borderRadius: 10,
-    marginBottom: 20,
+    marginBottom: 15,
+    borderWidth: 1,
   },
   modalTitle: {
     fontSize: 24,
