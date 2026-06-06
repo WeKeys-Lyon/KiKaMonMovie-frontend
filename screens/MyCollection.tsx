@@ -45,6 +45,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
+  
 
 
   const handleOpenMovie = (movie: any) => {

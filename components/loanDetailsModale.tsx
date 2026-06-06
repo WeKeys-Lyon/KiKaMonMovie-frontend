@@ -12,7 +12,7 @@ type LoanDetailsModalProps = {
     onClose: () => void;
     movieName: string;
     movieTmdbId: number;
-    currentLoan: any; // 👈 Les infos du prêt en cours
+    currentLoan: any; 
     onReturnSuccess: () => void;
 }
 
@@ -70,7 +70,9 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
             if (data.result) {
                 console.log("Film récupéré !");
                 const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
-                dispatch(setMovieReturned({index: indexMovie}));
+                if (indexMovie !== -1) {
+                    dispatch(setMovieReturned({ index: indexMovie }));
+                }
                 onReturnSuccess(); // Met à jour la MovieCard
                 onClose(); // Ferme la modale
             } else {
