@@ -43,9 +43,17 @@ export const userSlice = createSlice({
     },
     addMovieLoan: (state, action: PayloadAction<any>) => {
       const {index, data} = action.payload;
-      state.value.movies[index].pastLoans = data;
-      state.value.movies[index].isLoaned = true;
-    }
+      if (state.value.movies) {
+        state.value.movies[index].pastLoans = data;
+        state.value.movies[index].isLoaned = true;
+      }
+    },
+    setMovieReturned: (state, action: PayloadAction<any>) => {
+      const {index} = action.payload;
+      if (state.value.movies) { 
+        state.value.movies[index].isLoaned = false;
+      }
+    },
   },
 });
 
