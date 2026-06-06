@@ -90,10 +90,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 
-  // --- NOUVEAU : Mode Liste (Inspiré de SearchResults) ---
+  // --- NOUVEAU : Mode Liste  ---
   listCard: {
     flexDirection: 'row',
-    width: width * 0.9, // Prend 95% de l'écran comme dans SearchResults
+    width: width * 0.9, 
     backgroundColor: 'rgba(0, 0, 0, 0.75)', 
     borderRadius: 10,
     padding: 10,

@@ -38,24 +38,33 @@ export const userSlice = createSlice({
         );
       }
     },
-    logout:(state) => {
-      state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
-    },
-    addMovieLoan: (state, action: PayloadAction<any>) => {
-      const {index, data} = action.payload;
+    setMovieLoaned: (state, action: PayloadAction<any>) => {
       if (state.value.movies) {
-        state.value.movies[index].pastLoans = data;
-        state.value.movies[index].isLoaned = true;
+        
+        const movieIndex = state.value.movies.findIndex(
+          (movie: any) => String(movie.tmdb_id) === String(action.payload)
+        );
+        
+        if (movieIndex !== -1) {
+          state.value.movies[movieIndex].isLoaned = true;
+        }
       }
     },
     setMovieReturned: (state, action: PayloadAction<any>) => {
-      const {index} = action.payload;
-      if (state.value.movies) { 
-        state.value.movies[index].isLoaned = false;
+      if (state.value.movies) {
+        const movieIndex = state.value.movies.findIndex(
+          (movie: any) => String(movie.tmdb_id) === String(action.payload)
+        );
+        if (movieIndex !== -1) {
+          state.value.movies[movieIndex].isLoaned = false;
+        }
       }
+    },
+    logout:(state) => {
+      state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, logout, addMovieLoan } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout } = userSlice.actions;
 export default userSlice.reducer;

@@ -1,204 +1,274 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity,TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, ScrollView, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Dimensions, Alert } from 'react-native';
 import { Buttons } from '../components/buttons';
-import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
-import { useSelector, useDispatch } from 'react-redux';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Checkbox } from 'expo-checkbox';
-import { useHeaderHeight } from '@react-navigation/elements';
-import {addMovieLoan} from '../reducers/user';
+import { useSelector, useDispatch } from 'react-redux';
+import { setMovieLoaned } from '../reducers/user';
 
-type loanModalProps= {
-    movieName: String,
-    movieTmdbId: Number,
-    handleLoanReturn: () => void
+
+const { height } = Dimensions.get('window');
+
+type loanModalProps = {
+    visible: boolean;
+    onClose: () => void;
+    movie: any;
+    movieTmdbId: number;
+    onSuccess: (updatedPastLoans: any[]) => void;
 }
 
-export default function LoanModal({movieName, movieTmdbId, handleLoanReturn}: loanModalProps) {
-    const BACKEND_URL = process.env.BACKEND_URL;
+export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
+    const BACKEND_URL = process.env.BACKEND_URL;
+
     let dueDateDefault = new Date();
     dueDateDefault.setDate(dueDateDefault.getDate() + 7);
+
     const [loanTo, setLoanTo] = useState('');
     const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(false);
     const [notes, setNotes] = useState('');
-    const [error, setError] = useState('');
-    const headerHeight = useHeaderHeight();
-    const [loanState, setLoanState] = useState(user.movies.find(movie => movie.tmdb_id == movieTmdbId).isLoaned);
-    
-    const theMovie = user.movies.find(movie => movie.tmdb_id == movieTmdbId);
-    console.log(theMovie)
-    const handleLoanData =  async () => {
-        const data = {
-            token: user.token,
-            tmdb_id: movieTmdbId,
-            isSharedToUser: false, /* pour le moment... 
-           Todo  userid: userid, */
-            borrower: loanTo,
-            dueDate: loanDate,
-            notes: (notes) ? notes : '',
-            Notifications: reminder
-        };
-        
-        const myURL = `${BACKEND_URL}/users/add-loan`;
-        const response = await fetch(encodeURI(myURL), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        })
-        const answer = await response.json();
-        
-        
-        if (await answer.result) {
-            const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
-            dispatch(addMovieLoan({index: indexMovie, data: answer.answer}));
-            setLoanState(true)
-            handleLoanReturn();
+
+    const [isRendered, setIsRendered] = useState(visible);
+    const slideAnim = useRef(new Animated.Value(height)).current; 
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (visible) {
+            setIsRendered(true); 
+            
+            Animated.parallel([
+                Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+            ]).start();
         } else {
-            setError(answer.error)
+            
+            Animated.parallel([
+                Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: height, duration: 300, useNativeDriver: true })
+            ]).start(() => {
+                setIsRendered(false); 
+            });
         }
-        
-    } 
+    }, [visible]);
+
+    if (!visible) return null;
+
+    const handleValidate = async () => {
+        if (!loanTo.trim()) {
+            Alert.alert("Veuillez indiquer à qui vous prêtez ce film !");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/users/add-loan`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: user.token,
+                    tmdb_id: movieTmdbId,
+                    isSharedToUser: false, // On met false par défaut pour un prêt manuel
+                    borrower: loanTo,
+                    dueDate: loanDate,
+                    notes: notes,
+                    Notification: reminder
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.result) {
+                console.log("Prêt enregistré avec succès !");
+                dispatch(setMovieLoaned(movieTmdbId));
+                onSuccess(data.answer)
+                // On vide les champs pour la prochaine fois
+                setLoanTo('');
+                setNotes('');
+                setReminder(false);
+                // On ferme la modale
+                onClose();
+            } else {
+                console.log("Erreur du serveur :", data.answer);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la requête :", error);
+        }
+    };
+
     return (
+        <View style={styles.container}>
+            {/* 1. Le fond sombre qui apparait en fondu */}
+            <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]} />
+
+            {/* 2. La zone de contenu */}
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={headerHeight}
-                style={styles.container}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0} 
+                style={styles.keyboardView}
             >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView keyboardShouldPersistTaps='never'  >
-                <View style={styles.box}>
-                    {loanState ? (<Text style={styles.title}>Détails du pret de {movieName} ?</Text>) : (<Text style={styles.title}>Prêter {movieName} ?</Text>)}
-                <View>
-                    {/* TODO penser à chercher dans la liste des amis */}
-                    <TextInput
-                        placeholder="Prêter à :"
-                        placeholderTextColor="#000"
-                        autoCapitalize="none"
-                        onChangeText={setLoanTo}
-                        value={loanTo}
-                        style={styles.input}
-                    />
-                    <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-                    <Text style={styles.text}>Date du prêt :  </Text>
-                    <DateTimePicker 
-                        mode="date" 
-                        display="default" 
-                        onValueChange={(event, selectedDate) => setLoanDate(selectedDate)}
-                        value={loanDate} 
-                        style={styles.datepicker}
-                        minimumDate={new Date()}
+                {/* Zone invisible au-dessus pour fermer le clavier */}
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={styles.dismissArea} />
+                </TouchableWithoutFeedback>
+
+                {/* 3. La modale qui glisse de bas en haut */}
+                <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
+                    
+                    <Text style={styles.title}>Prêter {movie.title_fr ? movie.title_fr : movie.original_title } ?</Text>
+                    
+                    <ScrollView keyboardShouldPersistTaps='never' style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+                        <TextInput
+                            placeholder="Prêter à :"
+                            placeholderTextColor="#aaa"
+                            autoCapitalize="none"
+                            onChangeText={setLoanTo}
+                            value={loanTo}
+                            style={styles.input}
                         />
-                    </View>
-                    <View style={{flex:1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-                        <Text style={styles.text}>Obtenir une notification de rappel</Text>
-                        <Checkbox
-                            style={{marginBottom: 15}}
-                            value={reminder}
-                            onValueChange={setReminder}
-                            color={reminder ? '#1C2942' : undefined}
+                        
+                        <View style={styles.dateRow}>
+                            <Text style={[styles.text, {marginBottom: 0}]}>Date du prêt :</Text>
+                            <DateTimePicker 
+                                mode="date" 
+                                display="default" 
+                                onValueChange={(event, selectedDate) => setLoanDate(selectedDate || loanDate)}
+                                value={loanDate} 
+                                style={styles.datepicker}
+                                minimumDate={new Date()}
+                                themeVariant="dark" 
+                            />
+                        </View>
+                        
+                        <View style={styles.row}>
+                            <Text style={styles.text}>Obtenir une notification de rappel</Text>
+                            <Checkbox
+                                style={{ marginBottom: 15 }}
+                                value={reminder}
+                                onValueChange={setReminder}
+                                color={reminder ? '#e8be4b' : undefined}
+                            />
+                        </View>
+                        
+                        <TextInput
+                            placeholder="Notes :"
+                            placeholderTextColor="#aaa"
+                            autoCapitalize="none"
+                            onChangeText={setNotes}
+                            value={notes}
+                            style={styles.notes}
+                            multiline={true}
+                            spellCheck={true}
                         />
+                    </ScrollView>
+
+                    <View style={styles.footer}>
+                        <Buttons title="Retour" onPress={onClose} size='large' variant='secondary' />
+                        <Buttons title="Valider" onPress={handleValidate} size='large' variant='secondary' />
                     </View>
-                    <TextInput
-                        placeholder="Notes :"
-                        placeholderTextColor="#000"
-                        autoCapitalize="none"
-                        onChangeText={setNotes}
-                        value={notes}
-                        style={styles.notes}
-                        multiline={true}
-                        spellCheck={true}
-                    />
-                </View>
-                <Text style={{color: 'red', textAlign: 'center'}}>{(error) ? error : ''}</Text>
-                <View style={styles.btnctn}>
-                    <Buttons title="Retour" onPress={() => handleLoanReturn()} size='large'/>
-                    <Buttons title="Valider" onPress={() => handleLoanData()} size='large'/>
-                </View>
-            </View>
-            </ScrollView>
-            </TouchableWithoutFeedback>
+                    
+                </Animated.View>
             </KeyboardAvoidingView>
-
-    
-    )
+        </View>
+    );
 }
+
 const styles = StyleSheet.create({
-container: {
-    flex: 1,
-    width: '100%',
-    position: 'absolute',
-    
-},
-box: {
-    flex:1,
-    flexShrink: 1,
-    justifyContent:'flex-end',
-    minWidth: '100%',
-    width: '100%',
-    maxWidth: '100%',
-    maxHeight: '100%',
-    backgroundColor: '#1a1a1aeb',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e8be4b',
-},
-title: {
-    fontSize: 25,
-    fontWeight: 600,
-    color: '#fff',
-    textAlign: 'center',
-
-    marginBottom: 40,
-    width: '100%',
-
-},
-input: {
-    fontSize: 17,
-    backgroundColor: 'rgb(201, 201, 201)',
-    borderWidth: 1,
-    borderColor: 'rgb(173, 173, 173)',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    height: 50,
-    color: '#000',
-    marginBottom: 15,
-},
-datepicker: {
-    flex:1,
-    backgroundColor: '#1C2942',
-    borderRadius: 8,
-    color: '#000',
-    marginBottom: 15,
-},
-text: {
-    color: '#fff', 
-    fontSize: 17,
-    marginBottom: 15,
-    width: '60%'
-},
-btnctn: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 15,
-    marginBottom: 15,
-    height: 60
-},
-notes: {
-    fontSize: 17,
-    backgroundColor: 'rgb(201, 201, 201)',
-    borderWidth: 1,
-    borderColor: 'rgb(173, 173, 173)',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    height: 150,
-    color: '#000',
-    marginBottom: 15,
-},
-})
+    container: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+    },
+    // Le fond noir derrière
+    backdrop: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    },
+    keyboardView: {
+        flex: 1,
+        justifyContent: 'flex-end', // Pousse le formulaire en bas
+    },
+    dismissArea: {
+        flex: 1, 
+        width: '100%',
+    },
+    modalContent: {
+        backgroundColor: '#1C2942',
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        padding: 20,
+        paddingBottom: 35,
+        borderTopWidth: 1,
+        borderColor: '#e8be4b',
+        maxHeight: '85%',
+        width: '100%',
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#e8be4b',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    scrollArea: {
+        flexShrink: 1,
+    },
+    input: {
+        fontSize: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        height: 50,
+        color: '#fff',
+        marginBottom: 15,
+    },
+    dateRow: {
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        marginBottom: 15,
+    },
+    datepicker: {
+        width: 130,
+        height: 40,
+    },
+    row: {
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+    },
+    text: {
+        color: '#fff', 
+        fontSize: 16,
+        marginBottom: 15,
+        flex: 1,
+    },
+    notes: {
+        fontSize: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        height: 120,
+        color: '#fff',
+        marginBottom: 10,
+        textAlignVertical: 'top',
+        paddingTop: 15,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 15,
+        marginTop: 10,
+    },
+});

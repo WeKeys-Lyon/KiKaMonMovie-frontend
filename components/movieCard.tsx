@@ -6,7 +6,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
-import LoanModal from '../components/loanModal';
+import LoanModal from './loanModal';
+import LoanDetailsModal from './loanDetailsModale';
+
 
 
 type MovieCardScreenProps = {
@@ -26,31 +28,31 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
-    const user = useSelector((state: any) => state.user.value);
-    const dispatch = useDispatch();
-    const setModalVisible = () => {
-      setIsModalVisible(false)
-    }
-    const [datas, setDatas] = useState(moviedata)
-    const [isLoanModal, setLoanModal] = useState<boolean>(false);
-    
-    useEffect(() => {
-        const init = async () => {
-                if (drawStyle){
-                const myURL = `${BACKEND_URL}/movies/searchid/${moviedata.tmdb_id}`
-                const response = await fetch(encodeURI(myURL));
-                const data = await response.json();
-                if (data.result) {
-                  setDatas(data.answer);
-                }
-                }
-        }
-        init()
-    }, [])
-     
-  const handleLoanReturn = () => {
-    (isLoanModal) ? setLoanModal(false) : setLoanModal(true);
+  const user = useSelector((state: any) => state.user.value);
+  const dispatch = useDispatch();
+  const setModalVisible = () => {
+    setIsModalVisible(false)
   }
+  const [datas, setDatas] = useState(moviedata)
+  const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
+  const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
+  const currentLoan = user.movies.find(movie => movie.tmdb_id == moviedata.tmdb_id).pastLoans.at(-1);
+
+  useEffect(() => {
+    const init = async () => {
+      if (drawStyle) {
+        const myURL = `${BACKEND_URL}/movies/searchid/${moviedata.tmdb_id}`
+        const response = await fetch(encodeURI(myURL));
+        const data = await response.json();
+        if (data.result) {
+          setDatas(data.answer);
+        }
+      }
+    }
+    init()
+  }, [])
+
+
 
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;  
@@ -108,64 +110,88 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
   const imageUrl = datas.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
 
-    return (
-        <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                      <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-                       <View style={styles.posterContainer}>
-                          <Poster
-                            imageUrl={imageUrl}
-                            isLoaned={datas.isLoaned}
-                            columns={2} 
-                          />
-                        </View>
-                        {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
-                        <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
-        
-                        <View style={styles.modalInfoGrid}>
-                          {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
-                          <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
-                          <Text style={styles.modalLabel}>Réalisé par :</Text>
-                          {renderClickableNames(datas?.DirectedBy, 'director')}
-                          <Text style={styles.modalLabel}>Genre :</Text>
-                          {renderClickableNames(datas?.Genres, 'genre')}
-                          <Text style={styles.modalLabel}>Compositeur : </Text>
-                          {renderClickableNames(datas?.MusicBy, 'composer')}
-                          
-                          <Text style={styles.modalLabel}>Casting :</Text>
-                          {renderClickableNames(datas?.Cast, 'actor', 15)}
-                          {mode === 'collection' && (
-                          <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
-                            <Buttons 
-                              title="🗑️ Supprimer le film" 
-                              onPress={() => onDeleteClick()} 
-                              variant="primary" 
-                              style={{ backgroundColor: '#d9534f', width: '80%' }} 
-                            />
-                          </View>  
-                          )}
-                        </View>
-                      </ScrollView>
-        
-                      <View style={styles.modalButtonsRow}>
-                        {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
-                        <View style={{ flex: 1 }}>
-                          <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          {mode === 'add' ? (
-                          <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
-                          ) : (
-                          <Buttons title="Prêter" onPress={() => handleLoanReturn()} variant="primary" />
-                          )}
-                        </View>
-                      </View>
-                    </View>
-                    {isLoanModal && (<>
-                          <LoanModal movieName={moviedata.title_fr} movieTmdbId={moviedata.tmdb_id} handleLoanReturn={() => handleLoanReturn()}/>
-                          </>)}
-                  </View>
-    );
+  //aller sur la modale de prêt
+  const onLendClick = () => {
+    setIsLoanModalVisible(true);
+  };
+
+  return (
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
+          <View style={styles.posterContainer}>
+            <Poster
+              imageUrl={imageUrl}
+              isLoaned={datas.isLoaned}
+              columns={2} 
+            />
+          </View>
+          {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
+          <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
+
+          <View style={styles.modalInfoGrid}>
+            {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
+            <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
+            <Text style={styles.modalLabel}>Réalisé par :</Text>
+            {renderClickableNames(datas?.DirectedBy, 'director')}
+            <Text style={styles.modalLabel}>Genre :</Text>
+            {renderClickableNames(datas?.Genres, 'genre')}
+            <Text style={styles.modalLabel}>Compositeur : </Text>
+            {renderClickableNames(datas?.MusicBy, 'composer')}
+
+            <Text style={styles.modalLabel}>Casting :</Text>
+            {renderClickableNames(datas?.Cast, 'actor', 15)}
+            {mode === 'collection' && (
+              <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
+                <Buttons
+                  title="🗑️ Supprimer le film"
+                  onPress={onDeleteClick}
+                  variant="primary"
+                  style={{ backgroundColor: '#d9534f', width: '80%' }}
+                />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        <View style={styles.modalButtonsRow}>
+          {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
+          <View style={{ flex: 1 }}>
+            <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
+          </View>
+          <View style={{ flex: 1 }}>
+            {mode === 'add' ? (
+              <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+            ) : (
+              datas?.isLoaned ? (
+                <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+              ) : (
+                <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
+              )
+            )}
+          </View>
+        </View>
+      </View>
+      <LoanModal 
+        visible={isLoanModalVisible}
+        onClose={() => setIsLoanModalVisible(false)}
+        movie={datas}
+        movieTmdbId={datas?.tmdb_id}
+        onSuccess={(updatedPastLoans) => setDatas({ 
+            ...datas, 
+            isLoaned: true, 
+            pastLoans: updatedPastLoans})}
+      />
+      <LoanDetailsModal 
+        visible={isLoanDetailsVisible}
+        onClose={() => setIsLoanDetailsVisible(false)}
+        movieName={datas?.title_fr || datas?.original_title || 'ce film'}
+        movieTmdbId={datas?.tmdb_id}
+        currentLoan={currentLoan}
+        onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
