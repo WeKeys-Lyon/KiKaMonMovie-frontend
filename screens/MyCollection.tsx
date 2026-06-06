@@ -48,6 +48,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
 
   const handleOpenMovie = (movie: any) => {
+    console.log(movie)
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
@@ -57,6 +58,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     dispatch(logout());
     //navigation.navigate('Home');
   }
+  
   const safeMovies = movies || [];
 
   const filtredMovies = safeMovies
