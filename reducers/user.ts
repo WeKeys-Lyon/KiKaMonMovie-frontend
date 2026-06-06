@@ -41,9 +41,21 @@ export const userSlice = createSlice({
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
-
+    addMovieLoan: (state, action: PayloadAction<any>) => {
+      const {index, data} = action.payload;
+      if (state.value.movies) {
+        state.value.movies[index].pastLoans = data;
+        state.value.movies[index].isLoaned = true;
+      }
+    },
+    setMovieReturned: (state, action: PayloadAction<any>) => {
+      const {index} = action.payload;
+      if (state.value.movies) { 
+        state.value.movies[index].isLoaned = false;
+      }
+    },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, logout, addMovieLoan } = userSlice.actions;
 export default userSlice.reducer;

@@ -12,6 +12,7 @@
   "dependencies": {
     "@expo/dom-webview": "^56.0.5",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-vector-icons/fontawesome": "^13.1.1",
     "@react-navigation/bottom-tabs": "6",
     "@react-navigation/native": "6",
@@ -20,6 +21,7 @@
     "@types/emscripten": "^1.41.5",
     "expo": "^54.0.34",
     "expo-camera": "~17.0.10",
+    "expo-checkbox": "~5.0.8",
     "expo-status-bar": "~3.0.9",
     "install": "^0.13.0",
     "react": "19.1.0",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, Image, TouchableOpacity, Dimensions, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -44,7 +44,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     return (width * 0.9) / columns - 10;
   };
   const cardWidth = getCardWidth();
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{type: string, value: string} | null>(null);
   
@@ -55,7 +55,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   };
 
   const handleLogout = () => {
-    console.log('je suis la')
+
     dispatch(logout());
     //navigation.navigate('Home');
   }
@@ -81,6 +81,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
+
       <Header title="Ma Collection" 
       leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>} 
         onPressLeft={() => console.log('Aller vers le profil')}
@@ -141,6 +142,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
         )}
       </View>
       {/*LA MODALE DETAIL DE FILM*/}
+
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         {selectedMovie && (
           <MovieCard 
@@ -150,9 +152,6 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             onFilterClick={(type, value) => {
               setActiveFilter({type, value});
               setIsModalVisible(false);
-            }}
-            onLendClick={() => {
-              console.log('Ouvrir la modale de prêt pour :', selectedMovie.title_fr);
             }}
             onDeleteClick={() => {
               Alert.alert(
