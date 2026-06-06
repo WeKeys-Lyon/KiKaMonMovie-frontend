@@ -80,7 +80,8 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
             if (data.result) {
                 console.log("Prêt enregistré avec succès !");
-                dispatch(setMovieLoaned(movieTmdbId));
+                const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+                dispatch(setMovieLoaned({index: indexMovie, data: data.answer}));
                 onSuccess(data.answer)
                 // On vide les champs pour la prochaine fois
                 setLoanTo('');
