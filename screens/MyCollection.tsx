@@ -144,7 +144,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              console.log(item);
+
               <MovieGrid
                 movie={item}
                 columns={columns}
