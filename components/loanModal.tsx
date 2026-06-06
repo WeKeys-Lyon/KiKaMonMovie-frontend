@@ -14,10 +14,10 @@ type loanModalProps = {
     onClose: () => void;
     movieName: string;
     movieTmdbId: number;
-    onSuccess: () => void;
+    onSuccess: (updatedPastLoans: any[]) => void;
 }
 
-export default function LoanModal({ movieName, onClose, visible, movieTmdbId, onSucces }: loanModalProps) {
+export default function LoanModal({ movieName, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
@@ -78,7 +78,7 @@ export default function LoanModal({ movieName, onClose, visible, movieTmdbId, on
             if (data.result) {
                 console.log("Prêt enregistré avec succès !");
                 dispatch(setMovieLoaned(movieTmdbId));
-                onSucces()
+                onSuccess(data.answer)
                 // On vide les champs pour la prochaine fois
                 setLoanTo('');
                 setNotes('');

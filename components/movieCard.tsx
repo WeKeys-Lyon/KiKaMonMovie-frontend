@@ -182,7 +182,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         onClose={() => setIsLoanModalVisible(false)}
         movie={datas}
         movieTmdbId={datas?.tmdb_id}
-        onSuccess={() => setDatas({ ...datas, isLoaned: true })}
+        onSuccess={(updatedPastLoans) => setDatas({ 
+            ...datas, 
+            isLoaned: true, 
+            pastLoans: updatedPastLoans})}
       />
       <LoanDetailsModal 
         visible={isLoanDetailsVisible}
