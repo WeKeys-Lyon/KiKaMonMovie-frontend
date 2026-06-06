@@ -12,18 +12,21 @@ const { height } = Dimensions.get('window');
 type loanModalProps = {
     visible: boolean;
     onClose: () => void;
-    movieName: string;
+    movie: any;
     movieTmdbId: number;
     onSuccess: (updatedPastLoans: any[]) => void;
 }
 
-export default function LoanModal({ movieName, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
+export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
 
+    let dueDateDefault = new Date();
+    dueDateDefault.setDate(dueDateDefault.getDate() + 7);
+
     const [loanTo, setLoanTo] = useState('');
-    const [loanDate, setLoanDate] = useState(new Date());
+    const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(false);
     const [notes, setNotes] = useState('');
 
@@ -54,7 +57,7 @@ export default function LoanModal({ movieName, onClose, visible, movieTmdbId, on
 
     const handleValidate = async () => {
         if (!loanTo.trim()) {
-            Alert("Veuillez indiquer à qui vous prêtez ce film !");
+            Alert.alert("Veuillez indiquer à qui vous prêtez ce film !");
             return;
         }
 
@@ -92,7 +95,7 @@ export default function LoanModal({ movieName, onClose, visible, movieTmdbId, on
             console.error("Erreur lors de la requête :", error);
         }
     };
-
+    console.log(movie)
     return (
         <View style={styles.container}>
             {/* 1. Le fond sombre qui apparait en fondu */}
@@ -112,7 +115,7 @@ export default function LoanModal({ movieName, onClose, visible, movieTmdbId, on
                 {/* 3. La modale qui glisse de bas en haut */}
                 <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
                     
-                    <Text style={styles.title}>Prêter {movieName} ?</Text>
+                    <Text style={styles.title}>Prêter {movie.title_fr ? movie.title_fr : movie.original_title } ?</Text>
                     
                     <ScrollView keyboardShouldPersistTaps='never' style={styles.scrollArea} showsVerticalScrollIndicator={false}>
                         <TextInput
@@ -125,7 +128,7 @@ export default function LoanModal({ movieName, onClose, visible, movieTmdbId, on
                         />
                         
                         <View style={styles.dateRow}>
-                            <Text style={styles.text}>Date du prêt :</Text>
+                            <Text style={[styles.text, {marginBottom: 0}]}>Date du prêt :</Text>
                             <DateTimePicker 
                                 mode="date" 
                                 display="default" 

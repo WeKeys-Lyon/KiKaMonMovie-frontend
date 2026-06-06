@@ -56,7 +56,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     const handleReturn = async () => {
         try {
             // Appel de ta future route backend pour clore le prêt
-            const response = await fetch(`${BACKEND_URL}/users/return-loan`, {
+            const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
                 method: 'POST', // ou PUT
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -101,7 +101,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                         </View>
 
                         <View style={styles.infoBlock}>
-                            <Text style={styles.label}>Date du prêt :</Text>
+                            <Text style={styles.label}>Retour prévu le :</Text>
                             <Text style={styles.value}>{formatDate(currentLoan?.dueDate)}</Text>
                         </View>
 
@@ -125,7 +125,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                     
                     {/* Bouton de fermeture classique */}
                     <View style={{ marginTop: 15 }}>
-                        <Buttons title="Fermer" onPress={onClose} variant="primary" />
+                        <Buttons title="Fermer" onPress={onClose} variant="secondary" />
                     </View>
                     
                 </Animated.View>

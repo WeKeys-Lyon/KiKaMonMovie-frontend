@@ -125,7 +125,7 @@ export default function SettingsModal({
                     </ScrollView>
 
                     <View style={styles.footer}>
-                        <Buttons title="Appliquer" onPress={onClose} variant="primary" />
+                        <Buttons title="Appliquer" onPress={onClose} variant="secondary" />
                     </View>
 
                 </View>
