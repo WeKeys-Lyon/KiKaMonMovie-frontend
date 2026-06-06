@@ -69,7 +69,8 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
 
             if (data.result) {
                 console.log("Film récupéré !");
-                dispatch(setMovieReturned(movieTmdbId));
+                const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+                dispatch(setMovieReturned({index: indexMovie}));
                 onReturnSuccess(); // Met à jour la MovieCard
                 onClose(); // Ferme la modale
             } else {

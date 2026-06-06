@@ -39,25 +39,16 @@ export const userSlice = createSlice({
       }
     },
     setMovieLoaned: (state, action: PayloadAction<any>) => {
+      const {index, data} = action.payload;
       if (state.value.movies) {
-        
-        const movieIndex = state.value.movies.findIndex(
-          (movie: any) => String(movie.tmdb_id) === String(action.payload)
-        );
-        
-        if (movieIndex !== -1) {
-          state.value.movies[movieIndex].isLoaned = true;
-        }
+        state.value.movies[index].pastLoans = data;
+        state.value.movies[index].isLoaned = true;
       }
     },
     setMovieReturned: (state, action: PayloadAction<any>) => {
-      if (state.value.movies) {
-        const movieIndex = state.value.movies.findIndex(
-          (movie: any) => String(movie.tmdb_id) === String(action.payload)
-        );
-        if (movieIndex !== -1) {
-          state.value.movies[movieIndex].isLoaned = false;
-        }
+      const {index} = action.payload;
+      if (state.value.movies) { 
+        state.value.movies[index].isLoaned = false;
       }
     },
     logout:(state) => {
