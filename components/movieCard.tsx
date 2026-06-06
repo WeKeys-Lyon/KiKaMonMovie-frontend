@@ -37,11 +37,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
   const currentLoan = user.movies.find(movie => movie.tmdb_id == moviedata.tmdb_id).pastLoans.at(-1);
-  /* const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
-    ? datas.pastLoans[datas.pastLoans.length - 1] 
-    : null; */
-
-
 
   useEffect(() => {
     const init = async () => {
