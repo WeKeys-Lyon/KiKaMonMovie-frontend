@@ -48,6 +48,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
 
   const handleOpenMovie = (movie: any) => {
+    console.log(movie)
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
