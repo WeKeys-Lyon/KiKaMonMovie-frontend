@@ -146,7 +146,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
         <Buttons 
           title="Sauvegarder" 
           onPress={handleSaveChanges} 
-          variant="primary" 
+          variant="secondary" 
           style={{ marginTop: 20, width: '100%' }}
         />
 
