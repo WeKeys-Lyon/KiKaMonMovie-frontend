@@ -7,6 +7,7 @@ import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
 import Poster from '../components/poster';
+import ProfileMenuModal from '../components/menuProfileModal';
 import SettingsModal from '../components/settingsModal';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
@@ -47,6 +48,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [sortOption, setSortOption] = useState<string>('title_asc');
+  const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   
 
 
@@ -198,11 +200,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
         leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>}
-        onPressLeft={() => console.log('Aller vers le profil')}
-        onPressLogout={() => {
-          dispatch(logout());
-          navigation.navigate('Home');
-        }}
+        onPressLeft={() => setIsProfileMenuVisible(true)}
         rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
         onPressRight={() => setIsSettingsVisible(true)}
       />
@@ -224,7 +222,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
         {isDeleteMode && (
           <TouchableOpacity 
             onPress={() => setIsDeleteMode(false)} 
-            style={{ padding: 10, alignSelf: 'flex-end', marginRight: 20, marginBottom: 10 }}
+            style={{ padding: 10, alignSelf: 'flex-end', marginRight: 20, marginBottom: 10, backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
           >
             <Text style={{ color: '#e8be4b', fontWeight: 'bold', fontSize: 16 }}>Terminer</Text>
           </TouchableOpacity>
@@ -297,6 +295,16 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             }
           />
         )}
+        {/*MODALE PROFILE*/}
+        <ProfileMenuModal
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={(screen) => navigation.navigate(screen)}
+          onLogout={() => {
+             dispatch(logout());
+             navigation.navigate('Home');
+          }}
+        />
         {/*MODALE SETTINGS*/}
         <SettingsModal
           visible={isSettingsVisible}
