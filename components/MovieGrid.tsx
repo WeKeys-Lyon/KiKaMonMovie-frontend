@@ -6,6 +6,7 @@ const { width } = Dimensions.get('window');
 
 
 interface MovieGridProps {
+  titleOriginal: string,
   movie: any;
   columns: number;
   cardWidth: number | string;
@@ -13,14 +14,14 @@ interface MovieGridProps {
   onLongPress?: () => void;
 }
 
-export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress }: MovieGridProps) {
+export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal }: MovieGridProps) {
   
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
     : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
   
   const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
-  const title = movie.title_fr || movie.original_title;
+  const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
 
   //données en mode liste//
   const originalTitle = movie.original_title;

@@ -133,6 +133,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           <View style={styles.modalInfoGrid}>
             {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
+            {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
             <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
             <Text style={styles.modalLabel}>Réalisé par :</Text>
             {renderClickableNames(datas?.DirectedBy, 'director')}
