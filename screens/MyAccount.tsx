@@ -63,7 +63,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Zone de danger',
-      'Es-tu sûr de vouloir supprimer définitivement ton compte et ta collection ? Cette action est irréversible.',
+      'Êtes-vous sûr de vouloir supprimer définitivement votre compte ainsique votre collection ? Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
