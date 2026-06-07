@@ -46,6 +46,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [sortOption, setSortOption] = useState<string>('title_asc');
   
 
 
@@ -64,7 +65,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const safeMovies = movies || [];
 
   const filtredMovies = safeMovies
-
+    // 1. LE FILTRE PAR CATÉGORIE (Genre, Réalisateur, etc.)
     .filter((movie: any) => {
       if (!activeFilter) return true;
 
@@ -79,11 +80,56 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       }
       return false;
     })
+    // 2. LE FILTRE DE LA RECHERCHE GLOBALE
     .filter((movie: any) => {
       if (searchQuery.trim() === '') return true;
-      const title = movie.title_fr || movie.original_title || '';
-      return title.toLowerCase().includes(searchQuery.toLowerCase());
-    });
+      const lowerQuery = searchQuery.toLowerCase();
+
+      const title = (movie.title_fr || movie.original_title || '').toLowerCase();
+      if (title.includes(lowerQuery)) return true;
+
+      const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+      if (year.includes(lowerQuery)) return true;
+
+      const hasDirector = movie.DirectedBy?.some((d: any) => d.name?.toLowerCase().includes(lowerQuery));
+      if (hasDirector) return true;
+
+      const hasActor = movie.Cast?.some((a: any) => a.name?.toLowerCase().includes(lowerQuery));
+      if (hasActor) return true;
+
+      const hasComposer = movie.MusicBy?.some((c: any) => c.name?.toLowerCase().includes(lowerQuery));
+      if (hasComposer) return true;
+
+      return false;
+    })
+    // 3. LE TRI 
+    .sort((a: any, b: any) => {
+      // Tri Alphabétique (A-Z)
+      if (sortOption === 'title_asc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      // Tri Alphabétique (Z-A)
+      if (sortOption === 'title_desc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleB.localeCompare(titleA);
+      }
+      // Tri par Année (Du plus récent au plus ancien)
+      if (sortOption === 'year_desc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearB - yearA;
+      }
+      // Tri par Année (Du plus ancien au plus récent)
+      if (sortOption === 'year_asc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearA - yearB;
+      }
+      return 0;
+    }); 
 
     const deleteMovie = async (tmdb_id: number) =>{
       try {
@@ -260,6 +306,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           movies={filtredMovies}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
         />
       </View>
       {/*LA MODALE DETAIL DE FILM*/}

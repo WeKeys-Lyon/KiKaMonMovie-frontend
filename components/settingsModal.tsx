@@ -11,6 +11,8 @@ type SettingsModalProps = {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     movies: any[];
+    sortOption: string;
+    setSortOption: (option: string) => void;
 };
 
 export default function SettingsModal({
@@ -21,15 +23,58 @@ export default function SettingsModal({
     searchQuery,
     setSearchQuery,
     movies,
+    sortOption,
+    setSortOption,
 }: SettingsModalProps) {
 
     //recherche par suggestions
-    const suggestions = searchQuery.length > 1
-        ? movies.filter((movie: any) => {
-            const title = movie.title_fr || movie.original_title;
-            return title.toLowerCase().includes(searchQuery.toLowerCase());
-        }).slice(0, 5)
-        : [];
+    const getGlobalSuggestions = () => {
+        if (searchQuery.trim().length <= 1) return [];
+        const lowerText = searchQuery.toLowerCase();
+        const allSuggestions:{ type:string; value: string }[] = [];
+            movies.forEach((movie: any) => {
+                const title = movie.title_fr || movie.original_title || '';
+                if (title && title.toLowerCase().includes(lowerText)) {
+                    allSuggestions.push({ type: 'Film', value: title });
+                }
+                const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+                if (year.includes(searchQuery)) {
+                    allSuggestions.push({ type: 'Année', value: year });
+                }
+                if (movie.Cast) {
+                movie.Cast.forEach((actor: any) => {
+                    if (actor.name && actor.name.toLowerCase().includes(lowerText)) {
+                        allSuggestions.push({ type: 'Acteur', value: actor.name });
+                    }
+                });
+            }
+            // 4. Réalisateurs
+            if (movie.DirectedBy) {
+                movie.DirectedBy.forEach((director: any) => {
+                    if (director.name && director.name.toLowerCase().includes(lowerText)) {
+                        allSuggestions.push({ type: 'Réalisateur', value: director.name });
+                    }
+                });
+            }
+            // 5. Compositeurs
+            if (movie.MusicBy) {
+                movie.MusicBy.forEach((composer: any) => {
+                    if (composer.name && composer.name.toLowerCase().includes(lowerText)) {
+                        allSuggestions.push({ type: 'Compositeur', value: composer.name });
+                    }
+                });
+            }
+        });
+
+        // Déduplication : on enlève les doublons
+        const uniqueSuggestions = Array.from(
+            new Set(allSuggestions.map((s) => JSON.stringify(s)))
+        ).map((s) => JSON.parse(s));
+
+        return uniqueSuggestions.slice(0, 5); // On garde les 5 meilleurs
+    };
+
+    const suggestions = getGlobalSuggestions();
 
 
     return (
@@ -66,23 +111,32 @@ export default function SettingsModal({
                             </View>
 
                             {/*LE MENU DÉROULANT DES SUGGESTIONS */}
+                            
                             {suggestions.length > 0 && (
                                 <View style={styles.suggestionsContainer}>
-                                    {suggestions.map((movie, index) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={styles.suggestionItem}
-                                            onPress={() => {
-                                                setSearchQuery(movie.title_fr || movie.original_title);
-                                                onClose();
-                                            }}
-                                        >
-                                            <FontAwesome name="film" size={14} color="#e8be4b" style={{ marginRight: 10 }} />
-                                            <Text style={styles.suggestionText} numberOfLines={1}>
-                                                {movie.title_fr || movie.original_title}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
+                                    {suggestions.map((item, index) => {
+                                        // On choisit l'icône selon le type
+                                        let iconName = "film";
+                                        if (item.type === 'Acteur' || item.type === 'Réalisateur') iconName = "user";
+                                        else if (item.type === 'Compositeur') iconName = "music";
+                                        else if (item.type === 'Année') iconName = "calendar";
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.suggestionItem}
+                                                onPress={() => {
+                                                    setSearchQuery(item.value); // On enregistre ce qu'on a cliqué
+                                                    onClose(); // On ferme la modale
+                                                }}
+                                            >
+                                                <FontAwesome name={iconName as any} size={14} color="#e8be4b" style={{ width: 20, textAlign: 'center', marginRight: 10 }} />
+                                                <Text style={styles.suggestionText} numberOfLines={1}>
+                                                    {item.value} <Text style={styles.suggestionType}>({item.type})</Text>
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
                                 </View>
                             )}
                         </View>
@@ -112,6 +166,42 @@ export default function SettingsModal({
                             >
                                 <FontAwesome name="th" size={20} color={columns === 3 ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, columns === 3 && { color: '#fff' }]}>3 Col</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* SECTION : TRI */}
+                        <Text style={styles.sectionTitle}>Trier par</Text>
+                        <View style={styles.sortButtonsRow}>
+                            <TouchableOpacity
+                                style={[styles.displayBtn, sortOption === 'title_asc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('title_asc')}
+                            >
+                                <FontAwesome name="sort-alpha-asc" size={16} color={sortOption === 'title_asc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'title_asc' && { color: '#fff' }]}>A-Z</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.displayBtn, sortOption === 'title_desc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('title_desc')}
+                            >
+                                <FontAwesome name="sort-alpha-desc" size={16} color={sortOption === 'title_desc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'title_desc' && { color: '#fff' }]}>Z-A</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.displayBtn, sortOption === 'year_desc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('year_desc')}
+                            >
+                                <FontAwesome name="calendar" size={16} color={sortOption === 'year_desc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'year_desc' && { color: '#fff', fontSize: 13 }]}>Récent</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.displayBtn, sortOption === 'year_asc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('year_asc')}
+                            >
+                                <FontAwesome name="history" size={16} color={sortOption === 'year_asc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'year_asc' && { color: '#fff', fontSize: 13 }]}>Ancien</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -252,4 +342,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     flex: 1,
   },
+  //tri
+    sortButtonsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 5,
+        marginBottom: 10,
+    },
 });
