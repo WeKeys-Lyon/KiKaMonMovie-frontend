@@ -199,9 +199,9 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
-        leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>}
+        leftIcon={<FontAwesome name="user-circle" size={24} color="#e8be4b" />}
         onPressLeft={() => setIsProfileMenuVisible(true)}
-        rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
+        rightIcon={<FontAwesome name="cog" size={24} color="#e8be4b" />}
         onPressRight={() => setIsSettingsVisible(true)}
       />
 

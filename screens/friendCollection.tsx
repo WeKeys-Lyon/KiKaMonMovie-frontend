@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import Header from '../components/header';
-import MovieGrid from '../components/MovieGrid'; // Ton composant d'affichage
+import MovieGrid from '../components/MovieGrid';
+import MovieCard from '../components/movieCard';
+import SettingsModal from '../components/settingsModal';
 import { FontAwesome } from '@expo/vector-icons';
 import { Buttons } from '../components/buttons';
+
+const { width } = Dimensions.get('window');
 
 type FriendCollectionProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -23,7 +27,10 @@ export default function FriendCollection({ navigation, route }: FriendCollection
   const [accessDenied, setAccessDenied] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
+const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [columns, setColumns] = useState(2);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('year_desc');
   useEffect(() => {
     fetchFriendCollection();
   }, []);
@@ -58,6 +65,10 @@ export default function FriendCollection({ navigation, route }: FriendCollection
   const handleAskForMovie = async () => {
     if (!selectedMovie) return;
 
+    
+    console.log("Tentative d'emprunt. Voici l'objet du film :", selectedMovie.title_fr);
+    console.log("L'ID envoyé est :", selectedMovie.tmdb_id || selectedMovie.id);
+
     try {
       const response = await fetch(`${BACKEND_URL}/users/ask-movie`, {
         method: 'POST',
@@ -65,28 +76,59 @@ export default function FriendCollection({ navigation, route }: FriendCollection
         body: JSON.stringify({ 
           token: user.token, 
           friendId: friendId, 
-          movieId: selectedMovie._id 
+          // 🛡️ DOUBLE SÉCURITÉ : On cherche tmdb_id, et sinon on tente id
+          tmdb_id: selectedMovie.tmdb_id || selectedMovie.id 
         }),
       });
+      
       const data = await response.json();
 
       if (data.result) {
         Alert.alert('Succès !', data.message);
-        setIsModalVisible(false); 
+        setIsModalVisible(false);
       } else {
         Alert.alert('Oups', data.error);
       }
     } catch (error) {
+      console.log("Erreur catch frontend:", error);
       Alert.alert('Erreur', 'Impossible d\'envoyer la demande.');
     }
   };
+  // 1. Filtrage par recherche
+  const filteredMovies = movies.filter((movie) => {
+    if (!searchQuery) return true; // Si la barre est vide, on garde tout
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    const titleFr = (movie?.title_fr || '').toLowerCase();
+    const titleOriginal = (movie?.original_title || '').toLowerCase();
+    const year = movie?.release_date ? movie.release_date.substring(0, 4) : '';
+    
+    // On vérifie si la recherche correspond au titre ou à l'année
+    return titleFr.includes(lowerQuery) || titleOriginal.includes(lowerQuery) || year.includes(searchQuery);
+  });
 
-  return (
-    <View style={styles.container}>
+  // 2. Tri selon l'option choisie dans SettingsModal
+  const filteredAndSortedMovies = filteredMovies.sort((a, b) => {
+    if (sortOption === 'title_asc') {
+      return (a?.title_fr || a?.original_title || '').localeCompare(b?.title_fr || b?.original_title || '');
+    } else if (sortOption === 'title_desc') {
+      return (b?.title_fr || b?.original_title || '').localeCompare(a?.title_fr || a?.original_title || '');
+    } else if (sortOption === 'year_desc') {
+      return new Date(b?.release_date || 0).getTime() - new Date(a?.release_date || 0).getTime();
+    } else if (sortOption === 'year_asc') {
+      return new Date(a?.release_date || 0).getTime() - new Date(b?.release_date || 0).getTime();
+    }
+    return 0;
+  });
+
+return (
+    <View style={[styles.container, { backgroundColor: '#2A3B5C' }]}>
       <Header 
         title={`Collection de ${friendName}`} 
-        leftIcon={<FontAwesome name="home" size={28} color="#e8be4b" />}
+        leftIcon={<FontAwesome name="home" size={24} color="#e8be4b" />}
         onPressLeft={() => navigation.goBack()}
+        rightIcon={<FontAwesome name="cog" size={24} color="#e8be4b" />}
+        onPressRight={() => setIsSettingsModalVisible(true)}
       />
 
       {isLoading ? (
@@ -105,15 +147,34 @@ export default function FriendCollection({ navigation, route }: FriendCollection
       ) : (
         <View style={{ flex: 1, padding: 10 }}>
           <FlatList
-            data={movies}
+            key={columns} 
+            data={filteredAndSortedMovies} 
             keyExtractor={(item, index) => item?.tmdb_id?.toString() || item?._id?.toString() || index.toString()}
-            numColumns={2}
+            numColumns={columns}
+            
+            columnWrapperStyle={columns > 1 ? {
+              justifyContent: 'flex-start',
+              gap: 10,
+              width: width * 0.9,
+              marginBottom: 15,
+            } : undefined}
+            
+            contentContainerStyle={{
+              paddingHorizontal: '5%',
+              paddingTop: 15,
+              paddingBottom: 30,
+              alignItems: 'center' 
+            }}
+            
+            showsVerticalScrollIndicator={false} 
+            
             renderItem={({ item }) => (
-              <View style={{ margin: 5 }}>
+
+              <View style={{ margin: columns > 1 ? 5 : 0 }}>
                 <MovieGrid
                   movie={item}
-                  columns={2}
-                  cardWidth={170} 
+                  columns={columns}
+                  cardWidth={columns === 1 ? '90%' : columns === 2 ? 170 : 110} 
                   onPress={() => {
                     setSelectedMovie(item);
                     setIsModalVisible(true);
@@ -124,82 +185,36 @@ export default function FriendCollection({ navigation, route }: FriendCollection
           />
         </View>
       )}
+
+
       {/* 🎬 LA MODALE DU FILM */}
-      <Modal visible={isModalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            
-            {selectedMovie && (
-              <>
-                {/* L'affiche du film */}
-                <Image 
-                  source={{ uri: selectedMovie.poster_path ? `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}` : 'https://via.placeholder.com/500x750' }} 
-                  style={styles.modalPoster} 
-                />
-                
-                {/* Titre et Année */}
-                <Text style={styles.modalTitle}>{selectedMovie.title_fr || selectedMovie.original_title}</Text>
-                <Text style={styles.modalYear}>
-                  {selectedMovie.release_date ? selectedMovie.release_date.substring(0, 4) : 'N/A'}
-                </Text>
 
-                {/* LES INFOS TECHNIQUES (Réalisateur, Acteurs, Compositeur) */}
-                <View style={styles.detailsContainer}>
-                  
-                  <Text style={styles.modalLabel}>
-                    Date de sortie : <Text style={styles.modalValue}>
-                      {selectedMovie?.release_date ? new Date(selectedMovie.release_date).toLocaleDateString('fr-FR') : 'Inconnue'}
-                    </Text>
-                  </Text>
-
-                  <Text style={styles.modalLabel}>
-                    Réalisé par : <Text style={styles.modalValue}>
-                      {selectedMovie?.DirectedBy?.map((d: any) => d.name).join(', ') || 'Inconnu'}
-                    </Text>
-                  </Text>
-
-                  <Text style={styles.modalLabel}>
-                    Genre : <Text style={styles.modalValue}>
-                      {selectedMovie?.Genres?.map((g: any) => g.name).join(', ') || 'Inconnu'}
-                    </Text>
-                  </Text>
-
-                  <Text style={styles.modalLabel}>
-                    Compositeur : <Text style={styles.modalValue}>
-                      {selectedMovie?.MusicBy?.map((m: any) => m.name).join(', ') || 'Inconnu'}
-                    </Text>
-                  </Text>
-
-                  <Text style={styles.modalLabel}>
-                    Casting : <Text style={styles.modalValue}>
-                      {/* On limite à 5 acteurs pour ne pas surcharger la modale */}
-                      {selectedMovie?.Cast?.slice(0, 5).map((a: any) => a.name).join(', ') || 'Inconnu'}
-                    </Text>
-                  </Text>
-
-                </View>
-
-                {/* Les boutons d'action */}
-                <View style={styles.modalButtonsRow}>
-                  <Buttons 
-                    title="Retour" 
-                    onPress={() => setIsModalVisible(false)} 
-                    variant="secondary" 
-                    style={{ flex: 1, marginRight: 10 }} 
-                  />
-                  <Buttons 
-                    title="Demander" 
-                    onPress={handleAskForMovie} 
-                    variant="primary" 
-                    style={{ flex: 1 }} 
-                  />
-                </View>
-              </>
-            )}
-
-          </View>
-        </View>
+      <Modal visible={isModalVisible} transparent={true} animationType="fade">
+        {selectedMovie && (
+          <MovieCard
+            mode="friend"
+            moviedata={selectedMovie}
+            setIsModalVisible={setIsModalVisible}
+            drawStyle={false} 
+            clickable={false}
+            navigation={navigation}
+            onAskMovie={handleAskForMovie} 
+          />
+        )}
       </Modal>
+
+      <SettingsModal
+          visible={isSettingsModalVisible}
+          onClose={() => setIsSettingsModalVisible(false)}
+          columns={columns}
+          setColumns={setColumns}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          movies={movies} 
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+      />
+
     </View>
   );
 }

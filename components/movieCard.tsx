@@ -17,14 +17,15 @@ type MovieCardScreenProps = {
   moviedata: any,
   setIsModalVisible: any,
   drawStyle: boolean
-  mode?: 'add' | 'collection';
+  mode?: 'add' | 'collection' | 'friend';
   onFilterClick?: (type: string, value: string) => void;
   onDeleteClick: () => void;
   onAddSuccess?: () => void;
+  onAskMovie?: () => void;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie }: MovieCardScreenProps) {
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -157,14 +158,26 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         </ScrollView>
 
         <View style={styles.modalButtonsRow}>
-          {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
+          {/* Bouton Retour (Toujours là) */}
           <View style={{ flex: 1 }}>
             <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
           </View>
+          
+          {/* Bouton d'Action dynamique selon le mode */}
           <View style={{ flex: 1 }}>
             {mode === 'add' ? (
               <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+            ) : mode === 'friend' ? (
+              // 🤝 MODE AMI : Soit Indisponible, soit Demander
+              datas?.isLoaned ? (
+                <View style={{ backgroundColor: 'rgba(217, 83, 79, 0.2)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9534f', alignItems: 'center' }}>
+                  <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
+                </View>
+              ) : (
+                <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
+              )
             ) : (
+              // 🏠 MODE COLLECTION (Mon App) : Soit Détails, soit Prêter
               datas?.isLoaned ? (
                 <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
               ) : (

@@ -1,55 +1,47 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FontAwesome } from '@expo/vector-icons';
 
 type HeaderProps = {
-    title: string,
-    leftIcon?: any,
-    rightIcon?: any,
+    title?: string, // Optionnel car tu as une valeur par défaut
+    leftIcon?: React.ReactNode, // "ReactNode" est le type parfait pour dire "ça peut être n'importe quelle icône"
+    rightIcon?: React.ReactNode,
     onPressLeft?: () => void,
     onPressRight?: () => void,
-    onPressLogout?: () => void
 }
-export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight, onPressLogout}: HeaderProps) {
-    const insets = useSafeAreaInsets();
-    const displayTitle = title ? title : 'KikaMonMovie'
 
-    
+export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPressRight }: HeaderProps) {
+    const insets = useSafeAreaInsets();
+    const displayTitle = title ? title : 'KikaMonMovie';
 
     return (
         <View style={[styles.headerContainer, { paddingTop: insets.top, paddingBottom: 15 }]}>
             
+            {/* ZONE GAUCHE */}
             <View style={styles.sideZone}>
                 <View style={styles.leftIconsWrapper}>
-                    {/* LE LOGO PROFIL */}
-                    {onPressLeft && (
+                    {leftIcon && onPressLeft && (
                         <TouchableOpacity onPress={onPressLeft} style={styles.iconButton}>
                             {leftIcon}
-                        </TouchableOpacity>
-                    )}
-                    
-                    {/* LE LOGO DÉCONNEXION */}
-                    {onPressLogout && (
-                        <TouchableOpacity onPress={onPressLogout} style={styles.iconButton}>
-                            <FontAwesome name="sign-out" size={24} color="#ff4d4d" />
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
 
+            {/* ZONE TITRE */}
             <View style={styles.titleZone}>
-                <Text style={styles.title}>{displayTitle}</Text>
+                <Text style={styles.title} numberOfLines={1}>{displayTitle}</Text>
             </View>
 
+            {/* ZONE DROITE */}
             <View style={styles.sideZone}>
-                {/* LE LOGO RÉGLAGES*/}
-                {onPressRight && (
+                {rightIcon && onPressRight && (
                     <TouchableOpacity onPress={onPressRight} style={styles.iconButton}>
-                        <FontAwesome name="cog" size={24} color="#92c4d8" />
+                        {rightIcon}
                     </TouchableOpacity>
                 )}
             </View>
+
         </View>
     );
 }
@@ -61,10 +53,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', 
         alignItems: 'center', 
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 3,
         elevation: 5,
