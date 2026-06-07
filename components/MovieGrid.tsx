@@ -10,9 +10,10 @@ interface MovieGridProps {
   columns: number;
   cardWidth: number | string;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieGridProps) {
+export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress }: MovieGridProps) {
   
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
@@ -31,7 +32,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieG
   // --- MODE LISTE (1 colonne) ---
   if (columns === 1) {
     return (
-      <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
         
         {/* L'affiche avec le bandeau de prêt intelligent */}
         <View style={styles.listPosterContainer}>
@@ -64,7 +65,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieG
 
   // MODE GRILLE (2 ou 3 colonnes)
   return (
-    <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
       <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} />
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>

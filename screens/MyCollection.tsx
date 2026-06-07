@@ -45,6 +45,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
   
 
 
@@ -84,7 +85,67 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       return title.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
+    const deleteMovie = async (tmdb_id: number) =>{
+      try {
+        const response = await fetch(`${BACKEND_URL}/users/delete-movie`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            tmdb_id: tmdb_id,
+          }),
+        });
+        const data = await response.json();
+        if (data.result) {
+          console.log("Film supprimé");
+          dispatch(removedMovieFromStore(tmdb_id));
+          if (movies.length <= 1) {
+            setIsDeleteMode(false);
+          }
+          }
+        } catch (error) {
+          console.error(error)
+      }
+    };
 
+    const confirmDelete = (item: any) => {
+      const title = item.title_fr || item.original_title || '';
+      if (item.isLoaned) {
+        Alert.alert(
+          'Film en cours de prêt',
+        `Attention, "${title}" est actuellement en cours de prêt. Souhaitez-vous quand même le supprimer ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: () => {
+              deleteMovie(item.tmdb_id);
+              setIsDeleteMode(false);
+            },
+          },
+        ]
+      );
+    } else {
+      // ✅ ALERTE CLASSIQUE SI LE FILM N'EST PAS PRÊTÉ
+      Alert.alert(
+        'Supprimer le film',
+        `Êtes-vous sûr de vouloir supprimer "${title}" de votre collection ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: () => {
+              deleteMovie(item.tmdb_id);
+              setIsDeleteMode(false);
+            },
+          },
+        ]
+      );
+    }
+  };
+      
 
 
   return (
@@ -112,6 +173,15 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
               <FontAwesome name="times" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
+        )}
+        {/* LE BOUTON POUR QUITTER LE MODE SUPPRESSION */}
+        {isDeleteMode && (
+          <TouchableOpacity 
+            onPress={() => setIsDeleteMode(false)} 
+            style={{ padding: 10, alignSelf: 'flex-end', marginRight: 20, marginBottom: 10 }}
+          >
+            <Text style={{ color: '#e8be4b', fontWeight: 'bold', fontSize: 16 }}>Terminer</Text>
+          </TouchableOpacity>
         )}
         {/*VUE A : SI LA COLLECTION EST VIDE*/}
         {activeFilter && (
@@ -148,12 +218,35 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
 
-              <MovieGrid
-                movie={item}
-                columns={columns}
-                cardWidth={cardWidth}
-                onPress={() => handleOpenMovie(item)}
-              />
+
+              <View style={{ position: 'relative', margin: columns > 1 ? 5 : 0 }}>
+                <MovieGrid
+                  movie={item}
+                  columns={columns}
+                  cardWidth={cardWidth}
+                  onPress={() => {
+                    if (isDeleteMode) {
+                      confirmDelete(item); 
+                    } else {
+                      handleOpenMovie(item);
+                    }
+                  }}
+                  onLongPress={() => {
+                    setIsDeleteMode(true);
+                    setSelectedMovie(item);
+                  }}
+                />
+
+                {isDeleteMode && (
+                  <TouchableOpacity
+                    style={styles.deleteBadge}
+                    activeOpacity={0.7}
+                    onPress={() => confirmDelete(item)} 
+                  >
+                    <FontAwesome name="times" size={14} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </View>
             )
             }
           />
@@ -313,5 +406,21 @@ const styles = StyleSheet.create({
   clearFilterText: {
     color: '#ff4d4d',
     fontWeight: 'bold',
+  },
+
+  //supprimer un film longpress
+  deleteBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#d9534f',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1C2942', 
+    zIndex: 10,
   },
 });
