@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
@@ -17,7 +17,9 @@ type MovieCardScreenProps = {
   moviedata: any,
   setIsModalVisible: any,
   drawStyle: boolean
-  mode?: 'add' | 'collection' | 'friend';
+  mode?: 'add' | 'collection' | 'friend' | 'manage_request';
+  requester?: any;
+  notificationId?: string;
   onFilterClick?: (type: string, value: string) => void;
   onDeleteClick: () => void;
   onAddSuccess?: () => void;
@@ -25,8 +27,8 @@ type MovieCardScreenProps = {
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie }: MovieCardScreenProps) {
-  console.log(moviedata)
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId}: MovieCardScreenProps) {
+
   const BACKEND_URL = process.env.BACKEND_URL;
 
   const user = useSelector((state: any) => state.user.value);
@@ -117,10 +119,33 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const onLendClick = () => {
     setIsLoanModalVisible(true);
   };
+  const handleRefuse = async () => {
+    try {
+      const response = await fetch(`${process.env.BACKEND_URL}/users/refuse-loan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token, 
+          tmdb_id: moviedata.tmdb_id,
+          notificationId: notificationId,
+          requesterId: requester._id
+        })
+      });
+      const data = await response.json();
+      
+      if (data.result) {
+        Alert.alert("Refusé", "La demande a été refusée.");
+        setIsModalVisible(false); 
+      }
+    } catch (error) {
+      console.error("Erreur lors du refus :", error);
+    }
+  };
 
-  return (
+ return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
+        
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
           <View style={styles.posterContainer}>
             <Poster
@@ -159,45 +184,83 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         </ScrollView>
 
         <View style={styles.modalButtonsRow}>
-          {/* Bouton Retour (Toujours là) */}
-          <View style={{ flex: 1 }}>
-            <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
-          </View>
-          
-          {/* Bouton d'Action dynamique selon le mode */}
-          <View style={{ flex: 1 }}>
-            {mode === 'add' ? (
-              <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
-            ) : mode === 'friend' ? (
-              // 🤝 MODE AMI : Soit Indisponible, soit Demander
-              datas?.isLoaned ? (
-                <View style={{ backgroundColor: 'rgba(217, 83, 79, 0.2)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9534f', alignItems: 'center' }}>
-                  <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
-                </View>
-              ) : (
-                <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
-              )
-            ) : (
-              // 🏠 MODE COLLECTION (Mon App) : Soit Détails, soit Prêter
-              datas?.isLoaned ? (
-                <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
-              ) : (
-                <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
-              )
-            )}
-          </View>
+          {mode === 'manage_request' ? (
+            // 🚨 MODE DÉCISION (Venant d'une notification)
+            <>
+              <View style={{ flex: 1 }}>
+                <Buttons 
+                  title="Refuser" 
+                  onPress={handleRefuse}
+                  variant="primary" 
+                  style={{ backgroundColor: '#d9534f' }} 
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Buttons 
+                  title={`Prêter à ${requester?.username}`} 
+                  onPress={() => setIsLoanModalVisible(true)} 
+                  variant="primary" 
+                />
+              </View>
+            </>
+          ) : (
+            // 🏠 MODES CLASSIQUES
+            <>
+              <View style={{ flex: 1 }}>
+                <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
+              </View>
+              <View style={{ flex: 1 }}>
+                {mode === 'add' ? (
+                  // 1️⃣ MODE AJOUT
+                  <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+                ) : mode === 'friend' ? (
+                  // 2️⃣ MODE AMI
+                  datas?.isLoaned ? (
+                    <View style={{ backgroundColor: 'rgba(217, 83, 79, 0.2)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9534f', alignItems: 'center' }}>
+                      <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
+                    </View>
+                  ) : (
+                    <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
+                  )
+                ) : (
+                  // 3️⃣ MODE COLLECTION (Par défaut)
+                  datas?.isLoaned ? (
+                    <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+                  ) : (
+                    <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
+                  )
+                )}
+              </View>
+            </>
+          )}
         </View>
-      </View>
+
+      {/* 🚨 LA BALISE MANQUANTE EST ICI ! Elle ferme modalContent */}
+      </View> 
+
       <LoanModal 
         visible={isLoanModalVisible}
         onClose={() => setIsLoanModalVisible(false)}
         movie={datas}
         movieTmdbId={datas?.tmdb_id}
-        onSuccess={(updatedPastLoans) => setDatas({ 
-            ...datas, 
-            isLoaned: true, 
-            pastLoans: updatedPastLoans})}
+        preselectedUser={requester}
+        notificationId={notificationId}
+        onSuccess={(updatedPastLoans) => {
+            setDatas({ 
+                ...datas, 
+                isLoaned: true, 
+                pastLoans: updatedPastLoans
+            });
+
+            setIsLoanModalVisible(false);
+            if (typeof setIsModalVisible === 'function') {
+                setIsModalVisible(false);
+            } else if (typeof setModalVisible === 'function') {
+                setModalVisible();
+            }
+        }}
       />
+      
       <LoanDetailsModal 
         visible={isLoanDetailsVisible}
         onClose={() => setIsLoanDetailsVisible(false)}
@@ -206,6 +269,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         currentLoan={currentLoan}
         onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
       />
+      
     </View>
   );
 }

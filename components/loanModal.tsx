@@ -16,9 +16,11 @@ type loanModalProps = {
     movie: any;
     movieTmdbId: number;
     onSuccess: (updatedPastLoans: any[]) => void;
+    preselectedUser?: any;
+    notificationId?: string;
 }
 
-export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
+export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
@@ -37,6 +39,16 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [searchFriendID, setSearchFriendID] = useState<number>(0);
     const [openSuggestions, setOpenSuggestions] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (preselectedUser) {
+            setSearchQuery(preselectedUser.username);
+            setSearchFriendID(preselectedUser._id);
+        } else if (!visible) {
+            setLoanTo('');
+        }
+    }, [preselectedUser]);
+
 
     useEffect(() => {
         if (visible) {
@@ -77,7 +89,8 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                     borrower: (searchQuery && !loanTo) ? '' : loanTo,
                     dueDate: loanDate,
                     notes: notes,
-                    Notification: reminder
+                    Notification: reminder,
+                    notificationId: notificationId
                 }),
             });
 
