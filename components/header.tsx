@@ -25,7 +25,7 @@ export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPres
                     {/* LE LOGO PROFIL */}
                     {onPressLeft && (
                         <TouchableOpacity onPress={onPressLeft} style={styles.iconButton}>
-                            <FontAwesome name="user-circle" size={24} color="#92c4d8" />
+                            {leftIcon}
                         </TouchableOpacity>
                     )}
                     

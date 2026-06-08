@@ -8,6 +8,9 @@ import SignUpScreen from './screens/SignUpScreen';
 import SignInScreen from './screens/SignInScreen';
 import MyCollection from './screens/MyCollection';
 import AddAMovie from './screens/AddAMovie';
+import MyAccount from './screens/MyAccount';
+import MyFriends from './screens/myFriends';
+import FriendCollection from './screens/friendCollection';
 /*import MyShares from './screens/MyShares'; */
 
 // redux imports
@@ -71,6 +74,9 @@ export default function App() {
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="TabNavigator" component={TabNavigator} />
           <Stack.Screen name="OnboardingAddAMovie" component={AddAMovie} />
+          <Stack.Screen name="MyAccount" component={MyAccount} />
+          <Stack.Screen name="MyFriends" component={MyFriends} />
+          <Stack.Screen name="FriendCollection" component={FriendCollection} />
         </Stack.Navigator>
       </NavigationContainer>
       </PersistGate>

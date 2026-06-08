@@ -6,20 +6,22 @@ const { width } = Dimensions.get('window');
 
 
 interface MovieGridProps {
+  titleOriginal: string,
   movie: any;
   columns: number;
   cardWidth: number | string;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieGridProps) {
+export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal }: MovieGridProps) {
   
   const imageUrl = movie.poster_path 
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
     : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
   
   const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
-  const title = movie.title_fr || movie.original_title;
+  const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
 
   //données en mode liste//
   const originalTitle = movie.original_title;
@@ -31,7 +33,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieG
   // --- MODE LISTE (1 colonne) ---
   if (columns === 1) {
     return (
-      <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
         
         {/* L'affiche avec le bandeau de prêt intelligent */}
         <View style={styles.listPosterContainer}>
@@ -64,7 +66,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress }: MovieG
 
   // MODE GRILLE (2 ou 3 colonnes)
   return (
-    <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
       <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} />
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>

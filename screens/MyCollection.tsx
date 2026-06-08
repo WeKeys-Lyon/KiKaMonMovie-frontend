@@ -7,6 +7,7 @@ import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
 import Poster from '../components/poster';
+import ProfileMenuModal from '../components/menuProfileModal';
 import SettingsModal from '../components/settingsModal';
 import { removedMovieFromStore, logout } from '../reducers/user';
 import { useDispatch } from 'react-redux';
@@ -27,6 +28,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [columns, setColumns] = useState(2);
+  const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
 
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.value);
@@ -45,6 +47,10 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [sortOption, setSortOption] = useState<string>('title_asc');
+  const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
+  
 
 
   const handleOpenMovie = (movie: any) => {
@@ -62,7 +68,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const safeMovies = movies || [];
 
   const filtredMovies = safeMovies
-
+    // 1. LE FILTRE PAR CATÉGORIE (Genre, Réalisateur, etc.)
     .filter((movie: any) => {
       if (!activeFilter) return true;
 
@@ -77,24 +83,136 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       }
       return false;
     })
+    // 2. LE FILTRE DE LA RECHERCHE GLOBALE
     .filter((movie: any) => {
       if (searchQuery.trim() === '') return true;
-      const title = movie.title_fr || movie.original_title || '';
-      return title.toLowerCase().includes(searchQuery.toLowerCase());
-    });
+      const lowerQuery = searchQuery.toLowerCase();
 
+      const title = (movie.title_fr || movie.original_title || '').toLowerCase();
+      if (title.includes(lowerQuery)) return true;
 
+      const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+      if (year.includes(lowerQuery)) return true;
+
+      const hasDirector = movie.DirectedBy?.some((d: any) => d.name?.toLowerCase().includes(lowerQuery));
+      if (hasDirector) return true;
+
+      const hasActor = movie.Cast?.some((a: any) => a.name?.toLowerCase().includes(lowerQuery));
+      if (hasActor) return true;
+
+      const hasComposer = movie.MusicBy?.some((c: any) => c.name?.toLowerCase().includes(lowerQuery));
+      if (hasComposer) return true;
+
+      return false;
+    })
+    // 3. LE TRI 
+    .sort((a: any, b: any) => {
+      // Tri Alphabétique (A-Z)
+      if (sortOption === 'title_asc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      // Tri Alphabétique (Z-A)
+      if (sortOption === 'title_desc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleB.localeCompare(titleA);
+      }
+      // Tri par Année (Du plus récent au plus ancien)
+      if (sortOption === 'year_desc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearB - yearA;
+      }
+      // Tri par Année (Du plus ancien au plus récent)
+      if (sortOption === 'year_asc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearA - yearB;
+      }
+      // Tri Alphabétique Original (A-Z)
+      if (sortOption === 'title_origin_asc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      if (sortOption === 'title_origin_desc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleB.localeCompare(titleA);
+      }
+      return 0;
+    }); 
+
+    const deleteMovie = async (tmdb_id: number) =>{
+      try {
+        const response = await fetch(`${BACKEND_URL}/users/delete-movie`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            tmdb_id: tmdb_id,
+          }),
+        });
+        const data = await response.json();
+        if (data.result) {
+          console.log("Film supprimé");
+          dispatch(removedMovieFromStore(tmdb_id));
+          if (movies.length <= 1) {
+            setIsDeleteMode(false);
+          }
+          }
+        } catch (error) {
+          console.error(error)
+      }
+    };
+
+    const confirmDelete = (item: any) => {
+      const title = item.title_fr || item.original_title || '';
+      if (item.isLoaned) {
+        Alert.alert(
+          'Film en cours de prêt',
+        `Attention, "${title}" est actuellement en cours de prêt. Souhaitez-vous quand même le supprimer ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: () => {
+              deleteMovie(item.tmdb_id);
+              setIsDeleteMode(false);
+            },
+          },
+        ]
+      );
+    } else {
+      // ✅ ALERTE CLASSIQUE SI LE FILM N'EST PAS PRÊTÉ
+      Alert.alert(
+        'Supprimer le film',
+        `Êtes-vous sûr de vouloir supprimer "${title}" de votre collection ?`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: () => {
+              deleteMovie(item.tmdb_id);
+              setIsDeleteMode(false);
+            },
+          },
+        ]
+      );
+    }
+  };
+      
 
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
         leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>}
-        onPressLeft={() => console.log('Aller vers le profil')}
-        onPressLogout={() => {
-          dispatch(logout());
-          navigation.navigate('Home');
-        }}
+        onPressLeft={() => setIsProfileMenuVisible(true)}
         rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
         onPressRight={() => setIsSettingsVisible(true)}
       />
@@ -111,6 +229,15 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
               <FontAwesome name="times" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
+        )}
+        {/* LE BOUTON POUR QUITTER LE MODE SUPPRESSION */}
+        {isDeleteMode && (
+          <TouchableOpacity 
+            onPress={() => setIsDeleteMode(false)} 
+            style={{ padding: 10, alignSelf: 'flex-end', marginRight: 20, marginBottom: 10, backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+          >
+            <Text style={{ color: '#e8be4b', fontWeight: 'bold', fontSize: 16 }}>Terminer</Text>
+          </TouchableOpacity>
         )}
         {/*VUE A : SI LA COLLECTION EST VIDE*/}
         {activeFilter && (
@@ -147,16 +274,50 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
 
-              <MovieGrid
-                movie={item}
-                columns={columns}
-                cardWidth={cardWidth}
-                onPress={() => handleOpenMovie(item)}
-              />
+
+              <View style={{ position: 'relative', margin: columns > 1 ? 5 : 0 }}>
+                <MovieGrid
+                  titleOriginal={sortOption}
+                  movie={item}
+                  columns={columns}
+                  cardWidth={cardWidth}
+                  onPress={() => {
+                    if (isDeleteMode) {
+                      confirmDelete(item); 
+                    } else {
+                      handleOpenMovie(item);
+                    }
+                  }}
+                  onLongPress={() => {
+                    setIsDeleteMode(true);
+                    setSelectedMovie(item);
+                  }}
+                />
+
+                {isDeleteMode && (
+                  <TouchableOpacity
+                    style={styles.deleteBadge}
+                    activeOpacity={0.7}
+                    onPress={() => confirmDelete(item)} 
+                  >
+                    <FontAwesome name="times" size={14} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </View>
             )
             }
           />
         )}
+        {/*MODALE PROFILE*/}
+        <ProfileMenuModal
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={(screen) => navigation.navigate(screen)}
+          onLogout={() => {
+             dispatch(logout());
+             navigation.navigate('Home');
+          }}
+        />
         {/*MODALE SETTINGS*/}
         <SettingsModal
           visible={isSettingsVisible}
@@ -166,6 +327,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           movies={filtredMovies}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
         />
       </View>
       {/*LA MODALE DETAIL DE FILM*/}
@@ -312,5 +475,21 @@ const styles = StyleSheet.create({
   clearFilterText: {
     color: '#ff4d4d',
     fontWeight: 'bold',
+  },
+
+  //supprimer un film longpress
+  deleteBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#d9534f',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1C2942', 
+    zIndex: 10,
   },
 });
