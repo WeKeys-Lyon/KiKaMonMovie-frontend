@@ -6,12 +6,13 @@ export type UserState = {
     token: string | null;
     username: string | null;
     movies: any[] | null;
+    notifications: any[] | null;
     /* linkingCode: string | null; */
   };
 };
 
 const initialState: UserState = {
-  value: { email: null, token: null, username: null, movies: [] /* linkingCode: null */ },
+  value: { email: null, token: null, username: null, movies: [], notifications: []/* linkingCode: null */ },
 };
 
 export const userSlice = createSlice({
@@ -51,11 +52,14 @@ export const userSlice = createSlice({
         state.value.movies[index].isLoaned = false;
       }
     },
+    updateNotifications: (state, action: PayloadAction<any>) => {
+      state.value.notifications = action.payload;
+    },
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout } = userSlice.actions;
 export default userSlice.reducer;

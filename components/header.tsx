@@ -35,10 +35,18 @@ export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPres
 
             {/* ZONE DROITE */}
             <View style={styles.sideZone}>
-                {rightIcon && onPressRight && (
-                    <TouchableOpacity onPress={onPressRight} style={styles.iconButton}>
-                        {rightIcon}
-                    </TouchableOpacity>
+                {rightIcon && (
+                    onPressRight ? (
+                        /* Cas 1 : Une icône simple avec une action globale */
+                        <TouchableOpacity onPress={onPressRight} style={styles.iconButton}>
+                            {rightIcon}
+                        </TouchableOpacity>
+                    ) : (
+                        /* Cas 2 : Un groupe d'icônes qui gèrent déjà leurs clics */
+                        <View style={styles.iconButton}>
+                            {rightIcon}
+                        </View>
+                    )
                 )}
             </View>
 
