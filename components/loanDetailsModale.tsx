@@ -25,7 +25,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [friendName, setFriendName] = useState<string>('');
     useEffect(() => {
-        if (currentLoan.isSharedToUser) {
+        if (currentLoan?.isSharedToUser) {
             const friend = user.friends.find(f => f._id == currentLoan.userid)
             setFriendName(friend.username)
         }

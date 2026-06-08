@@ -8,7 +8,8 @@ import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
 import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
-
+import FontAwesome  from '@expo/vector-icons/FontAwesome';
+import {iLikeThisMovie} from '../reducers/user';
 
 
 type MovieCardScreenProps = {
@@ -26,7 +27,6 @@ type MovieCardScreenProps = {
 
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie }: MovieCardScreenProps) {
-  console.log(moviedata)
   const BACKEND_URL = process.env.BACKEND_URL;
 
   const user = useSelector((state: any) => state.user.value);
@@ -37,6 +37,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [datas, setDatas] = useState(moviedata)
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
   const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
     ? datas.pastLoans[datas.pastLoans.length - 1] 
     : null;
@@ -117,18 +118,38 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const onLendClick = () => {
     setIsLoanModalVisible(true);
   };
+  const indexMovie = user.movies.findIndex(film => moviedata.tmdb_id == film.tmdb_id);
+
+  const handleLike = async () => {
+      setIsLiked(!isLiked);
+      const myURL = `${BACKEND_URL}/users/isLiked`;
+      const response = await fetch(encodeURI(myURL), {
+         method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            tmdb_id: moviedata.tmdb_id
+          }),
+      });
+      const data = await response.json();
+      dispatch(iLikeThisMovie({index: indexMovie}))    
+    }
 
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
+          <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
+          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          </TouchableOpacity>
           <View style={styles.posterContainer}>
             <Poster
               imageUrl={imageUrl}
               isLoaned={datas.isLoaned}
               columns={2} 
-            />
+            /> 
           </View>
+          
           {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
 
