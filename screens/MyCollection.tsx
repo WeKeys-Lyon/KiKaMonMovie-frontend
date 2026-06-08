@@ -32,6 +32,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [columns, setColumns] = useState(2);
+  const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
 
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.value);
@@ -159,6 +160,17 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
         const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
         const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
         return yearA - yearB;
+      }
+      // Tri Alphabétique Original (A-Z)
+      if (sortOption === 'title_origin_asc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      if (sortOption === 'title_origin_desc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleB.localeCompare(titleA);
       }
       return 0;
     }); 
@@ -330,6 +342,7 @@ const handleManageLoan = (notification: any) => {
 
               <View style={{ position: 'relative', margin: columns > 1 ? 5 : 0 }}>
                 <MovieGrid
+                  titleOriginal={sortOption}
                   movie={item}
                   columns={columns}
                   cardWidth={cardWidth}

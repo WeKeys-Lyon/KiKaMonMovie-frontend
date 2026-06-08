@@ -173,7 +173,21 @@ export default function SettingsModal({
                         <Text style={styles.sectionTitle}>Trier par</Text>
                         <View style={styles.sortButtonsRow}>
                             <TouchableOpacity
-                                style={[styles.displayBtn, sortOption === 'title_asc' && styles.displayBtnActive]}
+                                style={[styles.sortBtn, sortOption === 'title_origin_asc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('title_origin_asc')}
+                            >
+                                <FontAwesome name="sort-alpha-asc" size={16} color={sortOption === 'title_origin_asc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'title_origin_asc' && { color: '#fff', fontSize: 13 }]}>Titre Original</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.sortBtn, sortOption === 'title_origin_desc' && styles.displayBtnActive]}
+                                onPress={() => setSortOption('title_origin_desc')}
+                            >
+                                <FontAwesome name="sort-alpha-desc" size={16} color={sortOption === 'title_origin_desc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'title_origin_desc' && { color: '#fff', fontSize: 13 }]}>Titre Original</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.sortBtn, sortOption === 'title_asc' && styles.displayBtnActive]}
                                 onPress={() => setSortOption('title_asc')}
                             >
                                 <FontAwesome name="sort-alpha-asc" size={16} color={sortOption === 'title_asc' ? "#fff" : "#aaa"} />
@@ -181,7 +195,7 @@ export default function SettingsModal({
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.displayBtn, sortOption === 'title_desc' && styles.displayBtnActive]}
+                                style={[styles.sortBtn, sortOption === 'title_desc' && styles.displayBtnActive]}
                                 onPress={() => setSortOption('title_desc')}
                             >
                                 <FontAwesome name="sort-alpha-desc" size={16} color={sortOption === 'title_desc' ? "#fff" : "#aaa"} />
@@ -189,7 +203,7 @@ export default function SettingsModal({
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.displayBtn, sortOption === 'year_desc' && styles.displayBtnActive]}
+                                style={[styles.sortBtn,  sortOption === 'year_desc' && styles.displayBtnActive]}
                                 onPress={() => setSortOption('year_desc')}
                             >
                                 <FontAwesome name="calendar" size={16} color={sortOption === 'year_desc' ? "#fff" : "#aaa"} />
@@ -197,7 +211,7 @@ export default function SettingsModal({
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.displayBtn, sortOption === 'year_asc' && styles.displayBtnActive]}
+                                style={[styles.sortBtn, sortOption === 'year_asc' && styles.displayBtnActive]}
                                 onPress={() => setSortOption('year_asc')}
                             >
                                 <FontAwesome name="history" size={16} color={sortOption === 'year_asc' ? "#fff" : "#aaa"} />
@@ -344,9 +358,27 @@ const styles = StyleSheet.create({
   },
   //tri
     sortButtonsRow: {
+        flex: 1,
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 5,
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignContent: 'flex-start',
+        gap: 15,
         marginBottom: 10,
+        width: '100%'
+        
     },
+    sortBtn: {
+        /* flex: 1,
+        flexDirection: 'row', */
+        width: 150,
+        alignItems: 'center',
+        /* justifyContent: 'center', */
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        padding: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'transparent',
+        gap: 8,
+    }
 });

@@ -53,7 +53,19 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
         Alert.alert("Fonctionnalité à venir", `Un rappel sera envoyé à ${currentLoan?.borrower || 'cet ami'}.`);
     };
 
-    const handleReturn = async () => {
+    const handleReturn = async () => { 
+        Alert.alert(
+            'Retour du film',
+            `Validez-vous le fait que "${movieName}" est de retour dans votre collection ?`,
+            [
+                {
+                text: 'Annuler',
+                style: 'cancel',
+                },
+                {
+                text: 'Valider',
+                style: 'destructive',
+                onPress: async () => {
         try {
             // Appel de ta future route backend pour clore le prêt
             const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
@@ -80,7 +92,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
             }
         } catch (error) {
             console.error(error);
-        }
+        }}}])
     };
 
     return (

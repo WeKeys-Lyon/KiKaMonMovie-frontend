@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 type ProfileMenuModalProps = {
@@ -42,7 +42,20 @@ export default function ProfileMenuModal({ visible, onClose, onNavigate, onLogou
 
               <TouchableOpacity 
                 style={styles.menuItem} 
-                onPress={() => { onClose(); onLogout(); }}
+                onPress={() => {  Alert.alert(
+                    'Déconnexion',
+                    `Souhaitez-vous vraiment vous déconnecter de votre compte ?`,
+                    [
+                      {
+                        text: 'Annuler',
+                        style: 'cancel',
+                      },
+                      {
+                        text: 'Valider',
+                        style: 'destructive',
+                        onPress: async () => {
+                          onClose(); onLogout();}}]) 
+                        }}
               >
                 <FontAwesome name="sign-out" size={18} color="#d9534f" style={styles.icon} />
                 <Text style={[styles.menuText, { color: '#d9534f' }]}>Me déconnecter</Text>
