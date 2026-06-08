@@ -10,6 +10,8 @@ import Poster from '../components/poster';
 import ProfileMenuModal from '../components/menuProfileModal';
 import NotificationModal from '../components/notificationsModal';
 import SettingsModal from '../components/settingsModal';
+import { useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { removedMovieFromStore, logout, updateNotifications } from '../reducers/user';
 import { useDispatch } from 'react-redux';
@@ -55,22 +57,34 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   
   
 //reception notifications
-useEffect(() => {
-  const fetchNotifications = async () => {
-      if (!user.toker) return;
-      try {
+useFocusEffect(
+    useCallback(() => {
+      console.log("👀 L'écran Ma Collection est au premier plan !");
+      
+      const fetchNotifications = async () => {
+        if (!user.token) {
+          console.log("❌ Annulation : Le token est introuvable dans Redux.");
+          return;
+        }
+
+        console.log("✅ Token trouvé, on appelle le backend...");
+        try {
           const response = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
           const data = await response.json();
-          if (data.result) {
-              dispatch(updateNotifications(data.notifications));
-          }
-      } catch (error) {
-          console.error(error);
-      }
-  };
+          
+          console.log("📥 Réponse du backend :", data);
 
-  fetchNotifications();
-}, []);
+          if (data.result) {
+            dispatch(updateNotifications(data.notifications));
+          }
+        } catch (error) {
+          console.error("🚨 Erreur lors du fetch :", error);
+        }
+      };
+
+      fetchNotifications();
+    }, [user.token])
+  );
 
 //calcul des notifications: 
 const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 0;
