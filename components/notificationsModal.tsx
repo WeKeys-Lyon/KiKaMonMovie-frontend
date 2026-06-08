@@ -12,9 +12,10 @@ type NotificationModalProps = {
     onAcceptFriend?: (notification: any) => void;
     onDeleteNotification?: (notificationId: string) => void;
     onMarkAllAsRead?: () => void;
+    onManageFriendRequest?: (notification: any, action: 'accept' | 'refuse') => void;
 };
 
-export default function NotificationModal({ visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead }: NotificationModalProps) {
+export default function NotificationModal({ visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest }: NotificationModalProps) {
 
    const renderNotification = ({ item }: { item: any }) => {
         // 1️⃣ Cas : Demande de prêt
@@ -92,7 +93,41 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
+
+        //Cas: demande d'ami
+        if (item.type === 'friend_request') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="user-plus" size={20} color="#337ab7" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> (Code: {item.senderId?.friendCode}) souhaite t'ajouter à sa liste d'amis.
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                            <View style={{ flex: 1 }}>
+                                <Buttons 
+                                    title="Refuser" 
+                                    onPress={() => onManageFriendRequest && onManageFriendRequest(item, 'refuse')} 
+                                    variant="primary" 
+                                    style={{ backgroundColor: '#d9534f', paddingVertical: 8 }} 
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Buttons 
+                                    title="Accepter" 
+                                    onPress={() => onManageFriendRequest && onManageFriendRequest(item, 'accept')} 
+                                    variant="primary" 
+                                    style={{ backgroundColor: '#5cb85c', paddingVertical: 8 }} 
+                                />
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            )
     };
+}
 
     return (
         <Modal visible={visible} animationType="slide" transparent={true}>

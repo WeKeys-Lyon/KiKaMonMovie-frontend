@@ -308,6 +308,42 @@ const handleDeleteNotification = async (notificationId: string) => {
     }
   };
 
+  // Gérer les demandes d'amis (Accepter / Refuser)
+  const handleManageFriendRequest = async (notification: any, action: 'accept' | 'refuse') => {
+    try {
+      // On choisit la bonne route selon le bouton cliqué
+      const endpoint = action === 'accept' ? 'accept-friend' : 'refuse-friend';
+      
+      const response = await fetch(`${process.env.BACKEND_URL}/users/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          notificationId: notification._id,
+          senderId: notification.senderId?._id 
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        // Succès ! On retire la notification de la liste Redux pour l'effacer de l'écran
+        const updatedNotifications = user.notifications.filter((n: any) => n._id !== notification._id);
+        dispatch(updateNotifications(updatedNotifications));
+        
+        // Un petit message pour confirmer à l'utilisateur
+        Alert.alert(
+          action === 'accept' ? 'Nouvel ami !' : 'Demande refusée',
+          data.message
+        );
+      } else {
+        console.log("Erreur de gestion d'ami :", data.error);
+      }
+    } catch (error) {
+      console.error(`Erreur lors de la gestion de l'ami (${action}) :`, error);
+    }
+  };
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -524,6 +560,7 @@ const handleDeleteNotification = async (notificationId: string) => {
         onManageLoan={handleManageLoan}
         onDeleteNotification={handleDeleteNotification}
         onMarkAllAsRead={handleMarkAllAsRead}
+        onManageFriendRequest={handleManageFriendRequest}
       />
     </ImageBackground>
   );
