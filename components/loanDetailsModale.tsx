@@ -23,7 +23,13 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
-
+    const [friendName, setFriendName] = useState<string>('');
+    useEffect(() => {
+        if (currentLoan.isSharedToUser) {
+            const friend = user.friends.find(f => f._id == currentLoan.userid)
+            setFriendName(friend.username)
+        }
+    }, [])
     useEffect(() => {
         if (visible) {
             setIsRendered(true);
@@ -112,7 +118,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                     <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
                         <View style={styles.infoBlock}>
                             <Text style={styles.label}>Prêté à :</Text>
-                            <Text style={styles.value}>{currentLoan?.borrower || 'Inconnu'}</Text>
+                            <Text style={styles.value}>{friendName || currentLoan?.borrower || 'Inconnu'}</Text>
                         </View>
 
                         <View style={styles.infoBlock}>

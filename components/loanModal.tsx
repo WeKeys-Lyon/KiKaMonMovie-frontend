@@ -60,7 +60,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     if (!visible) return null;
 
     const handleValidate = async () => {
-        if (!loanTo.trim()) {
+        if (!loanTo.trim() && !searchQuery.trim()) {
             Alert.alert("Veuillez indiquer à qui vous prêtez ce film !");
             return;
         }
@@ -107,14 +107,10 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 const lowerText = loanTo.toLowerCase();
                 const allSuggestions:{value: string, _id: any }[] = [];
                     user.friends.forEach((friend: {_id: any, username: string}) => {
-                        
                         if (friend.username && friend.username.toLowerCase().includes(lowerText)) {
-                            console.log('y a un match');
                             allSuggestions.push({ value: friend.username, _id: friend._id });
                         }
                 });
-
-                
                 return allSuggestions.slice(0, 5); // On garde les 5 meilleurs
             } else {
                 return  [];
@@ -163,9 +159,9 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                                                 key={index}
                                                 style={styles.suggestionItem}
                                                 onPress={() => {
-                                                    /*setSearchFriendID(item._id);
+                                                    setSearchFriendID(item._id);
                                                     setSearchQuery(item.value);
-                                                     setLoanTo('')*/ // On enregistre ce qu'on a cliqué
+                                                     setLoanTo('') // On enregistre ce qu'on a cliqué
                                                     // On ferme la modale
                                                 }}
                                             >
