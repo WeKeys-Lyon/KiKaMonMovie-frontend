@@ -8,8 +8,12 @@ import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
 import Poster from '../components/poster';
 import ProfileMenuModal from '../components/menuProfileModal';
+import NotificationModal from '../components/notificationsModal';
 import SettingsModal from '../components/settingsModal';
-import { removedMovieFromStore, logout } from '../reducers/user';
+import { useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+
+import { removedMovieFromStore, logout, updateNotifications } from '../reducers/user';
 import { useDispatch } from 'react-redux';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -50,11 +54,37 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [sortOption, setSortOption] = useState<string>('title_asc');
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
+  const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   
+  
+//reception notifications
+useFocusEffect(
+    useCallback(() => {
+      const fetchNotifications = async () => {
+        if (!user.token) {
+          console.log("Annulation : Le token est introuvable dans Redux.");
+          return;
+        }
+        try {
+          const response = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+          const data = await response.json();
 
+          if (data.result) {
+            dispatch(updateNotifications(data.notifications));
+          }
+        } catch (error) {
+          console.error("Erreur lors du fetch :", error);
+        }
+      };
+
+      fetchNotifications();
+    }, [user.token])
+  );
+
+//calcul des notifications: 
+const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 0;
 
   const handleOpenMovie = (movie: any) => {
-    console.log(movie)
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
@@ -206,15 +236,50 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     }
   };
       
-
+//gérer le prêt dans notif
+const handleManageLoan = (notification: any) => {
+  setIsNotificationModalVisible(false);
+  const fullMovie = user.movies.find((m: any) =>  m.movieid?._id === notification.movieId?._id || m.tmdb_id === notification.movieId?.tmdb_id
+    );
+    if (fullMovie) {
+      setSelectedMovie(fullMovie);
+      setIsModalVisible(true);
+    } else {
+      setSelectedMovie(notification.movieId);
+      setIsModalVisible(true);
+    }
+}
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
-        leftIcon={<Text style={{ fontSize: 20 }}>👤</Text>}
+        leftIcon={<FontAwesome name="user-circle" size={24} color="#e8be4b" />}
         onPressLeft={() => setIsProfileMenuVisible(true)}
-        rightIcon={<Text style={{ fontSize: 20 }}>⚙️</Text>}
-        onPressRight={() => setIsSettingsVisible(true)}
+        rightIcon={<View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+            {/* La Cloche */}
+            <TouchableOpacity onPress={() => setIsNotificationModalVisible(true)}>
+              <View>
+                <FontAwesome name="bell" size={22} color="#e8be4b" />
+                {unreadCount > 0 && (
+                  <View style={{
+                    position: 'absolute', top: -5, right: -8,
+                    backgroundColor: '#d9534f', borderRadius: 10,
+                    width: 18, height: 18, justifyContent: 'center', alignItems: 'center'
+                  }}>
+                    <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                      {unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+
+            {/* L'Engrenage */}
+            <TouchableOpacity onPress={() => setIsSettingsVisible(true)}>
+              <FontAwesome name="cog" size={24} color="#e8be4b" />
+            </TouchableOpacity>
+          </View>
+        }
       />
 
 
@@ -391,6 +456,13 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           />
         )}
       </Modal>
+      {/*MODALE NOTIFICATIONS*/}
+      <NotificationModal
+        visible={isNotificationModalVisible}
+        onClose={() => setIsNotificationModalVisible(false)}
+        notifications={user.notifications || []}
+        onManageLoan={handleManageLoan}
+      />
     </ImageBackground>
   );
 }

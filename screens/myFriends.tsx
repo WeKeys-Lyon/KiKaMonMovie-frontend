@@ -237,7 +237,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1C2942' },
+  container: { flex: 1, backgroundColor: '#2A3B5C' },
   content: { flex: 1, padding: 20 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#e8be4b', marginBottom: 10, marginTop: 15 },
   

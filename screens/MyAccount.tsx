@@ -165,7 +165,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1C2942', 
+    backgroundColor: '#2A3B5C', 
   },
   content: {
     flex: 1,

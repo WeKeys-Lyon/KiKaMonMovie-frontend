@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     zIndex: 50, 
   },
   suggestionsContainer: {
-    backgroundColor: '#2A3B5C', // Un bleu un peu plus clair pour se détacher
+    backgroundColor: '#2A3B5C', // Un bleu)àç!è  un peu plus clair pour se détacher
     borderRadius: 10,
     marginTop: 5,
     borderWidth: 1,

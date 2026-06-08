@@ -6,12 +6,14 @@ export type UserState = {
     token: string | null;
     username: string | null;
     movies: any[] | null;
+    notifications: any[] | null;
     friendCode: string | null;
+    friends: any[] | null;
   };
 };
 
 const initialState: UserState = {
-  value: { email: null, token: null, username: null, movies: [], friendCode: null },
+  value: { email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [] }, 
 };
 
 export const userSlice = createSlice({
@@ -21,12 +23,14 @@ export const userSlice = createSlice({
     /* updateEmail: (state, action: PayloadAction<string>) => {
       state.value.email = action.payload;
     }, */
-    login: (state, action: PayloadAction<{email: string, token: string, username: string, movies: any, friendCode: string}>) => {
+    login: (state, action: PayloadAction<{email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
       state.value.email = action.payload.email;
       state.value.token = action.payload.token;
       state.value.username = action.payload.username;
       state.value.movies = action.payload.movies;
       state.value.friendCode = action.payload.friendCode;
+      state.value.friends = action.payload.friends;
+      state.value.notifications = action.payload.notifications;
     },
     addMovieToStore: (state, action: PayloadAction<any>) => {
       state.value.movies?.push(action.payload);
@@ -51,11 +55,14 @@ export const userSlice = createSlice({
         state.value.movies[index].isLoaned = false;
       }
     },
+    updateNotifications: (state, action: PayloadAction<any>) => {
+      state.value.notifications = action.payload;
+    },
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout } = userSlice.actions;
 export default userSlice.reducer;
