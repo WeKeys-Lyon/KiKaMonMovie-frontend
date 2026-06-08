@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Dimensions, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Dimensions, Alert, TouchableOpacity } from 'react-native';
 import { Buttons } from '../components/buttons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Checkbox } from 'expo-checkbox';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieLoaned } from '../reducers/user';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 const { height } = Dimensions.get('window');
@@ -35,10 +36,14 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [searchFriendID, setSearchFriendID] = useState<number>(0);
+    const [openSuggestions, setOpenSuggestions] = useState<boolean>(false);
 
     useEffect(() => {
         if (preselectedUser) {
-            setLoanTo(preselectedUser.username);
+            setSearchQuery(preselectedUser.username);
+            setSearchFriendID(preselectedUser._id);
         } else if (!visible) {
             setLoanTo('');
         }
@@ -67,7 +72,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     if (!visible) return null;
 
     const handleValidate = async () => {
-        if (!loanTo.trim()) {
+        if (!loanTo.trim() && !searchQuery.trim()) {
             Alert.alert("Veuillez indiquer à qui vous prêtez ce film !");
             return;
         }
@@ -79,9 +84,9 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 body: JSON.stringify({
                     token: user.token,
                     tmdb_id: movieTmdbId,
-                    isSharedToUser: !!preselectedUser,
-                    userid: preselectedUser?._id ? preselectedUser._id : null,
-                    borrower: loanTo,
+                    isSharedToUser: (searchQuery && !loanTo) ? true : false,
+                    userid: (searchQuery && !loanTo) ? searchFriendID : null,
+                    borrower: (searchQuery && !loanTo) ? '' : loanTo,
                     dueDate: loanDate,
                     notes: notes,
                     Notification: reminder,
@@ -109,7 +114,23 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
             console.error("Erreur lors de la requête :", error);
         }
     };
+        const getGlobalSuggestions = () => {
+            if (user.friends) {
+                if (loanTo.trim().length <= 3) return [];
+                const lowerText = loanTo.toLowerCase();
+                const allSuggestions:{value: string, _id: any }[] = [];
+                    user.friends.forEach((friend: {_id: any, username: string}) => {
+                        if (friend.username && friend.username.toLowerCase().includes(lowerText)) {
+                            allSuggestions.push({ value: friend.username, _id: friend._id });
+                        }
+                });
+                return allSuggestions.slice(0, 5); // On garde les 5 meilleurs
+            } else {
+                return  [];
+            }            
+    };
 
+    const suggestions = getGlobalSuggestions();
     return (
         <View style={styles.container}>
             {/* 1. Le fond sombre qui apparait en fondu */}
@@ -136,11 +157,36 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                             placeholder="Prêter à :"
                             placeholderTextColor="#aaa"
                             autoCapitalize="none"
-                            onChangeText={setLoanTo}
-                            value={loanTo}
-                            editable={!preselectedUser}
+                            onChangeText={(value) => {setLoanTo(value)}}
+                            value={(searchQuery) ? searchQuery : loanTo}
                             style={styles.input}
                         />
+                        {/*LE MENU DÉROULANT DES SUGGESTIONS */}
+                            
+                            {suggestions.length > 0  && (
+                                <View style={styles.suggestionsContainer}>
+                                    {suggestions.map((item, index) => {
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.suggestionItem}
+                                                onPress={() => {
+                                                    setSearchFriendID(item._id);
+                                                    setSearchQuery(item.value);
+                                                     setLoanTo('') // On enregistre ce qu'on a cliqué
+                                                    // On ferme la modale
+                                                }}
+                                            >
+                                                <FontAwesome name="users" size={14} color="#e8be4b" style={styles.icon} />
+                                                <Text style={styles.suggestionText} numberOfLines={1}>
+                                                    {item.value} 
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            )}
                         
                         <View style={styles.dateRow}>
                             <Text style={[styles.text, {marginBottom: 0}]}>Date du prêt :</Text>
@@ -286,4 +332,25 @@ const styles = StyleSheet.create({
         gap: 15,
         marginTop: 10,
     },
+     suggestionsContainer: {
+    backgroundColor: '#2A3B5C', // Un bleu)àç!è  un peu plus clair pour se détacher
+    borderRadius: 10,
+    marginTop: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 190, 75, 0.5)', // Bordure dorée légère
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  suggestionText: {
+    color: '#fff',
+    fontSize: 15,
+    flex: 1,
+    marginLeft: 5
+  },
 });
