@@ -59,26 +59,20 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 //reception notifications
 useFocusEffect(
     useCallback(() => {
-      console.log("👀 L'écran Ma Collection est au premier plan !");
-      
       const fetchNotifications = async () => {
         if (!user.token) {
-          console.log("❌ Annulation : Le token est introuvable dans Redux.");
+          console.log("Annulation : Le token est introuvable dans Redux.");
           return;
         }
-
-        console.log("✅ Token trouvé, on appelle le backend...");
         try {
           const response = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
           const data = await response.json();
-          
-          console.log("📥 Réponse du backend :", data);
 
           if (data.result) {
             dispatch(updateNotifications(data.notifications));
           }
         } catch (error) {
-          console.error("🚨 Erreur lors du fetch :", error);
+          console.error("Erreur lors du fetch :", error);
         }
       };
 
