@@ -15,9 +15,11 @@ type loanModalProps = {
     movie: any;
     movieTmdbId: number;
     onSuccess: (updatedPastLoans: any[]) => void;
+    preselectedUser?: any;
+    notificationId?: string;
 }
 
-export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess }: loanModalProps) {
+export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
@@ -33,6 +35,15 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (preselectedUser) {
+            setLoanTo(preselectedUser.username);
+        } else if (!visible) {
+            setLoanTo('');
+        }
+    }, [preselectedUser]);
+
 
     useEffect(() => {
         if (visible) {
@@ -68,11 +79,13 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 body: JSON.stringify({
                     token: user.token,
                     tmdb_id: movieTmdbId,
-                    isSharedToUser: false, // On met false par défaut pour un prêt manuel
+                    isSharedToUser: !!preselectedUser,
+                    userid: preselectedUser?._id ? preselectedUser._id : null,
                     borrower: loanTo,
                     dueDate: loanDate,
                     notes: notes,
-                    Notification: reminder
+                    Notification: reminder,
+                    notificationId: notificationId
                 }),
             });
 
@@ -125,6 +138,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                             autoCapitalize="none"
                             onChangeText={setLoanTo}
                             value={loanTo}
+                            editable={!preselectedUser}
                             style={styles.input}
                         />
                         
