@@ -344,6 +344,31 @@ const handleDeleteNotification = async (notificationId: string) => {
     }
   };
 
+  // Gérer le clic sur "Réclamer"
+  const handleRemindFriend = async (notification: any) => {
+    try {
+      const response = await fetch(`${process.env.BACKEND_URL}/users/remind-loan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          borrowerId: notification.senderId._id,
+          movieId: notification.movieId._id
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        Alert.alert('Rappel envoyé 🔔', data.message);
+      } else {
+        Alert.alert('Oups', data.error);
+      }
+    } catch (error) {
+      console.error('Erreur lors du rappel :', error);
+    }
+  };
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -561,6 +586,7 @@ const handleDeleteNotification = async (notificationId: string) => {
         onDeleteNotification={handleDeleteNotification}
         onMarkAllAsRead={handleMarkAllAsRead}
         onManageFriendRequest={handleManageFriendRequest}
+        onRemindFriend={handleRemindFriend}
       />
     </ImageBackground>
   );

@@ -13,9 +13,10 @@ type NotificationModalProps = {
     onDeleteNotification?: (notificationId: string) => void;
     onMarkAllAsRead?: () => void;
     onManageFriendRequest?: (notification: any, action: 'accept' | 'refuse') => void;
+    onRemindFriend?: (notification: any) => void;
 };
 
-export default function NotificationModal({ visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest }: NotificationModalProps) {
+export default function NotificationModal({ visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend }: NotificationModalProps) {
 
    const renderNotification = ({ item }: { item: any }) => {
         // 1️⃣ Cas : Demande de prêt
@@ -127,6 +128,64 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             )
     };
+    // ⏳ Cas : Date de prêt EXPIRÉE (Notification automatique pour le prêteur)
+        if (item.type === 'loan_expired') {
+            // On vérifie si c'est un ami de l'application ou un prêt manuel
+            const borrowerName = item.senderId?.username || "ton ami";
+            
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="hourglass-end" size={20} color="#ff4d4d" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={{color: '#ff4d4d', fontWeight: 'bold'}}>Date dépassée !</Text> Tu as prêté <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text> à <Text style={styles.bold}>{borrowerName}</Text> et la date de retour est arrivée.
+                        </Text>
+                        
+                        {/* On affiche le bouton "Réclamer" SEULEMENT si c'est un utilisateur de l'application */}
+                        {item.senderId && (
+                            <Buttons 
+                                title={`💬 Réclamer à ${borrowerName}`} 
+                                onPress={() => onRemindFriend && onRemindFriend(item)} 
+                                variant="primary" 
+                                style={{ marginTop: 10, paddingVertical: 8, backgroundColor: '#e8be4b' }} 
+                            />
+                        )}
+                    </View>
+                    
+                    {/* Petite corbeille pour effacer l'alerte si on veut */}
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+        // ⚠️ Cas : Rappel de retour (Notification pour l'emprunteur)
+        if (item.type === 'loan_reminder') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="exclamation-triangle" size={22} color="#e8be4b" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={{color: '#e8be4b', fontWeight: 'bold'}}>Rappel :</Text> <Text style={styles.bold}>{item.senderId?.username}</Text> aimerait récupérer son film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>. Pense à lui rendre prochainement !
+                        </Text>
+                    </View>
+                    {/* Corbeille pour que l'emprunteur puisse effacer l'alerte */}
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
 }
 
     return (
