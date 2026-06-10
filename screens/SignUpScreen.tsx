@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 8,
     paddingHorizontal: 15,
+    minWidth: '80%',
     height: 50,
     color: '#fff',
     marginBottom: 15,
