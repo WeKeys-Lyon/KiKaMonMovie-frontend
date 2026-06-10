@@ -54,6 +54,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [sortOption, setSortOption] = useState<string>('title_asc');
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<any>(null);
   
   
 //reception notifications
@@ -82,6 +83,13 @@ useFocusEffect(
 
 //calcul des notifications: 
 const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 0;
+
+// 🧹 NOUVEAU : Nettoyage automatique de la notification quand on ferme la MovieCard
+  useEffect(() => {
+    if (!isModalVisible) {
+      setActiveNotification(null);
+    }
+  }, [isModalVisible]);
 
   const handleOpenMovie = (movie: any) => {
     setSelectedMovie(movie);
@@ -238,6 +246,7 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
 //gérer le prêt dans notif
 const handleManageLoan = (notification: any) => {
   setIsNotificationModalVisible(false);
+  setActiveNotification(notification);
   const fullMovie = user.movies.find((m: any) =>  m.movieid?._id === notification.movieId?._id || m.tmdb_id === notification.movieId?.tmdb_id
     );
     if (fullMovie) {
@@ -248,6 +257,55 @@ const handleManageLoan = (notification: any) => {
       setIsModalVisible(true);
     }
 }
+//supprimer une notif$
+const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      const response = await fetch(`${process.env.BACKEND_URL}/users/delete-notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          notificationId: notificationId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.result) {
+        const updatedNotifications = user.notifications.filter((n: any) => n._id !== notificationId);
+        dispatch(updateNotifications(updatedNotifications));
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
+  //marquer toutes les notifs comme lues
+  const handleMarkAllAsRead = async () => {
+    // Sécurité : s'il n'y a pas de notifications non lues, inutile d'appeler le backend
+    const hasUnread = user.notifications.some((n: any) => !n.isRead);
+    if (!hasUnread) return;
+
+    try {
+      const response = await fetch(`${process.env.BACKEND_URL}/users/mark-all-read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token })
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        // On met à jour Redux en clonant les notifs et en les passant à isRead: true
+        const updatedNotifications = user.notifications.map((n: any) => ({
+          ...n,
+          isRead: true
+        }));
+        dispatch(updateNotifications(updatedNotifications));
+      }
+    } catch (error) {
+      console.error("Erreur lors du marquage des notifications :", error);
+    }
+  };
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -400,7 +458,9 @@ const handleManageLoan = (notification: any) => {
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         {selectedMovie && (
           <MovieCard
-            mode="collection"
+            mode={activeNotification ? "manage_request" : "collection"}
+            requester={activeNotification?.senderId}
+            notificationId={activeNotification?._id}
             moviedata={selectedMovie}
             setIsModalVisible={setIsModalVisible}
             onFilterClick={(type, value) => {
@@ -461,6 +521,8 @@ const handleManageLoan = (notification: any) => {
         onClose={() => setIsNotificationModalVisible(false)}
         notifications={user.notifications || []}
         onManageLoan={handleManageLoan}
+        onDeleteNotification={handleDeleteNotification}
+        onMarkAllAsRead={handleMarkAllAsRead}
       />
     </ImageBackground>
   );
