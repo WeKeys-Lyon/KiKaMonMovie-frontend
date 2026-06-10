@@ -6,9 +6,10 @@ type PosterProps = {
     isLoaned: boolean;
     isListMode?: boolean;
     columns?: number;
+    shareType?: string[];
 }
 
-export default function Poster({ imageUrl, isLoaned, columns = 2 }: PosterProps) {
+export default function Poster({ imageUrl, isLoaned, columns = 2, shareType}: PosterProps) {
 
     const getBannerStyle = () => {
     if (columns === 1) return styles.bannerCol1;
@@ -27,16 +28,23 @@ export default function Poster({ imageUrl, isLoaned, columns = 2 }: PosterProps)
         return (<Image source={require('../assets/nomovie.jpg')} style={styles.poster} />)
       }
     }
+
+  const isBorrowed = shareType === 'borrowed';
+    const showBanner = isLoaned || isBorrowed; 
+    const bannerText = isBorrowed ? "Emprunté" : "Prêt en cours";
+    const bannerColor = isBorrowed ? "#e8be4b" : "#ff4d4d";
+
+
     return (
         <View style={styles.posterContainer}>
           {imageToDraw()}
-            {isLoaned && (
+            {showBanner && (
                 <>
                 <View style={styles.grayOverlay} />
-                <View style={[styles.banner, getBannerStyle()]}>
-            <Text style={[styles.bannerText, getTextStyle()]}>
-              Prêt en cours
-            </Text>
+                <View style={[styles.banner, getBannerStyle(), { backgroundColor: bannerColor }]}>
+                  <Text style={[styles.bannerText, getTextStyle()]}>
+                    {bannerText}
+                  </Text>
           </View>
         </>
       )}
@@ -64,7 +72,6 @@ export default function Poster({ imageUrl, isLoaned, columns = 2 }: PosterProps)
   // --- Le socle commun du bandeau ---
   banner: {
     position: 'absolute',
-    backgroundColor: '#ff4d4d',
     transform: [{ rotate: '-45deg' }],
     justifyContent: 'center',
     alignItems: 'center',

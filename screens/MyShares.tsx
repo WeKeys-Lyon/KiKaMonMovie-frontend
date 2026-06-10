@@ -1,413 +1,194 @@
-import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, ImageBackground, TextInput, FlatList,
-  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity, Alert
-} from 'react-native';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, ActivityIndicator, ImageBackground } from 'react-native';
+import { useSelector } from 'react-redux';
+import { NavigationProp, ParamListBase, useIsFocused } from '@react-navigation/native';
 import Header from '../components/header';
-import { Buttons } from '../components/buttons';
-import MovieCard from '../components/movieCard';
-import SelectionMenu from '../components/selectionMenu';
-import ManualSearch from '../components/manualSearch';
-import SearchResults from '../components/searchResults';
-import BarcodeScanner from '../components/barcodeScanner';
-import { UseDispatch, useSelector } from 'react-redux';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { truncate } from 'node:fs';
+import MovieGrid from '../components/MovieGrid'; // Vérifie que le chemin est correct selon ton arborescence
+import { FontAwesome } from '@expo/vector-icons';
 
-
-type AddAMovieScreenProps = {
+type MySharesProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps) {
+const BACKEND_URL = process.env.BACKEND_URL;
+const { width } = Dimensions.get('window');
 
-
-
-  const [isSearchMode, setIsSearchMode] = useState(false);
-  const [queryTitle, setQueryTitle] = useState('');
-  const [queryPerson, setQueryPerson] = useState('');
-  const [queryAsked, setQueryAsked] = useState('');
-  const [movieData, setMovieData] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<any>(null);
-  const [drawStyle, setDrawStyle] = useState<boolean>(false);
+export default function MyShares({ navigation }: MySharesProps) {
   const user = useSelector((state: any) => state.user.value);
-  const [permission, requestPermission] = useCameraPermissions();
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isScanning, setIsScanning] = useState(true);
-  const [scannedTitle, setScannedTitle] = useState<string | null>(null);
-  const [searchOrigin, setSearchOrigin] = useState('manual');
+  const isFocused = useIsFocused(); // Permet de recharger quand on revient sur l'écran
 
-  const BACKEND_URL = process.env.BACKEND_URL;
+  // Variables d'état
+  const [allShares, setAllShares] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Le filtre actif ('all', 'loaned', ou 'borrowed')
+  const [activeFilter, setActiveFilter] = useState<'all' | 'loaned' | 'borrowed'>('all');
 
+  // Récupération des données
+  useEffect(() => {
+    if (isFocused) {
+      fetchMyShares();
+    }
+  }, [isFocused]);
 
-
-  const handleManualSearch = () => {
-    setIsSearchMode(true);
-    {/*navigation.navigate('ManualSearch');*/ }
-    console.log("Ouverture de la page de recherche manuelle");
-  };
-
-  const cancelSearch = () => {
-    setIsSearchMode(false);
-    setShowResults(false);
-    setQueryTitle('');
-    setQueryPerson('');
-    setMovieData([]);
-  };
-
-  const backToSearch = () => {
-    setShowResults(false);
-    setMovieData([]);
-  };
-
-
-  const launchSearch = async () => {
-    if (!queryTitle) return;
-
-    console.log('Recherche lancée pour :', queryTitle);
-
+  const fetchMyShares = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/search/${queryTitle}`);
+      const response = await fetch(`${BACKEND_URL}/users/my-shares`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token }),
+      });
       const data = await response.json();
-
+      
       if (data.result) {
-        setMovieData(data.answer);
-        setShowResults(true);
-        setQueryAsked(queryTitle);
-        setSearchOrigin('manual');
-      } else {
-        console.log("Erreur backend", data.error);
+        setAllShares(data.shares);
       }
     } catch (error) {
-      console.error("Erreur réseau :", error);
-    }
-  };
-  const launchSearchPeople = async () => {
-
-    if (!queryPerson) return;
-
-    console.log('Recherche de personnalité lancée pour :', queryPerson);
-
-    try {
-
-      const response = await fetch(`${BACKEND_URL}/movies/searchpeople/${queryPerson}`);
-      const data = await response.json();
-
-      if (data.result) {
-        setMovieData(data.answer);
-        setShowResults(true);
-        setDrawStyle(true)
-        setQueryAsked(data.people)
-      } else {
-        console.log("Erreur backend", data.error);
-      }
-    } catch (error) {
-      console.error("Erreur réseau :", error);
+      console.error("Erreur lors de la récupération des partages :", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleOpenModal = (movie: any) => {
-    setSelectedMovie(movie);
-    setIsModalVisible(true);
-  };
+  // Filtrage de la liste selon le bouton sélectionné
+  const filteredShares = allShares.filter(movie => {
+    if (activeFilter === 'all') return true;
+    return movie.shareType === activeFilter;
+  });
 
-  const clearSearch = () => {
-    setQueryTitle('');
-    setQueryPerson('');
-    setMovieData([]);
-    setShowResults(false);
-    setIsSearchMode(false);
-  };
-
-  //Gestion de la camera: 
-  const handleBarCodeScanned = async ({ type, data }: { type: String, data: string }) => {
-    console.log("code barre détecté", data, "de type", type)
-    if (!isScanning) return;
-    setIsScanning(false);
-    console.log(`code barre: ${data}`)
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
-      const json = await response.json();
-
-      if (json.result && json.answer) {
-        setScannedTitle(json.answer);
-      } else {
-        Alert.alert("Mince !", json.error || "Aucun film trouvé pour ce code-barres.");
-        setIsScanning(true);
-      }
-    } catch (error) {
-      console.error(error);
-      setIsScanning(true);
-    }
-  };
-
-  // bouton relancer scan
-  const handleRescan = () => {
-    setScannedTitle(null);
-    setIsScanning(true);
-  }
-
-  //bouton ajouter, rechercher sur tmdb et ouvrir la modale
-  const handleConfirmScannedMovie = async (titleToSearch: string) => {
-    console.log("👉 Bouton Ajouter cliqué ! Titre REÇU :", titleToSearch);
-
-    if (!titleToSearch) return;
-
-    try {
-      let cleanTitle = titleToSearch;
-      if (cleanTitle.includes('-')) {
-        cleanTitle = cleanTitle.split('-')[0]; 
-      }
-
-      cleanTitle = cleanTitle.replace(/dvd|blu-ray|bleu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr/gi, '');
-      
-      cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
-      
-      
-      cleanTitle = cleanTitle.trim();
-
-      console.log("Titre nettoyé envoyé à TMDB :", cleanTitle);
-
-      const safeUrlTitle = encodeURIComponent(cleanTitle);
-
-      // 3. LE FETCH
-      const response = await fetch(`${BACKEND_URL}/movies/search/${safeUrlTitle}`);
-      const data = await response.json();
-
-      if (data.result && data.answer.length > 0) {
-        
-        // 1. On injecte toute la liste de films dans ton state 'movieData'
-        setMovieData(data.answer);
-        
-        // 2. On met à jour le titre recherché (pour que ton composant l'affiche)
-        setQueryAsked(titleToSearch); 
-        setSearchOrigin('barcode');
-        
-        // 3. On active les "interrupteurs" pour afficher ta VUE 3
-        setIsSearchMode(true);
-        setShowResults(true);
-        
-        // 4. On ferme la caméra et on la réinitialise en arrière-plan
-        setIsCameraActive(false);
-        handleRescan();
-
-      } else {
-        Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la confirmation :", error);
-      Alert.alert("Erreur", "Le serveur a rencontré un problème avec ce titre.");
-    }
-  };
-
-  const handlebackToSearch = () => {
-    setQueryTitle('');
-    setQueryPerson('');
-    setShowResults(false); 
-    if (searchOrigin === 'barcode') {
-      setIsSearchMode(false);
-      setIsCameraActive(true);
-    } else {
-      setIsSearchMode(true);
-    }
-    handleRescan();
-  };
-
+  // Configuration de la grille (3 colonnes pour l'exemple)
+  const numColumns = 3;
+  const cardWidth = (width - 40 - (numColumns - 1) * 10) / numColumns; // Calcul dynamique de la largeur
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
-      <Header title="Ajouter un film" />
+      <Header 
+        title="Mes Partages" 
+        leftIcon={<FontAwesome name="home" size={28} color="#e8be4b" />}
+        onPressLeft={() => navigation.goBack()} // Ou navigation.navigate('Home') selon ta nav
+      />
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      {/* --- LES BOUTONS DE FILTRE --- */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity 
+          style={[styles.filterButton, activeFilter === 'all' && styles.activeFilter]}
+          onPress={() => setActiveFilter('all')}
+        >
+          <Text style={[styles.filterText, activeFilter === 'all' && styles.activeFilterText]}>Tous</Text>
+        </TouchableOpacity>
 
-        {/* VUE 1 : LES CHOIX DE DÉPART */}
-        {!isSearchMode && !isCameraActive && (
-          <SelectionMenu
-            onOpenScanner={async () => {
-              if (!permission?.granted) await requestPermission();
-              setIsCameraActive(true);
-            }}
-            onOpenSearch={() => setIsSearchMode(true)}
-          />
-        )}
+        <TouchableOpacity 
+          style={[styles.filterButton, activeFilter === 'loaned' && styles.activeFilter]}
+          onPress={() => setActiveFilter('loaned')}
+        >
+          <Text style={[styles.filterText, activeFilter === 'loaned' && styles.activeFilterText]}>Prêtés</Text>
+        </TouchableOpacity>
 
-        {/* VUE 2.1 : La camera */}
-        {isCameraActive && permission?.granted && (
-          <BarcodeScanner
-            isScanning={isScanning}
-            scannedTitle={scannedTitle}
-            onBarcodeScanned={handleBarCodeScanned}
-            onRescan={handleRescan}
-            onConfirm={handleConfirmScannedMovie}
-            onClose={() => {
-              setIsCameraActive(false);
-              handleRescan();
-            }}
-          />
-        )}
+        <TouchableOpacity 
+          style={[styles.filterButton, activeFilter === 'borrowed' && styles.activeFilter]}
+          onPress={() => setActiveFilter('borrowed')}
+        >
+          <Text style={[styles.filterText, activeFilter === 'borrowed' && styles.activeFilterText]}>Empruntés</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
-        {isSearchMode && !showResults && (
-          <ManualSearch
-            queryTitle={queryTitle}
-            setQueryTitle={setQueryTitle}
-            queryPerson={queryPerson}
-            setQueryPerson={setQueryPerson}
-            launchSearchTitle={launchSearch}
-            launchSearchPeople={launchSearchPeople}
-            cancelSearch={cancelSearch}
-          />
-        )}
-
-        {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}
-        {isSearchMode && showResults && (
-          <SearchResults
-            movieData={movieData}
-            queryAsked={queryAsked}
-            drawStyle={drawStyle}
-            backToSearch={handlebackToSearch}
-            handleOpenModal={handleOpenModal}
-          />
-        )}
-
-
-        {/* modale */}
-        <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />
-        </Modal>
-      </KeyboardAvoidingView>
+      {/* --- L'AFFICHAGE DES FILMS --- */}
+      {isLoading ? (
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#e8be4b" />
+        </View>
+      ) : filteredShares.length === 0 ? (
+        <View style={styles.centerContent}>
+          <FontAwesome name="film" size={50} color="#555" style={{ marginBottom: 15 }} />
+          <Text style={styles.emptyText}>Aucun film partagé pour le moment.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredShares}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={numColumns}
+          contentContainerStyle={styles.gridContainer}
+          columnWrapperStyle={{ gap: 10, marginBottom: 15 }}
+          renderItem={({ item }) => (
+            <MovieGrid 
+              movie={item} 
+              columns={numColumns} 
+              cardWidth={cardWidth} 
+              titleOriginal="title_fr" // Ou la variable que tu utilises par défaut
+              onPress={() => {
+                // On navigue vers la MovieCard en passant le film ET le contexte de partage
+                navigation.navigate('MovieCard', { 
+                  movie: item, 
+                  context: 'myshares', // Très utile pour adapter la MovieCard plus tard !
+                  shareType: item.shareType,
+                  ownerName: item.ownerName // Pour afficher "Propriétaire: Machin"
+                });
+              }} 
+            />
+          )}
+        />
+      )}
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, resizeMode: 'cover' },
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
-  // Vue 1
-  card: { marginHorizontal: 20, padding: 30, backgroundColor: 'rgba(0, 0, 0, 0.75)', borderRadius: 15, alignItems: 'center', width: '90%' },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 15, textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#ddd', textAlign: 'center', marginBottom: 35, lineHeight: 22 },
-  buttonContainer: { width: '100%', alignItems: 'center' },
-  actionButton: { width: '100%' },
-  spacer: { height: 15 },
-
-  // Vue 2
-  searchContainer: { flex: 1, width: '100%', paddingTop: 20, alignItems: 'center' },
-  titleBox: { fontSize: 20, fontWeight: 'bold', color: '#fff', marginBottom: 10, textAlign: 'left', width: '100%' },
-  searchBox: { width: '90%', backgroundColor: 'rgba(0, 0, 0, 0.75)', padding: 20, borderRadius: 15, alignItems: 'center', marginBottom: 20 },
-  input: { width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.3)', borderRadius: 8, paddingHorizontal: 15, height: 50, color: '#fff', marginBottom: 15, fontSize: 16 },
-  searchButtonsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '60%', gap: 20 },
-  smallButton: { flex: 1 },
-
-
-  // FlatList (Résultats de recherche)
-  list: { width: '90%', flex: 1 },
-  text: { color: '#fff', textAlign: 'center', marginTop: 15, fontSize: 20 },
-  movieCard: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  poster: {
-    width: 60,
-    height: 90,
-    borderRadius: 5,
-    marginRight: 15,
-    backgroundColor: '#333',
-  },
-  movieInfo: {
+  background: {
     flex: 1,
+    resizeMode: 'cover',
+  },
+  container: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  movieTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+  
+  // Filtres
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(232, 190, 75, 0.3)',
   },
-  movieVOTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#d2d2d2ff',
-    marginBottom: 4,
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#555',
   },
-  movieYear: {
-    fontSize: 14,
-    color: '#e8be4b',
-    marginBottom: 2,
-    fontWeight: 'bold',
+  activeFilter: {
+    backgroundColor: 'rgba(232, 190, 75, 0.2)',
+    borderColor: '#e8be4b',
   },
-  movieDirector: {
-    fontSize: 14,
+  filterText: {
     color: '#aaa',
+    fontWeight: 'bold',
+  },
+  activeFilterText: {
+    color: '#e8be4b',
+  },
+
+  // Grille et contenu
+  gridContainer: {
+    padding: 20,
+    paddingBottom: 50, // Espace pour le scroll
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    color: '#aaa',
+    fontSize: 16,
+    textAlign: 'center',
     fontStyle: 'italic',
   },
-  resultsContainer: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 10,
-  },
-  backButtonContainer: {
-    width: '90%',
-    marginBottom: 15,
-  },
-  // --- STYLES CAMERA ---
-  cameraContainer: {
-    width: '90%',
-    height: '60%', // Ajuste selon la taille que tu souhaites
-    borderRadius: 20,
-    overflow: 'hidden', // Empêche la caméra de dépasser des bords arrondis
-    borderWidth: 2,
-    borderColor: '#e8be4b',
-    backgroundColor: '#000',
-  },
-  camera: {
-    flex: 1,
-    justifyContent: 'flex-end', // Aligne l'overlay vers le bas
-  },
-  closeCameraButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#fff',
-  },
-  scanOverlay: {
-    width: '100%',
-    backgroundColor: 'rgba(28, 41, 66, 0.95)',
-    padding: 20,
-    borderTopWidth: 2,
-    borderColor: '#e8be4b',
-    alignItems: 'center',
-  },
-  overlayText: {
-    color: '#fff',
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  overlayButtons: {
-    flexDirection: 'row',
-    gap: 15,
-    justifyContent: 'center',
-    width: '100%',
-  },
-
 });
