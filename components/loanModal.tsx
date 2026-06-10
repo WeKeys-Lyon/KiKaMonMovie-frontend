@@ -30,7 +30,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
     const [loanTo, setLoanTo] = useState('');
     const [loanDate, setLoanDate] = useState(dueDateDefault);
-    const [reminder, setReminder] = useState(false);
+    const [reminder, setReminder] = useState(true);
     const [notes, setNotes] = useState('');
 
     const [isRendered, setIsRendered] = useState(visible);

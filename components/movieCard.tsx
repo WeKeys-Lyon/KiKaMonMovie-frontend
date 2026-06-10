@@ -265,8 +265,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             </>
           )}
         </View>
-
-      {/* 🚨 LA BALISE MANQUANTE EST ICI ! Elle ferme modalContent */}
       </View> 
 
       <LoanModal 

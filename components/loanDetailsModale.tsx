@@ -29,7 +29,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
             const friend = user.friends.find(f => f._id == currentLoan.userid)
             setFriendName(friend.username)
         }
-    }, [])
+    }, [currentLoan, user.friends]);
     useEffect(() => {
         if (visible) {
             setIsRendered(true);
@@ -54,10 +54,6 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
-    const handleClaim = () => {
-        // TODO : Mettre en place l'envoi de mail ou la notification plus tard
-        Alert.alert("Fonctionnalité à venir", `Un rappel sera envoyé à ${currentLoan?.borrower || 'cet ami'}.`);
-    };
 
     const handleReturn = async () => { 
         Alert.alert(
@@ -100,6 +96,36 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
             console.error(error);
         }}}])
     };
+    const handleRemindBorrower = async () => {
+        // Sécurité : On ne peut relancer qu'un utilisateur de l'application
+        if (!currentLoan?.isSharedToUser) {
+            Alert.alert("Prêt manuel", "Ce prêt a été ajouté manuellement, relance ton ami par SMS !");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.BACKEND_URL}/users/remind-loan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: user.token,
+                    // On récupère les ID depuis le prêt en cours
+                    borrowerId: currentLoan.userid?._id || currentLoan.userid,
+                    movieId: currentLoan.movieid?._id || currentLoan.movieid
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.result) {
+                Alert.alert('Rappel envoyé 🔔', data.message);
+            } else {
+                Alert.alert('Oups', data.error);
+            }
+        } catch (error) {
+            console.error('Erreur lors du rappel depuis les détails :', error);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -137,7 +163,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                     {/* Zone des boutons d'action */}
                     <View style={styles.actionButtonsContainer}>
                         <View style={{ flex: 1, marginRight: 5 }}>
-                            <Buttons title="🔔 Réclamer" onPress={handleClaim} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+                            <Buttons title="🔔 Réclamer" onPress={handleRemindBorrower} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
                         </View>
                         <View style={{ flex: 1, marginLeft: 5 }}>
                             <Buttons title="✅ Récupérer" onPress={handleReturn} variant="primary" style={{ backgroundColor: '#5cb85c' }} />
