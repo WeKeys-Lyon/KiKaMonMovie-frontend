@@ -4,8 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
-import { logout } from '../reducers/user';
+import { logout, removeCollection } from '../reducers/user';
 import { FontAwesome } from '@expo/vector-icons';
+
 
 type MyAccountProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -92,6 +93,39 @@ export default function MyAccount({ navigation }: MyAccountProps) {
       ]
     );
   };
+  // 3. Fonction pour supprimer sa collection
+  const handleDeleteCollection = () => {
+    Alert.alert(
+      'Zone de danger',
+      'Êtes-vous sûr de vouloir supprimer définitivement l\'intégralité de votre collection ? Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Oui, supprimer ma collection',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await fetch(`${BACKEND_URL}/users/user-collection`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: user.token }),
+              });
+              
+              const data = await response.json();
+              
+              if (data.result) {
+                // Si supprimé du backend, on vide Redux et on renvoie à l'accueil
+                dispatch(removeCollection());
+                navigation.navigate('Ma Collection');
+              }
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de supprimer le compte pour le moment.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -149,7 +183,12 @@ export default function MyAccount({ navigation }: MyAccountProps) {
           variant="secondary" 
           style={{ marginTop: 20, width: '100%' }}
         />
-
+        <View style={styles.warningZone}>
+          <Text style={styles.warningTitle}>Remise à zéro de ma collection</Text>
+          <TouchableOpacity style={styles.deleteCollectionButton} onPress={handleDeleteCollection}>
+            <Text style={styles.deleteCollectionButtonText}>Supprimer ma collection</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.dangerZone}>
           <Text style={styles.dangerTitle}>Supression du compte</Text>
           <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
@@ -200,7 +239,7 @@ const styles = StyleSheet.create({
   
   // Styles pour la suppression
   dangerZone: {
-    marginTop: 50,
+    marginTop: 25,
     padding: 15,
     backgroundColor: 'rgba(217, 83, 79, 0.1)',
     borderRadius: 10,
@@ -220,6 +259,31 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   deleteButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+    // Styles pour la suppression
+  warningZone: {
+    marginTop: 50,
+    padding: 15,
+    backgroundColor: 'rgba(217, 83, 79, 0.1)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'orange',
+    alignItems: 'center',
+  },
+  warningTitle: {
+    color: 'orange',
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  deleteCollectionButton: {
+    backgroundColor: 'orange',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  deleteCollectionButtonText: {
     color: '#fff',
     fontWeight: 'bold',
   },
