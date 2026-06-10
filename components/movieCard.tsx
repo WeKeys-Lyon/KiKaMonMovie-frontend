@@ -112,7 +112,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     );
   };
 
-  const imageUrl = datas.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+  const imageUrl = datas.poster_path ? `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: false;
 
   //aller sur la modale de prêt
   const onLendClick = () => {

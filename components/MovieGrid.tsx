@@ -25,8 +25,8 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
   const dispatch = useDispatch();
 
   const imageUrl = movie.poster_path 
-    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
-    : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+    ? `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${movie.poster_path}` 
+    : false;
   
   const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
   const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
