@@ -185,6 +185,52 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
+        // Cas : Demande d'ami acceptée (Notification de confirmation)
+        if (item.type === 'friend_accepted') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="check-circle" size={22} color="#5cb85c" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            Bonne nouvelle ! <Text style={styles.bold}>{item.senderId?.username}</Text> a accepté ta demande d'ami. Vous êtes désormais connectés ! 🎬
+                        </Text>
+                    </View>
+                    
+                    {/* Petite corbeille pour effacer la notification une fois lue */}
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+        // 🚫 Cas : Demande d'ami refusée
+        if (item.type === 'friend_refused') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="user-times" size={20} color="#aaa" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            Ta demande d'ami envoyée à <Text style={styles.bold}>{item.senderId?.username}</Text> n'a pas pu aboutir.
+                        </Text>
+                    </View>
+                    
+                    {/* Petite corbeille pour effacer la notification */}
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
 }
 
     return (
