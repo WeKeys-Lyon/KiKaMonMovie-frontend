@@ -115,7 +115,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     );
   };
 
-  const imageUrl = datas.poster_path ? `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: false;
+  let imageUrl: string | boolean = '';
+  if (mode == 'add') {
+    datas.poster_path ? imageUrl = `https://image.tmdb.org/t/p/w500${datas.poster_path}` : imageUrl = false;
+  } else {
+    datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: imageUrl = false;
+  }
 
   //aller sur la modale de prêt
   const onLendClick = () => {
@@ -145,7 +150,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       }
       
     }
-    
+
   const handleRefuse = async () => {
     try {
       const response = await fetch(`${process.env.BACKEND_URL}/users/refuse-loan`, {

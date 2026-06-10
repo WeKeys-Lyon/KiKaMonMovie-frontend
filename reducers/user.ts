@@ -66,9 +66,12 @@ export const userSlice = createSlice({
       if (state.value.movies) { 
         state.value.movies[index].isLiked ?  state.value.movies[index].isLiked = false : state.value.movies[index].isLiked = true;
       }
-    }
+    },
+    removeCollection: (state) => {
+      state.value.movies = []
+    },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection } = userSlice.actions;
 export default userSlice.reducer;
