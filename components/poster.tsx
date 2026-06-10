@@ -20,6 +20,7 @@ export default function Poster({ imageUrl, isLoaned, columns = 2 }: PosterProps)
     if (columns === 3) return styles.textCol3;
     return styles.textCol2;
   };
+
     const imageToDraw = () => {
       if (imageUrl) {
         return (<Image source={{ uri: imageUrl }} style={styles.poster} />)

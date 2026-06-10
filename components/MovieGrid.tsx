@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import Poster from './poster';
-import FontAwesome  from '@expo/vector-icons/FontAwesome';
+import FontAwesome  from '@react-native-vector-icons/fontawesome';
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {iLikeThisMovie} from '../reducers/user';
@@ -30,7 +30,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
   
   const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
   const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
-
+  
   
   const [isLiked, setIsLiked] = useState<boolean>(movie.isLiked);
   

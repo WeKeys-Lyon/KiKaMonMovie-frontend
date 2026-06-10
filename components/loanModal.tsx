@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Checkbox } from 'expo-checkbox';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieLoaned } from '../reducers/user';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 
 const { height } = Dimensions.get('window');

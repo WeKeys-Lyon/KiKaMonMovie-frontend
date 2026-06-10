@@ -57,7 +57,9 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           username: data.answer.username,
           token: data.answer.token,
           movies: data.answer.movies,
-          friends: data.answer.friends
+          friends: data.answer.friends,
+          friendCode: data.answer.friendCode,
+          notifications: data.answer.notifications
         }));
         navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {

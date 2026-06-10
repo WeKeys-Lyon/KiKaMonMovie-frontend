@@ -6,7 +6,7 @@ import Header from '../components/header';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
 import SettingsModal from '../components/settingsModal';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from '../components/buttons';
 
 const { width } = Dimensions.get('window');

@@ -5,7 +5,7 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import { logout, removeCollection } from '../reducers/user';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 
 type MyAccountProps = {
@@ -64,7 +64,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Zone de danger',
-      'Êtes-vous sûr de vouloir supprimer définitivement votre compte ainsique votre collection ? Cette action est irréversible.',
+      'Êtes-vous sûr de vouloir supprimer définitivement votre compte ainsi que votre collection et vos amis ? Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {

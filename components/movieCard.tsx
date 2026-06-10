@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
 import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
-import FontAwesome  from '@expo/vector-icons/FontAwesome';
+import FontAwesome  from '@react-native-vector-icons/fontawesome';
 import {iLikeThisMovie} from '../reducers/user';
 
 

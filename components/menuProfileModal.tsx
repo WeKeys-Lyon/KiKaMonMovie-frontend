@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedback, Alert } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 type ProfileMenuModalProps = {
   visible: boolean;

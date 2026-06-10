@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 type MyFriendsProps = {
   navigation: NavigationProp<ParamListBase>;

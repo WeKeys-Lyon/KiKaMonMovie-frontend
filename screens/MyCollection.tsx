@@ -14,7 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { removedMovieFromStore, logout, updateNotifications } from '../reducers/user';
 import { useDispatch } from 'react-redux';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 
 
