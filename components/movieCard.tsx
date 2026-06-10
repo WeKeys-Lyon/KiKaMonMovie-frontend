@@ -134,13 +134,20 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const data = await response.json();
       dispatch(iLikeThisMovie({index: indexMovie}))    
     }
-
+    const drawHeart = () => {
+      if (mode == 'add') {
+        return (<></>)
+      } else {
+        return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
+      }
+      
+    }
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
           <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
-          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {drawHeart()}
           </TouchableOpacity>
           <View style={styles.posterContainer}>
             <Poster
