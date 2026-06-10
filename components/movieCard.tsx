@@ -81,7 +81,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           datas.isLiked = false;
           dispatch(addMovieToStore(datas));
           if (onAddSuccess) onAddSuccess();
-          navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
         } else {
           console.log("Erreur lors de l'ajout", data.error);
         }

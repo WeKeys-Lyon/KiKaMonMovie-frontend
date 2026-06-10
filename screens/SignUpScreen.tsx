@@ -75,14 +75,17 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           email: email, 
           username: username, 
           token: data.answer.token,
-          movies: userMovies
+          movies: userMovies,
+          friendCode: data.answer.firendCode,
+          friends: data.answer.friends,
+          notifications: data.answer.notifications
         }));
         if (userMovies.length < 1) {
           
           navigation.navigate('OnboardingAddAMovie');
         } else {
           
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
         } 
       } else {
         setError(data.answer);

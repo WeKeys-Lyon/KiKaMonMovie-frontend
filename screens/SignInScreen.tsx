@@ -59,7 +59,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           movies: data.answer.movies,
           friends: data.answer.friends
         }));
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {
         setError(data.answer);
       }

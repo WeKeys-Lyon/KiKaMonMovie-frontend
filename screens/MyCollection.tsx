@@ -439,7 +439,7 @@ const handleDeleteNotification = async (notificationId: string) => {
             <Text style={styles.emptySubtitle}>Commencez à ajouter vos films préférés dès maintenant !</Text>
             <Buttons
               title="🔍 Trouver un film"
-              onPress={() => navigation.navigate('AddAMovie')}
+              onPress={() => navigation.navigate('Ajouter un Film')}
               variant="primary"
               style={styles.emptyButton}
             />

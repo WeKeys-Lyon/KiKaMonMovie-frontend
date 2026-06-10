@@ -116,7 +116,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
               if (data.result) {
                 // Si supprimé du backend, on vide Redux et on renvoie à l'accueil
                 dispatch(removeCollection());
-                navigation.navigate('MyCollection');
+                navigation.navigate('Ma Collection');
               }
             } catch (error) {
               Alert.alert('Erreur', 'Impossible de supprimer le compte pour le moment.');
