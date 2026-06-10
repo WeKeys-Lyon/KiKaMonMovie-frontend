@@ -26,11 +26,8 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     const [friendName, setFriendName] = useState<string>('');
     useEffect(() => {
         if (currentLoan?.isSharedToUser) {
-            const friend = user.friends?.find((f: any) => f.userid?._id === currentLoan.borrowerId);
-            if (friend) {
-                
-                setFriendName(friend.username || friend.userid?.username); 
-            }
+            const friend = user.friends.find(f => f._id == currentLoan.userid)
+            setFriendName(friend.username)
         }
     }, [currentLoan, user.friends]);
     useEffect(() => {

@@ -8,7 +8,8 @@ import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
 import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
-
+import FontAwesome  from '@expo/vector-icons/FontAwesome';
+import {iLikeThisMovie} from '../reducers/user';
 
 
 type MovieCardScreenProps = {
@@ -39,6 +40,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [datas, setDatas] = useState(moviedata)
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
   const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
     ? datas.pastLoans[datas.pastLoans.length - 1] 
     : null;
@@ -113,12 +115,37 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     );
   };
 
-  const imageUrl = datas.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+  const imageUrl = datas.poster_path ? `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: false;
 
   //aller sur la modale de prêt
   const onLendClick = () => {
     setIsLoanModalVisible(true);
   };
+  const indexMovie = user.movies.findIndex(film => moviedata.tmdb_id == film.tmdb_id);
+
+  const handleLike = async () => {
+      setIsLiked(!isLiked);
+      const myURL = `${BACKEND_URL}/users/isLiked`;
+      const response = await fetch(encodeURI(myURL), {
+         method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            tmdb_id: moviedata.tmdb_id
+          }),
+      });
+      const data = await response.json();
+      dispatch(iLikeThisMovie({index: indexMovie}))    
+    }
+    const drawHeart = () => {
+      if (mode == 'add') {
+        return (<></>)
+      } else {
+        return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
+      }
+      
+    }
+  return (
   const handleRefuse = async () => {
     try {
       const response = await fetch(`${process.env.BACKEND_URL}/users/refuse-loan`, {
@@ -147,13 +174,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       <View style={styles.modalContent}>
         
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
+          <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
+          {drawHeart()}
+          </TouchableOpacity>
           <View style={styles.posterContainer}>
             <Poster
               imageUrl={imageUrl}
               isLoaned={datas.isLoaned}
               columns={2} 
-            />
+            /> 
           </View>
+          
           {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
 

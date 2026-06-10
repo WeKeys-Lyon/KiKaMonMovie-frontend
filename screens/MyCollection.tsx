@@ -6,7 +6,6 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
-import Poster from '../components/poster';
 import ProfileMenuModal from '../components/menuProfileModal';
 import NotificationModal from '../components/notificationsModal';
 import SettingsModal from '../components/settingsModal';

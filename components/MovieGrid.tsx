@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import Poster from './poster';
+import FontAwesome  from '@expo/vector-icons/FontAwesome';
+import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {iLikeThisMovie} from '../reducers/user';
 
 const { width } = Dimensions.get('window');
 
@@ -16,23 +20,47 @@ interface MovieGridProps {
 
 export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal }: MovieGridProps) {
   
+  const BACKEND_URL = process.env.BACKEND_URL;
+  const user = useSelector((state: any) => state.user.value);
+  const dispatch = useDispatch();
+
   const imageUrl = movie.poster_path 
-    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
-    : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+    ? `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${movie.poster_path}` 
+    : false;
   
   const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
   const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
 
+  
+  const [isLiked, setIsLiked] = useState<boolean>(movie.isLiked);
+  
   //données en mode liste//
   const originalTitle = movie.original_title;
   const showVO = movie.title_fr && movie.title_fr !== movie.original_title;
   const director = movie.DirectedBy && movie.DirectedBy.length > 0
     ? movie.DirectedBy[0].name
     : 'Réalisateur inconnu';
+  const numberLoan = movie.pastLoans?.length;
+  const indexMovie = user.movies.findIndex(film => movie.tmdb_id == film.tmdb_id);
 
+  const handleLike = async () => {
+    setIsLiked(!isLiked);
+    const myURL = `${BACKEND_URL}/users/isLiked`;
+    const response = await fetch(encodeURI(myURL), {
+       method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          tmdb_id: movie.tmdb_id
+        }),
+    });
+    const data = await response.json();
+    dispatch(iLikeThisMovie({index: indexMovie}))    
+  }
   // --- MODE LISTE (1 colonne) ---
   if (columns === 1) {
     return (
+      
       <TouchableOpacity style={styles.listCard} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
         
         {/* L'affiche avec le bandeau de prêt intelligent */}
@@ -58,7 +86,12 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
           
           <Text style={styles.listYear}>{year}</Text>
           <Text style={styles.listDirector} numberOfLines={1}>{director}</Text>
+          <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         </View>
+        <TouchableOpacity onPress={() => handleLike()}  style={{justifyContent: 'center'}}>
+          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          </TouchableOpacity>
+        
 
       </TouchableOpacity>
     );
@@ -71,14 +104,25 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}
+        {(columns === 3) ? (<TouchableOpacity onPress={() => handleLike()}  style={{alignItems: 'flex-end'}}>
+          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          </TouchableOpacity>) : (<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between'}}>
+          <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
+        <TouchableOpacity onPress={() => handleLike()}  style={{}}>
+          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          </TouchableOpacity></View>) }
+        
+          
+              
       </View>
+
     </TouchableOpacity>
   );
 }
 
 
 const styles = StyleSheet.create({
-  // --- Styles Communs (Mode Grille) ---
+  // --- Styles Communs (Mode Grille) ---1
   infoContainer: { padding: 5 },
   movieTitle: { fontSize: 13, fontWeight: 'bold', color: '#fff', marginBottom: 2 },
   movieYear: { fontSize: 11, color: '#e8be4b', fontWeight: '600' },
@@ -90,6 +134,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginLeft: -5
   },
 
   // --- NOUVEAU : Mode Liste  ---
