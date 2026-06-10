@@ -70,8 +70,14 @@ export const userSlice = createSlice({
     removeCollection: (state) => {
       state.value.movies = []
     },
+    removeFriend: (state, action: PayloadAction<any>) => {
+      console.log(action.payload)
+      if (state.value.friends) {
+        state.value.friends = state.value.friends.filter((ami) => ami.userid !== action.payload)
+      }
+    },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend } = userSlice.actions;
 export default userSlice.reducer;
