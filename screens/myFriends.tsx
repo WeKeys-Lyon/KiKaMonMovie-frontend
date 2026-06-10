@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, FlatList, TouchableOpacity, Share, KeyboardAvoidingView, Platform, Switch, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import {removeFriend} from '../reducers/user';
+import {refreshFriends} from '../reducers/user';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
@@ -42,6 +42,9 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
         setMyCode(data.friendCode);
         setFriendsList(data.friends);
         setPendingRequests(data.pendingRequests || []);
+        let toDispatch: any = [];
+        data.friends.forEach((friend: any) => {toDispatch.push(friend.userid)})
+        dispatch(refreshFriends(toDispatch))
       } else {
         Alert.alert('Erreur', data.error);
       }
@@ -84,6 +87,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
         Alert.alert('Succès !', data.message);
         setCodeToAdd(''); 
         fetchSocialData(); 
+        dispatch(addFriend(data.answer));
       } else {
         Alert.alert('Erreur', data.error);
       }
@@ -110,7 +114,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
       const data = await response.json();
       if (data.result) {
         setIsPermissionModalVisible(false);
-        fetchSocialData(); 
+        fetchSocialData();
       } else {
         Alert.alert('Erreur', data.error);
       }
@@ -146,8 +150,6 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
               if (data.result) {
                 setIsPermissionModalVisible(false); // On ferme la modale
                 fetchSocialData(); // On recharge la liste d'amis
-                console.log(selectedFriend.userid)
-                dispatch(removeFriend(selectedFriend.userid._id))
               } else {
                 Alert.alert('Erreur', data.error);
               }
