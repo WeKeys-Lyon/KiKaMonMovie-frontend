@@ -116,6 +116,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     };
         const getGlobalSuggestions = () => {
             if (user.friends) {
+                
                 if (loanTo.trim().length <= 3) return [];
                 const lowerText = loanTo.toLowerCase();
                 const allSuggestions:{value: string, _id: any }[] = [];

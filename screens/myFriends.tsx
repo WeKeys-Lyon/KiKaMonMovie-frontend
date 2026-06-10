@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, FlatList, TouchableOpacity, Share, KeyboardAvoidingView, Platform, Switch, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import {refreshFriends} from '../reducers/user';
+import {addFriend, removeFriend} from '../reducers/user';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
@@ -28,6 +28,9 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
   // 1. Récupérer les données au chargement de l'écran
   useEffect(() => {
     fetchSocialData();
+/*     let toDispatch: any = [];
+    friendsList.forEach((friend: any) => {toDispatch.push(friend.userid)});
+    dispatch(refreshFriends(toDispatch)); */
   }, []);
 
   const fetchSocialData = async () => {
@@ -42,9 +45,6 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
         setMyCode(data.friendCode);
         setFriendsList(data.friends);
         setPendingRequests(data.pendingRequests || []);
-        let toDispatch: any = [];
-        data.friends.forEach((friend: any) => {toDispatch.push(friend.userid)})
-        dispatch(refreshFriends(toDispatch))
       } else {
         Alert.alert('Erreur', data.error);
       }
@@ -86,7 +86,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
       if (data.result) {
         Alert.alert('Succès !', data.message);
         setCodeToAdd(''); 
-        fetchSocialData(); 
+        fetchSocialData();
         dispatch(addFriend(data.answer));
       } else {
         Alert.alert('Erreur', data.error);
@@ -149,6 +149,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
               const data = await response.json();
               if (data.result) {
                 setIsPermissionModalVisible(false); // On ferme la modale
+                dispatch(removeFriend(selectedFriend.userid.username))
                 fetchSocialData(); // On recharge la liste d'amis
               } else {
                 Alert.alert('Erreur', data.error);

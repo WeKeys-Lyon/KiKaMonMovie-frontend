@@ -70,11 +70,16 @@ export const userSlice = createSlice({
     removeCollection: (state) => {
       state.value.movies = []
     },
-    refreshFriends: (state, action: PayloadAction<any>) => {
-      state.value.friends = (action.payload);
+    addFriend: (state, action: PayloadAction<any>) => {
+      state.value.friends = [...state.value.friends, action.payload]
+    },
+    removeFriend: (state, action: PayloadAction<any>) => {
+      if (state.value.friends) {
+        state.value.friends = state.value.friends.filter((ami) => ami.username !== action.payload)
+      }
     },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, refreshFriends } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend } = userSlice.actions;
 export default userSlice.reducer;
