@@ -61,8 +61,14 @@ export const userSlice = createSlice({
     logout:(state) => {
       state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
     },
+    iLikeThisMovie: (state, action: PayloadAction<any>) => {
+      const {index} = action.payload;
+      if (state.value.movies) { 
+        state.value.movies[index].isLiked ?  state.value.movies[index].isLiked = false : state.value.movies[index].isLiked = true;
+      }
+    }
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie } = userSlice.actions;
 export default userSlice.reducer;
