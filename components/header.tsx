@@ -3,8 +3,8 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type HeaderProps = {
-    title?: string, // Optionnel car tu as une valeur par défaut
-    leftIcon?: React.ReactNode, // "ReactNode" est le type parfait pour dire "ça peut être n'importe quelle icône"
+    title?: string, 
+    leftIcon?: React.ReactNode,
     rightIcon?: React.ReactNode,
     onPressLeft?: () => void,
     onPressRight?: () => void,

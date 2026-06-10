@@ -7,7 +7,6 @@ type NotificationModalProps = {
     visible: boolean;
     onClose: () => void;
     notifications: any[];
-    // On préparera ces fonctions pour plus tard :
     onManageLoan?: (notification: any) => void;
     onAcceptFriend?: (notification: any) => void;
     onDeleteNotification?: (notificationId: string) => void;
