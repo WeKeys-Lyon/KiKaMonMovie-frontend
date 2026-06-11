@@ -266,6 +266,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}
         {isSearchMode && showResults && (
           <SearchResults
+            navigation={navigation}
             movieData={movieData}
             queryAsked={queryAsked}
             drawStyle={drawStyle}

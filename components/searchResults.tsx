@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet} from 'react-native';
+import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { Buttons } from './buttons';
 import { Checkbox } from 'expo-checkbox';
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import {addMovieToStore} from '../reducers/user';
 
 type SearchResultsProps = {
+  navigation: NavigationProp<ParamListBase>;
   movieData: any[];
   queryAsked: string;
   drawStyle: boolean;
@@ -14,6 +17,7 @@ type SearchResultsProps = {
 };
 
 export default function SearchResults({
+  navigation,
   movieData,
   queryAsked,
   drawStyle,
@@ -22,6 +26,7 @@ export default function SearchResults({
 }: SearchResultsProps) {
   const user = useSelector((state: any) => state.user.value);
   const [checkedMovies, setCheckedMovies] = useState<any[]>([]);
+  const dispatch = useDispatch();
   const checkThisBox= (item) => {
     if (checkedMovies.find(movie => movie == item.tmdb_id)) {
       setCheckedMovies(checkedMovies.filter(movie => movie !== item.tmdb_id))
@@ -49,7 +54,16 @@ export default function SearchResults({
       const data = await response.json();
 
       if (data.result) {
-        console.log(data)
+        data.answer.forEach((movie:any) => {
+          if (movie) {
+            if (user.movies.find((film) => film.tmdb_id == movie.tmdb_id)) {
+              console.log('niet')
+            } else {
+              dispatch(addMovieToStore(movie));
+            }
+          }         
+        })
+         navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {
         console.log("Erreur backend", data.error);
       }
