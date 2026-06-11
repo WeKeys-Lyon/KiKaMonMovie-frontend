@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions, ImageBackground } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import Header from '../components/header';
@@ -122,7 +122,7 @@ const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   });
 
 return (
-    <View style={[styles.container, { backgroundColor: '#2A3B5C' }]}>
+    <ImageBackground source={require('../assets/arriereplan.png')} style={styles.background}>
       <Header 
         title={`Collection de ${friendName}`} 
         leftIcon={<FontAwesome name="home" size={24} color="#e8be4b" />}
@@ -215,11 +215,15 @@ return (
           setSortOption={setSortOption}
       />
 
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+   background: {
+    flex: 1,
+    resizeMode: 'cover',
+  },
   container: { flex: 1, backgroundColor: '#1C2942' },
   centerBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   errorText: { color: '#d9534f', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },

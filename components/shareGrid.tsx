@@ -26,7 +26,6 @@ export default function ShareGrid({ item, cardWidth, columns = 2, onPressImage, 
   let borrowerName = "un ami";
   if (item.shareType === 'loaned' && item.pastLoans && item.pastLoans.length > 0) {
     const currentLoan = item.pastLoans[item.pastLoans.length - 1];
-    console.log("--- DEBUG LOAN ---", JSON.stringify(currentLoan, null, 2));
     if (currentLoan.isSharedToUser && currentLoan.userid && currentLoan.userid.username) {
       borrowerName = currentLoan.userid.username;
     } 
