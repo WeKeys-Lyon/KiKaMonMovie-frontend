@@ -181,7 +181,7 @@ export default function MyShares({ navigation }: MySharesProps) {
         </View>
       ) : filteredShares.length === 0 ? (
         <View style={styles.centerContent}>
-          <FontAwesome name="film" size={50} color="#555" style={{ marginBottom: 15 }} />
+          <FontAwesome name="film" size={50} color="#c3c3c3" style={{ marginBottom: 15 }} />
           <Text style={styles.emptyText}>Aucun film partagé pour le moment.</Text>
         </View>
       ) : (
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    color: '#aaa',
+    color: '#ffffff',
     fontSize: 16,
     textAlign: 'center',
     fontStyle: 'italic',
