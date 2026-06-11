@@ -38,7 +38,6 @@ export default function SearchResults({
   const BACKEND_URL = process.env.BACKEND_URL;
   
   const handleAddMovies = async () => {
-    console.log('je suis rentré');
     try {
       const myURL = `${BACKEND_URL}/users/add-movies`
       const response = await fetch(encodeURI(myURL), {
