@@ -9,11 +9,13 @@ export type UserState = {
     notifications: any[] | null;
     friendCode: string | null;
     friends: any[] | null;
+    columns: number | null;
+    sort: string | null;
   };
 };
 
 const initialState: UserState = {
-  value: { email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [] }, 
+  value: { email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [], columns: null, sort: null }, 
 };
 
 export const userSlice = createSlice({
@@ -78,8 +80,13 @@ export const userSlice = createSlice({
         state.value.friends = state.value.friends.filter((ami) => ami.username !== action.payload)
       }
     },
-  },
-});
+    settingColumns: (state, action: PayloadAction<any>) => {
+      state.value.columns = action.payload;
+    },
+    settingSort: (state, action: PayloadAction<any>) => {
+      state.value.sort = action.payload;
+    }
+}});
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, settingColumns, settingSort } = userSlice.actions;
 export default userSlice.reducer;
