@@ -69,6 +69,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
              imageUrl={imageUrl} 
              isLoaned={movie.isLoaned} 
              isListMode={true} 
+             shareType={movie.shareType}
           />
         </View>
 
@@ -100,7 +101,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
   // MODE GRILLE (2 ou 3 colonnes)
   return (
     <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
-      <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} />
+      <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} shareType={movie.shareType} />
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     marginLeft: -5
   },
 
-  // --- NOUVEAU : Mode Liste  ---
+  // --- Mode Liste  ---
   listCard: {
     flexDirection: 'row',
     width: width * 0.9, 

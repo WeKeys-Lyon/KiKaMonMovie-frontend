@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, Platform, TouchableWithoutFeedback, Animated, Dimensions, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableWithoutFeedback, Animated, Dimensions, Alert } from 'react-native';
 import { Buttons } from '../components/buttons';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieReturned } from '../reducers/user';
@@ -14,9 +14,12 @@ type LoanDetailsModalProps = {
     movieTmdbId: number;
     currentLoan: any; 
     onReturnSuccess: () => void;
+    // 🌟 NOUVEAU : On ajoute ces propriétés pour adapter l'affichage
+    shareType?: 'loaned' | 'borrowed'; 
+    ownerName?: string; 
 }
 
-export default function LoanDetailsModal({ visible, onClose, movieName, movieTmdbId, currentLoan, onReturnSuccess }: LoanDetailsModalProps) {
+export default function LoanDetailsModal({ visible, onClose, movieName, movieTmdbId, currentLoan, onReturnSuccess, shareType = 'loaned', ownerName }: LoanDetailsModalProps) {
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
 
@@ -24,12 +27,15 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     const slideAnim = useRef(new Animated.Value(height)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [friendName, setFriendName] = useState<string>('');
+
     useEffect(() => {
-        if (currentLoan?.isSharedToUser) {
-            const friend = user.friends.find(f => f._id == currentLoan.userid)
-            setFriendName(friend.username)
+        if (currentLoan?.isSharedToUser && shareType === 'loaned') {
+            const targetId = currentLoan.userid?._id || currentLoan.userid;
+            const friend = user.friends.find((f: any) => f.userid == targetId || f._id == targetId);
+            if (friend) setFriendName(friend.username);
         }
-    }, [currentLoan, user.friends]);
+    }, [currentLoan, user.friends, shareType]);
+
     useEffect(() => {
         if (visible) {
             setIsRendered(true);
@@ -47,57 +53,51 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
 
     if (!isRendered) return null;
 
-    // Fonction pour formater la date proprement
     const formatDate = (dateString: string) => {
         if (!dateString) return 'Date inconnue';
         const date = new Date(dateString);
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     };
 
-
     const handleReturn = async () => { 
         Alert.alert(
             'Retour du film',
             `Validez-vous le fait que "${movieName}" est de retour dans votre collection ?`,
             [
+                { text: 'Annuler', style: 'cancel' },
                 {
-                text: 'Annuler',
-                style: 'cancel',
-                },
-                {
-                text: 'Valider',
-                style: 'destructive',
-                onPress: async () => {
-        try {
-            // Appel de ta future route backend pour clore le prêt
-            const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
-                method: 'POST', // ou PUT
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: user.token,
-                    tmdb_id: movieTmdbId,
-                }),
-            });
+                    text: 'Valider',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token: user.token, tmdb_id: movieTmdbId }),
+                            });
 
-            const data = await response.json();
+                            const data = await response.json();
 
-            if (data.result) {
-                console.log("Film récupéré !");
-                const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
-                if (indexMovie !== -1) {
-                    dispatch(setMovieReturned({ index: indexMovie }));
+                            if (data.result) {
+                                const indexMovie = user.movies.findIndex((movie: any) => movie.tmdb_id == movieTmdbId);
+                                if (indexMovie !== -1) {
+                                    dispatch(setMovieReturned({ index: indexMovie }));
+                                }
+                                onReturnSuccess(); 
+                                onClose(); 
+                            } else {
+                                Alert.alert("Erreur", data.error);
+                            }
+                        } catch (error) {
+                            Alert.alert("Erreur", "Impossible de joindre le serveur");
+                        }
+                    }
                 }
-                onReturnSuccess(); // Met à jour la MovieCard
-                onClose(); // Ferme la modale
-            } else {
-                console.log("Erreur serveur :", data.error);
-            }
-        } catch (error) {
-            console.error(error);
-        }}}])
+            ]
+        );
     };
+
     const handleRemindBorrower = async () => {
-        // Sécurité : On ne peut relancer qu'un utilisateur de l'application
         if (!currentLoan?.isSharedToUser) {
             Alert.alert("Prêt manuel", "Ce prêt a été ajouté manuellement, relance ton ami par SMS !");
             return;
@@ -109,7 +109,6 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     token: user.token,
-                    // On récupère les ID depuis le prêt en cours
                     borrowerId: currentLoan.userid?._id || currentLoan.userid,
                     movieId: currentLoan.movieid?._id || currentLoan.movieid
                 })
@@ -123,7 +122,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                 Alert.alert('Oups', data.error);
             }
         } catch (error) {
-            console.error('Erreur lors du rappel depuis les détails :', error);
+            console.error(error);
         }
     };
 
@@ -143,8 +142,14 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                     
                     <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
                         <View style={styles.infoBlock}>
-                            <Text style={styles.label}>Prêté à :</Text>
-                            <Text style={styles.value}>{friendName || currentLoan?.borrower || 'Inconnu'}</Text>
+                            {/* Le texte s'adapte */}
+                            <Text style={styles.label}>{shareType === 'borrowed' ? 'Emprunté à :' : 'Prêté à :'}</Text>
+                            <Text style={styles.value}>
+                               {shareType === 'borrowed' 
+                                    ? ownerName 
+                                    : (currentLoan?.userid?.username || friendName || currentLoan?.borrower || 'Inconnu')
+                                }
+                            </Text>
                         </View>
 
                         <View style={styles.infoBlock}>
@@ -160,17 +165,18 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                         ) : null}
                     </ScrollView>
 
-                    {/* Zone des boutons d'action */}
-                    <View style={styles.actionButtonsContainer}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Buttons title="🔔 Réclamer" onPress={handleRemindBorrower} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+                    {/* On n'affiche les boutons QUE si le film est prêté (pas emprunté) */}
+                    {shareType !== 'borrowed' && (
+                        <View style={styles.actionButtonsContainer}>
+                            <View style={{ flex: 1, marginRight: 5 }}>
+                                <Buttons title="🔔 Réclamer" onPress={handleRemindBorrower} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 5 }}>
+                                <Buttons title="✅ Récupérer" onPress={handleReturn} variant="primary" style={{ backgroundColor: '#5cb85c' }} />
+                            </View>
                         </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Buttons title="✅ Récupérer" onPress={handleReturn} variant="primary" style={{ backgroundColor: '#5cb85c' }} />
-                        </View>
-                    </View>
+                    )}
                     
-                    {/* Bouton de fermeture classique */}
                     <View style={{ marginTop: 15 }}>
                         <Buttons title="Fermer" onPress={onClose} variant="secondary" />
                     </View>
@@ -181,13 +187,14 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     );
 }
 
+
 const styles = StyleSheet.create({
     container: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 9999 },
     backdrop: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0, 0, 0, 0.85)' },
     contentWrapper: { flex: 1, justifyContent: 'flex-end' },
     dismissArea: { flex: 1, width: '100%' },
     modalContent: {
-        backgroundColor: '#1C2942',
+        backgroundColor: '#2A3B5C',
         borderTopLeftRadius: 25, borderTopRightRadius: 25,
         padding: 20, paddingBottom: 35,
         borderTopWidth: 1, borderColor: '#e8be4b',
