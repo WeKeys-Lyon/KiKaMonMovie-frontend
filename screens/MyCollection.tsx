@@ -460,6 +460,7 @@ const handleDeleteNotification = async (notificationId: string) => {
 
               <View style={{ position: 'relative', margin: columns > 1 ? 5 : 0 }}>
                 <MovieGrid
+                  mode='add'
                   titleOriginal={sortOption}
                   movie={item}
                   columns={columns}

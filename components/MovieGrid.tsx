@@ -10,7 +10,8 @@ const { width } = Dimensions.get('window');
 
 
 interface MovieGridProps {
-  titleOriginal: string,
+  mode: 'friend' | 'add',
+  titleOriginal?: string,
   movie: any;
   columns: number;
   cardWidth: number | string;
@@ -18,7 +19,7 @@ interface MovieGridProps {
   onLongPress?: () => void;
 }
 
-export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal }: MovieGridProps) {
+export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal, mode }: MovieGridProps) {
   
   const BACKEND_URL = process.env.BACKEND_URL;
   const user = useSelector((state: any) => state.user.value);
@@ -89,7 +90,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
           <Text style={styles.listDirector} numberOfLines={1}>{director}</Text>
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         </View>
-        <TouchableOpacity onPress={() => handleLike()}  style={{justifyContent: 'center'}}>
+        <TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{justifyContent: 'center'}}>
           {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity>
         
@@ -105,11 +106,11 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}
-        {(columns === 3) ? (<TouchableOpacity onPress={() => handleLike()}  style={{alignItems: 'flex-end'}}>
+        {(columns === 3) ? (<TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{alignItems: 'flex-end'}}>
           {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity>) : (<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between'}}>
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
-        <TouchableOpacity onPress={() => handleLike()}  style={{}}>
+        <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{}}>
           {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity></View>) }
         

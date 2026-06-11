@@ -179,7 +179,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       <View style={styles.modalContent}>
         
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-          <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
+          <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{marginLeft:'90%'}}>
           {drawHeart()}
           </TouchableOpacity>
           <View style={styles.posterContainer}>
