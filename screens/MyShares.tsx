@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, ActivityIndicator, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, ActivityIndicator, ImageBackground, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, useIsFocused } from '@react-navigation/native';
 import Header from '../components/header';
-import MovieGrid from '../components/MovieGrid'; // Vérifie que le chemin est correct selon ton arborescence
+import ShareGrid from '../components/shareGrid';
+import LoanDetailsModal from '../components/loanDetailsModale';
 import { FontAwesome } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { setMovieReturned } from '../reducers/user';
+
 
 type MySharesProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -16,10 +20,15 @@ const { width } = Dimensions.get('window');
 export default function MyShares({ navigation }: MySharesProps) {
   const user = useSelector((state: any) => state.user.value);
   const isFocused = useIsFocused(); // Permet de recharger quand on revient sur l'écran
+  const dispatch = useDispatch();
+
 
   // Variables d'état
   const [allShares, setAllShares] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [columns, setColumns] = useState<number>(2);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedShare, setSelectedShare] = useState<any>(null);
   
   // Le filtre actif ('all', 'loaned', ou 'borrowed')
   const [activeFilter, setActiveFilter] = useState<'all' | 'loaned' | 'borrowed'>('all');
@@ -57,16 +66,88 @@ export default function MyShares({ navigation }: MySharesProps) {
     return movie.shareType === activeFilter;
   });
 
-  // Configuration de la grille (3 colonnes pour l'exemple)
-  const numColumns = 3;
-  const cardWidth = (width - 40 - (numColumns - 1) * 10) / numColumns; // Calcul dynamique de la largeur
+  const cardWidth = columns === 1 ? width * 0.9 : (width - 50) / 2;
+
+// Fonction pour relancer 
+  const handleRemind = (borrowerId: string, borrowerName: string, movieId: string) => {
+    Alert.alert(
+      "Relancer",
+      `Souhaitez-vous relancer ${borrowerName} ?`,
+      [
+        { text: "Non", style: "cancel" },
+        { 
+          text: "Oui", 
+          onPress: async () => {
+            try {
+              const response = await fetch(`${BACKEND_URL}/users/remind-loan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: user.token, borrowerId, movieId }),
+              });
+              const data = await response.json();
+              if (data.result) {
+                Alert.alert('Rappel envoyé 🔔', data.message || "La relance a bien été envoyée !");
+              } else {
+                Alert.alert('Oups', data.error);
+              }
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de joindre le serveur.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Fonction pour récupérer 
+  const handleRecover = (tmdb_id: number, movieTitle: string) => {
+    Alert.alert(
+      'Retour du film',
+      `Validez-vous le fait que "${movieTitle}" est de retour dans votre collection ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Valider', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: user.token, tmdb_id }),
+              });
+              
+              const data = await response.json();
+              if (data.result) {
+                // 1. Mise à jour de ton Redux comme dans le Modal
+                const indexMovie = user.movies.findIndex((m: any) => m.tmdb_id == tmdb_id);
+                if (indexMovie !== -1) {
+                    dispatch(setMovieReturned({ index: indexMovie }));
+                }
+                
+                // 2. Mise à jour visuelle de l'écran MyShares
+                fetchMyShares(); 
+              } else {
+                Alert.alert('Erreur', data.error);
+              }
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de joindre le serveur.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header 
         title="Mes Partages" 
-        leftIcon={<FontAwesome name="home" size={28} color="#e8be4b" />}
-        onPressLeft={() => navigation.goBack()} // Ou navigation.navigate('Home') selon ta nav
+        leftIcon={<FontAwesome name="angle-left" size={24} color="#e8be4b" />}
+        onPressLeft={() => navigation.goBack()}
+        // 🌟 NOUVEAU : La roue des réglages pour changer l'affichage
+        rightIcon={<FontAwesome name="cog" size={24} color="#e8be4b" />} 
+        onPressRight={() => setColumns(columns === 2 ? 1 : 2)}
       />
 
       {/* --- LES BOUTONS DE FILTRE --- */}
@@ -104,29 +185,63 @@ export default function MyShares({ navigation }: MySharesProps) {
           <Text style={styles.emptyText}>Aucun film partagé pour le moment.</Text>
         </View>
       ) : (
-        <FlatList
+      <FlatList
           data={filteredShares}
           keyExtractor={(item, index) => index.toString()}
-          numColumns={numColumns}
+          numColumns={columns}
+          key={columns}
           contentContainerStyle={styles.gridContainer}
-          columnWrapperStyle={{ gap: 10, marginBottom: 15 }}
-          renderItem={({ item }) => (
-            <MovieGrid 
-              movie={item} 
-              columns={numColumns} 
-              cardWidth={cardWidth} 
-              titleOriginal="title_fr" // Ou la variable que tu utilises par défaut
-              onPress={() => {
-                // On navigue vers la MovieCard en passant le film ET le contexte de partage
-                navigation.navigate('MovieCard', { 
-                  movie: item, 
-                  context: 'myshares', // Très utile pour adapter la MovieCard plus tard !
-                  shareType: item.shareType,
-                  ownerName: item.ownerName // Pour afficher "Propriétaire: Machin"
-                });
-              }} 
-            />
-          )}
+          columnWrapperStyle={columns > 1 ? { gap: 10, marginBottom: 15 } : undefined}
+          renderItem={({ item }) => {
+            
+            // Pour la MovieCard, on prépare les données unifiées
+            const formattedMovieData = {
+              ...(item.movieid || {}),
+              isLoaned: item.isLoaned,
+              pastLoans: item.pastLoans,
+              shareType: item.shareType,
+              ownerName: item.ownerName,
+              ownerId: item.ownerId
+            };
+
+            return (
+              <ShareGrid 
+                item={item}
+                cardWidth={cardWidth}
+                columns={columns} // 👈 NOUVEAU : On informe ShareGrid du mode actuel
+                onPressImage={() => {
+                  setSelectedShare(item);
+                  setModalVisible(true);
+                }}
+                onRemind={() => {
+                  const currentLoan = item.pastLoans[item.pastLoans.length - 1];
+                  const borrowerId = currentLoan.userid?._id;
+                  const borrowerName = currentLoan.userid?.username || currentLoan.borrower || "cet ami";
+                  
+                  handleRemind(borrowerId, borrowerName, item.movieid._id);
+                }}
+                onRecover={() => {
+                  const movieTitle = item.movieid?.title_fr || item.movieid?.original_title || 'ce film';
+                  handleRecover(item.movieid.tmdb_id, movieTitle);
+                }}
+              />
+            );
+          }}
+        />
+      )}
+      {selectedShare && (
+        <LoanDetailsModal 
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          movieName={selectedShare.movieid?.title_fr || selectedShare.movieid?.original_title}
+          movieTmdbId={selectedShare.movieid?.tmdb_id}
+          currentLoan={selectedShare.pastLoans?.[selectedShare.pastLoans.length - 1]}
+          shareType={selectedShare.shareType}
+          ownerName={selectedShare.ownerName}
+          onReturnSuccess={() => {
+            fetchMyShares(); // Met à jour la liste automatiquement en arrière-plan
+            setModalVisible(false); // Ferme la modale
+          }}
         />
       )}
     </ImageBackground>
@@ -190,5 +305,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  // Styles pour la nouvelle carte sur-mesure
+  shareCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  shareInfoContainer: {
+    padding: 8,
+  },
+  shareMovieTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  shareSubtitle: {
+    fontSize: 12,
+    color: '#aaa',
+  },
+  boldUser: {
+    color: '#e8be4b',
+    fontWeight: 'bold',
+  },
+
+  // Boutons d'action rapide
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    justifyContent: 'space-between',
+  },
+  quickButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    flex: 1,
+  },
+  quickButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
 });
