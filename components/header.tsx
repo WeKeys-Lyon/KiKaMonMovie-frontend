@@ -30,7 +30,7 @@ export default function Header({ title, leftIcon, rightIcon, onPressLeft, onPres
 
             {/* ZONE TITRE */}
             <View style={styles.titleZone}>
-                <Text style={styles.title} numberOfLines={1}>{displayTitle}</Text>
+                <Text style={styles.title} numberOfLines={2} adjustsFontSizeToFit={true} minimumFontScale={0.7}>{displayTitle}</Text>
             </View>
 
             {/* ZONE DROITE */}
