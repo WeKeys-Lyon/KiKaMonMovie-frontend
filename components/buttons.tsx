@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: '#e8be4b',
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -180,10 +180,10 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   outlineText: {
-    color: '#007AFF',
+    color: '#e8be4b',
   },
   ghostText: {
-    color: '#007AFF',
+    color: '#e8be4b',
   },
 
   // Text size styles

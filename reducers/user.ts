@@ -13,16 +13,21 @@ export type UserState = {
 };
 
 const initialState: UserState = {
-  value: { email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [] }, 
+  value: { 
+    email: null, 
+    token: null, 
+    username: null, 
+    movies: [], 
+    friendCode: null, 
+    notifications: [], 
+    friends: []
+  }, 
 };
 
 export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    /* updateEmail: (state, action: PayloadAction<string>) => {
-      state.value.email = action.payload;
-    }, */
     login: (state, action: PayloadAction<{email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
       state.value.email = action.payload.email;
       state.value.token = action.payload.token;
@@ -37,7 +42,7 @@ export const userSlice = createSlice({
     },
     removedMovieFromStore: (state, action: PayloadAction<any>) => {
       if (state.value.movies) {
-      state.value.movies = state.value.movies.filter(
+        state.value.movies = state.value.movies.filter(
           (movie: any) => String(movie.tmdb_id) !== String(action.payload)
         );
       }
@@ -59,27 +64,42 @@ export const userSlice = createSlice({
       state.value.notifications = action.payload;
     },
     logout:(state) => {
-      state.value = { email: null, token: null, username: null, movies: [] /* linkingCode: null */ };
+      // 🌟 CORRECTION : On remet TOUT à zéro proprement !
+      state.value = initialState.value;
     },
     iLikeThisMovie: (state, action: PayloadAction<any>) => {
       const {index} = action.payload;
-      if (state.value.movies) { 
-        state.value.movies[index].isLiked ?  state.value.movies[index].isLiked = false : state.value.movies[index].isLiked = true;
+      if (state.value.movies && state.value.movies[index]) { 
+        state.value.movies[index].isLiked = !state.value.movies[index].isLiked;
       }
     },
     removeCollection: (state) => {
-      state.value.movies = []
+      if (state.value.movies) {
+        state.value.movies = [];
+      }
     },
     addFriend: (state, action: PayloadAction<any>) => {
-      state.value.friends = [...state.value.friends, action.payload]
+      if (state.value.friends) {
+        state.value.friends = [...state.value.friends, action.payload];
+      }
     },
     removeFriend: (state, action: PayloadAction<any>) => {
       if (state.value.friends) {
-        state.value.friends = state.value.friends.filter((ami) => ami.username !== action.payload)
+        state.value.friends = state.value.friends.filter((ami) => ami.username !== action.payload);
+      }
+    },
+    addReviewToStore: (state, action: PayloadAction<{ index: number, review: any }>) => {
+      const { index, review } = action.payload;
+      // 🌟 CORRECTION : On vérifie que movies et movies[index] existent pour éviter un crash
+      if (state.value.movies && state.value.movies[index]) {
+        if (!state.value.movies[index].reviews) {
+          state.value.movies[index].reviews = [];
+        }
+        state.value.movies[index].reviews.push(review);
       }
     },
   },
 });
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore } = userSlice.actions;
 export default userSlice.reducer;

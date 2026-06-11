@@ -199,6 +199,7 @@ return (
             clickable={false}
             navigation={navigation}
             onAskMovie={handleAskForMovie} 
+            ownerId={friendId}
           />
         )}
       </Modal>

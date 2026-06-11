@@ -1,13 +1,14 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert, TextInput } from 'react-native';
 import { Buttons } from '../components/buttons';
-import { addMovieToStore } from '../reducers/user';
+import { addMovieToStore, addReviewToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
 import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
+import StarRating from '../components/starRating';
 import FontAwesome  from '@react-native-vector-icons/fontawesome';
 import {iLikeThisMovie} from '../reducers/user';
 
@@ -25,10 +26,11 @@ type MovieCardScreenProps = {
   onDeleteClick: () => void;
   onAddSuccess?: () => void;
   onAskMovie?: () => void;
+  ownerId?: string;
 };
 
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId}: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId }: MovieCardScreenProps) {
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -41,6 +43,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
+  const [activeTab, setActiveTab] = useState<'details' | 'reviews'>('details');
+
+  const [rating, setRating] = useState<number>(0);
+  const [reviewText, setReviewText] = useState<string>('');
+
   const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
     ? datas.pastLoans[datas.pastLoans.length - 1] 
     : null;
@@ -174,6 +181,85 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
+  //poster un avis (si on a emprunté le film)
+  const handlePublishReview = async () => {
+    if (rating === 0 && reviewText.trim() === '') {
+      Alert.alert("Oups", "Veuillez laisser une note ou un commentaire.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/add-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          ownerId: ownerId || user._id, // Si pas d'ownerId, on envoie mon propre ID
+          tmdb_id: datas.tmdb_id,
+          rating: rating,
+          comment: reviewText
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        Alert.alert("Succès", data.message);
+      const newReview = {
+          userid: { username: user.username }, 
+          rating: rating,
+          comment: reviewText,
+          createdAt: new Date().toISOString()
+        };
+        
+        setDatas({
+          ...datas,
+          reviews: [...(datas.reviews || []), newReview]
+        });
+        if (mode === 'collection' && indexMovie !== -1) {
+          dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
+        }
+
+        // On vide le formulaire
+        setRating(0); 
+        setReviewText('');
+      } else {
+        Alert.alert("Accès refusé", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Impossible de contacter le serveur.");
+    }
+  };
+
+  // Formater la date proprement (ex: 12 juin 2026)
+  const formatReviewDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  // Retrouver le pseudo en fonction de l'ID
+  const getReviewerName = (reviewerId: any) => {
+    if (!reviewerId) return 'Inconnu';
+    
+    // CAS 1 : C'est notre avis généré instantanément (avec le pseudo)
+    if (reviewerId.username) {
+      if (reviewerId.username === user.username) return 'Moi';
+      return reviewerId.username;
+    }
+
+    // CAS 2 : C'est un ID brut venant du backend
+    const id = reviewerId._id || reviewerId;
+    
+    // On cherche dans la liste de tes amis
+    const friend = user.friends?.find((f: any) => (f.userid?._id || f.userid) === id || f._id === id);
+    if (friend) return friend.username;
+
+    // 🌟 ASTUCE : Si l'auteur n'est pas dans tes amis, c'est forcément que c'est TON avis !
+    return 'Moi'; 
+  };
+
  return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
@@ -192,31 +278,111 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           
           {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
+          {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalSubtitle}>{datas?.original_title}</Text>) : null}
 
-          <View style={styles.modalInfoGrid}>
-            {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
-            {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
-            <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
-            <Text style={styles.modalLabel}>Réalisé par :</Text>
-            {renderClickableNames(datas?.DirectedBy, 'director')}
-            <Text style={styles.modalLabel}>Genre :</Text>
-            {renderClickableNames(datas?.Genres, 'genre')}
-            <Text style={styles.modalLabel}>Compositeur : </Text>
-            {renderClickableNames(datas?.MusicBy, 'composer')}
+          {/* 🌟 NOUVEAU : Menu des onglets */}
+          {mode !== 'add' && ( // On n'affiche pas l'onglet "Avis" lors de la première recherche TMDB
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity 
+                style={[styles.tabButton, activeTab === 'details' && styles.activeTabButton]}
+                onPress={() => setActiveTab('details')}
+              >
+                <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>Détails</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.tabButton, activeTab === 'reviews' && styles.activeTabButton]}
+                onPress={() => setActiveTab('reviews')}
+              >
+                <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>Avis</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-            <Text style={styles.modalLabel}>Casting :</Text>
-            {renderClickableNames(datas?.Cast, 'actor', 15)}
-            {mode === 'collection' && (
-              <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
-                <Buttons
-                  title="🗑️ Supprimer le film"
-                  onPress={onDeleteClick}
-                  variant="primary"
-                  style={{ backgroundColor: '#d9534f', width: '80%' }}
+          {/* 🌟 CONTENU CONDITIONNEL SELON L'ONGLET */}
+          {activeTab === 'details' ? (
+            // --- VUE DÉTAILS TECHNIQUES ---
+            <View style={styles.modalInfoGrid}>
+              <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
+              <Text style={styles.modalLabel}>Réalisé par :</Text>
+              {renderClickableNames(datas?.DirectedBy, 'director')}
+              <Text style={styles.modalLabel}>Genre :</Text>
+              {renderClickableNames(datas?.Genres, 'genre')}
+              <Text style={styles.modalLabel}>Compositeur : </Text>
+              {renderClickableNames(datas?.MusicBy, 'composer')}
+              <Text style={styles.modalLabel}>Casting :</Text>
+              {renderClickableNames(datas?.Cast, 'actor', 15)}
+              
+              {mode === 'collection' && (
+                <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
+                  <Buttons
+                    title="🗑️ Supprimer le film"
+                    onPress={onDeleteClick}
+                    variant="primary"
+                    style={{ backgroundColor: '#d9534f', width: '80%' }}
+                  />
+                </View>
+              )}
+            </View>
+          ) : (
+            // --- 🌟 NOUVEAU : VUE SOCIALE (AVIS) ---
+            <View style={styles.reviewsContainer}>
+             {/* 🌟 LA LISTE DES AVIS */}
+              {datas.reviews && datas.reviews.length > 0 ? (
+                <View style={styles.reviewsList}>
+                  {datas.reviews.map((review: any, index: number) => (
+                    <View key={index} style={styles.reviewItem}>
+                      
+                      <View style={styles.reviewHeader}>
+                        <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
+                        <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
+                      </View>
+                      
+                      {/* Note : disabled={true} car on est juste en lecture ! */}
+                      <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
+                        <StarRating rating={review.rating} size={14} disabled={true} />
+                      </View>
+                      
+                      {review.comment ? (
+                        <Text style={styles.reviewText}>{review.comment}</Text>
+                      ) : null}
+
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.reviewPlaceholder}>
+                  Aucun avis pour le moment. Soyez le premier !
+                </Text>
+              )}
+
+              {/* Formulaire pour laisser un avis */}
+              <View style={styles.reviewFormContainer}>
+                <Text style={styles.modalLabel}>Laissez votre avis :</Text>
+                
+                <StarRating 
+                  rating={rating} 
+                  onRatingPress={(newRating) => setRating(newRating)} 
+                />
+
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Qu'avez-vous pensé de ce film ?"
+                  placeholderTextColor="#888"
+                  multiline={true}
+                  numberOfLines={4}
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                />
+
+                <Buttons 
+                  title="Publier mon avis" 
+                  onPress={handlePublishReview}
+                  variant="outline" 
                 />
               </View>
-            )}
-          </View>
+            </View>
+          )}
         </ScrollView>
 
         <View style={styles.modalButtonsRow}>
@@ -367,5 +533,98 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  // 🌟 NOUVEAU : Styles pour les onglets
+  tabsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  activeTabButton: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#e8be4b',
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  activeTabText: {
+    color: '#e8be4b',
+  },
+
+ // --- Styles pour la zone des avis ---
+  reviewsContainer: {
+    width: '100%',
+    paddingVertical: 10,
+  },
+  reviewPlaceholder: {
+    color: '#aaa',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  reviewFormContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 10,
+  },
+  textInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    color: '#fff',
+    borderRadius: 8,
+    padding: 15,
+    minHeight: 100,
+    textAlignVertical: 'top', // Très important pour les champs multiline sur Android
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 190, 75, 0.3)',
+
+  },
+  // --- Styles des avis ---
+  reviewsList: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  reviewItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewAuthor: {
+    color: '#e8be4b',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  reviewDate: {
+    color: '#aaa',
+    fontSize: 12,
+  },
+  reviewText: {
+    color: '#fff',
+    fontSize: 15,
+    fontStyle: 'italic',
+    marginTop: 8,
+    lineHeight: 22,
   },
 });
