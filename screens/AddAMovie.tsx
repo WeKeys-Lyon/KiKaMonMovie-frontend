@@ -196,7 +196,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         handleRescan();
 
       } else {
-        Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
+        Alert.alert("Film introuvable", `Le service de TheMovieDataBase n'a pas reconnu : "${cleanTitle}"`);
       }
     } catch (error) {
       console.error("Erreur lors de la confirmation :", error);

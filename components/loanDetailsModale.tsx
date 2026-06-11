@@ -99,7 +99,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
 
     const handleRemindBorrower = async () => {
         if (!currentLoan?.isSharedToUser) {
-            Alert.alert("Prêt manuel", "Ce prêt a été ajouté manuellement, relance ton ami par SMS !");
+            Alert.alert("Prêt manuel", "Ce prêt a été fait à une personne n'utilisant pas KiKaMonMovie, relancez cette personne par un autre biais.");
             return;
         }
 
