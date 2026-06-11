@@ -238,8 +238,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2.1 : La camera */}
         {isCameraActive && permission?.granted && (
           <BarcodeScanner
-            isScanning={isScanning}
-            scannedTitle={scannedTitle}
+            Scanning={isScanning}
+            scanTitle={scannedTitle}
             onBarcodeScanned={handleBarCodeScanned}
             onRescan={handleRescan}
             onConfirm={handleConfirmScannedMovie}
@@ -266,6 +266,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}
         {isSearchMode && showResults && (
           <SearchResults
+            navigation={navigation}
             movieData={movieData}
             queryAsked={queryAsked}
             drawStyle={drawStyle}

@@ -22,7 +22,7 @@ type MovieCardScreenProps = {
   requester?: any;
   notificationId?: string;
   onFilterClick?: (type: string, value: string) => void;
-  onDeleteClick: () => void;
+  onDeleteClick?: () => void;
   onAddSuccess?: () => void;
   onAskMovie?: () => void;
 };
