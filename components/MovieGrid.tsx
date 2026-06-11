@@ -82,7 +82,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
           
           {showVO && (
             <Text style={styles.listVOTitle} numberOfLines={1}>
-              {originalTitle}
+              {(titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? (movie.title_fr) : (originalTitle)}
             </Text>
           )}
           
