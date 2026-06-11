@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import { Buttons } from './buttons';
+import { Checkbox } from 'expo-checkbox';
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 type SearchResultsProps = {
   movieData: any[];
@@ -17,11 +20,49 @@ export default function SearchResults({
   backToSearch,
   handleOpenModal,
 }: SearchResultsProps) {
+  const user = useSelector((state: any) => state.user.value);
+  const [checkedMovies, setCheckedMovies] = useState<any[]>([]);
+  const checkThisBox= (item) => {
+    if (checkedMovies.find(movie => movie == item.tmdb_id)) {
+      setCheckedMovies(checkedMovies.filter(movie => movie !== item.tmdb_id))
+    } else {
+      setCheckedMovies(prevData => [...prevData, item.tmdb_id]) 
+    }
+  };
+
+  const BACKEND_URL = process.env.BACKEND_URL;
+  
+  const handleAddMovies = async () => {
+    console.log('je suis rentré');
+    try {
+      const myURL = `${BACKEND_URL}/users/add-movies`
+      const response = await fetch(encodeURI(myURL), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: user.token,
+          moviesid: checkedMovies
+        }),
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        console.log(data)
+      } else {
+        console.log("Erreur backend", data.error);
+      }
+    } catch (error) {
+      console.error("Erreur réseau :", error);
+    }
+  }
   return (
     <View style={styles.resultsContainer}>
       <View style={styles.backButtonContainer}>
-        <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" />
+        <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" style={{width: '55%'}}/>
         <Text style={styles.text}>Résultats pour {queryAsked}</Text>
+        {(checkedMovies.length > 0) ? (<Buttons title="Ajout groupé" onPress={handleAddMovies} variant="secondary" style={{backgroundColor: '#e8be4b', width: '55%'}}/>) : (<></>) }
       </View>
       
       <FlatList
@@ -29,11 +70,12 @@ export default function SearchResults({
         keyExtractor={(item, index) => item.tmdb_id ? item.tmdb_id.toString() : index.toString()}
         style={styles.list}
         renderItem={({ item }) => {
+          item.checked = false;
           const year = item.release_date ? item.release_date.substring(0, 4) : 'N/A';
           const director = item.DirectedBy && item.DirectedBy.length > 0
             ? item.DirectedBy[0].name
             : 'Réalisateur inconnu';
-
+        
           return (
             <TouchableOpacity onPress={() => handleOpenModal(item)}>
               <View style={styles.movieCard}>
@@ -55,6 +97,14 @@ export default function SearchResults({
                   <Text style={styles.movieYear}>{year}</Text>
                   
                   {!drawStyle && <Text style={styles.movieDirector}>{director}</Text>} 
+                </View>
+                <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+                    <Checkbox
+                        style={{margin: 8}}
+                        value={checkedMovies.find(movie => movie == item.tmdb_id)}
+                        onValueChange={() => checkThisBox(item)}
+                        color={checkedMovies.find(movie => movie == item.tmdb_id ) ? '#e8be4b' : undefined}
+                    />
                 </View>
               </View>
             </TouchableOpacity>
@@ -81,6 +131,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginTop: 10,
+    marginBottom: 10,
     fontWeight: 'bold',
   },
   list: {
@@ -101,7 +152,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   movieInfo: {
-    flex: 1,
+    flex: 8,
     marginLeft: 15,
     justifyContent: 'center',
   },

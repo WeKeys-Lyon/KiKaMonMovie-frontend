@@ -238,8 +238,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2.1 : La camera */}
         {isCameraActive && permission?.granted && (
           <BarcodeScanner
-            isScanning={isScanning}
-            scannedTitle={scannedTitle}
+            Scanning={isScanning}
+            scanTitle={scannedTitle}
             onBarcodeScanned={handleBarCodeScanned}
             onRescan={handleRescan}
             onConfirm={handleConfirmScannedMovie}
