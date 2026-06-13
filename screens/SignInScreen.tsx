@@ -53,6 +53,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
       if (data.result) {
         dispatch(login({
+          _id: data.answer._id,
           email: data.answer.email,
           username: data.answer.username,
           token: data.answer.token,

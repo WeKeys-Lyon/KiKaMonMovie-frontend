@@ -52,6 +52,22 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     ? datas.pastLoans[datas.pastLoans.length - 1] 
     : null;
 
+  const didIMakeAReview = () => {
+    if (moviedata.reviews) {
+        const myReview = moviedata.reviews.find((avis) => avis.userid == user._id)
+        if (myReview) {
+          return true
+        } else {
+          return false
+        }
+    } else {
+      return false
+    }
+    
+
+    
+  };
+  
   useEffect(() => {
     const init = async () => {
       if (drawStyle) {
@@ -261,12 +277,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
  return (            
-      <View style={styles.modalOverlay}>
+
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : 'height'}
+        keyboardVerticalOffset={-110} style={styles.modalOverlay}>
       <View style={styles.modalContent}>
-        <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : 'height'}
-        keyboardVerticalOffset={50}
-        >
+        
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
           <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{marginLeft:'90%'}}>
           {drawHeart()}
@@ -329,6 +344,33 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           ) : (
             // --- 🌟 NOUVEAU : VUE SOCIALE (AVIS) ---
             <View style={styles.reviewsContainer}>
+              {/* Formulaire pour laisser un avis */}
+              {(didIMakeAReview()) ? (<></>) : (<View style={styles.reviewFormContainer}>
+                <Text style={styles.modalLabel}>Laissez votre avis :</Text>
+                
+                <StarRating 
+                  rating={rating} 
+                  onRatingPress={(newRating) => setRating(newRating)} 
+                />
+                <>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Qu'avez-vous pensé de ce film ?"
+                  placeholderTextColor="#888"
+                  multiline={true}
+                  numberOfLines={4}
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                />
+                </>
+                <Buttons 
+                  title="Publier mon avis" 
+                  onPress={handlePublishReview}
+                  variant="outline" 
+                />
+              </View>)}
+            
+                           
              {/* 🌟 LA LISTE DES AVIS */}
               {datas.reviews && datas.reviews.length > 0 ? (
                 <View style={styles.reviewsList}>
@@ -359,37 +401,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                 </Text>
               )}
 
-              {/* Formulaire pour laisser un avis */}
-                <View style={styles.reviewFormContainer}>
-                <Text style={styles.modalLabel}>Laissez votre avis :</Text>
-                
-                <StarRating 
-                  rating={rating} 
-                  onRatingPress={(newRating) => setRating(newRating)} 
-                />
-                <>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Qu'avez-vous pensé de ce film ?"
-                  placeholderTextColor="#888"
-                  multiline={true}
-                  numberOfLines={4}
-                  value={reviewText}
-                  onChangeText={setReviewText}
-                />
-                </>
-                <Buttons 
-                  title="Publier mon avis" 
-                  onPress={handlePublishReview}
-                  variant="outline" 
-                />
-              </View>
+              
             </View>
-            
           )}
         </ScrollView>
 
-        </KeyboardAvoidingView>
         <View style={styles.modalButtonsRow}>
           {mode === 'manage_request' ? (
             // 🚨 MODE DÉCISION (Venant d'une notification)
@@ -441,6 +457,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             </>
           )}
         </View>
+  
       </View> 
 
       <LoanModal 
@@ -475,7 +492,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
       />
       
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -575,6 +592,7 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontStyle: 'italic',
     textAlign: 'center',
+    marginTop: 20,
     marginBottom: 20,
   },
   reviewFormContainer: {
@@ -583,8 +601,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginTop: 10,
-  },
+    marginTop: 5,
+    marginBottom: 10, 
+   },
   textInput: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     color: '#fff',
