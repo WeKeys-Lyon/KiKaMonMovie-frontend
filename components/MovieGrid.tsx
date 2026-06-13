@@ -10,7 +10,7 @@ const { width } = Dimensions.get('window');
 
 
 interface MovieGridProps {
-  titleOriginal: string,
+  titleOriginal?: string,
   movie: any;
   columns: number;
   cardWidth: number | string;

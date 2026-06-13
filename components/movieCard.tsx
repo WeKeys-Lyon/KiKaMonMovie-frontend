@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore, addReviewToStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
@@ -260,10 +260,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     return 'Moi'; 
   };
 
- return (
-    <View style={styles.modalOverlay}>
+ return (            
+      <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
-        
+        <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : 'height'}
+        keyboardVerticalOffset={50}
+        >
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
           <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
           {drawHeart()}
@@ -276,9 +279,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             /> 
           </View>
           
-          {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
-          {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalSubtitle}>{datas?.original_title}</Text>) : null}
 
           {/* 🌟 NOUVEAU : Menu des onglets */}
           {mode !== 'add' && ( // On n'affiche pas l'onglet "Avis" lors de la première recherche TMDB
@@ -303,6 +304,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           {activeTab === 'details' ? (
             // --- VUE DÉTAILS TECHNIQUES ---
             <View style={styles.modalInfoGrid}>
+              {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
               <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
               <Text style={styles.modalLabel}>Réalisé par :</Text>
               {renderClickableNames(datas?.DirectedBy, 'director')}
@@ -348,6 +350,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       ) : null}
 
                     </View>
+                    
                   ))}
                 </View>
               ) : (
@@ -357,14 +360,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               )}
 
               {/* Formulaire pour laisser un avis */}
-              <View style={styles.reviewFormContainer}>
+                <View style={styles.reviewFormContainer}>
                 <Text style={styles.modalLabel}>Laissez votre avis :</Text>
                 
                 <StarRating 
                   rating={rating} 
                   onRatingPress={(newRating) => setRating(newRating)} 
                 />
-
+                <>
                 <TextInput
                   style={styles.textInput}
                   placeholder="Qu'avez-vous pensé de ce film ?"
@@ -374,7 +377,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                   value={reviewText}
                   onChangeText={setReviewText}
                 />
-
+                </>
                 <Buttons 
                   title="Publier mon avis" 
                   onPress={handlePublishReview}
@@ -382,9 +385,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                 />
               </View>
             </View>
+            
           )}
         </ScrollView>
 
+        </KeyboardAvoidingView>
         <View style={styles.modalButtonsRow}>
           {mode === 'manage_request' ? (
             // 🚨 MODE DÉCISION (Venant d'une notification)
