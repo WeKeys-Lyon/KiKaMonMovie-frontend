@@ -174,6 +174,7 @@ return (
                 <MovieGrid
                   movie={item}
                   columns={columns}
+                  mode="friend"
                   cardWidth={columns === 1 ? '90%' : columns === 2 ? 170 : 110} 
                   onPress={() => {
                     setSelectedMovie(item);

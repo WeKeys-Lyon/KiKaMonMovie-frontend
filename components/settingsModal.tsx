@@ -7,24 +7,24 @@ type SettingsModalProps = {
     visible: boolean;
     onClose: () => void;
     columns: number;
-    setColumns: (cols: number) => void;
+    modColumns: (cols: number) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     movies: any[];
     sortOption: string;
-    setSortOption: (option: string) => void;
+    modSort: (option: string) => void;
 };
 
 export default function SettingsModal({
     visible,
     onClose,
     columns,
-    setColumns,
+    modColumns,
     searchQuery,
     setSearchQuery,
     movies,
     sortOption,
-    setSortOption,
+    modSort,
 }: SettingsModalProps) {
 
     //recherche par suggestions
@@ -146,7 +146,7 @@ export default function SettingsModal({
                         <View style={styles.displayButtonsRow}>
                             <TouchableOpacity
                                 style={[styles.displayBtn, columns === 1 && styles.displayBtnActive]}
-                                onPress={() => setColumns(1)}
+                                onPress={() => modColumns(1)}
                             >
                                 <FontAwesome name="list" size={20} color={columns === 1 ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, columns === 1 && { color: '#fff' }]}>Liste</Text>
@@ -154,7 +154,7 @@ export default function SettingsModal({
 
                             <TouchableOpacity
                                 style={[styles.displayBtn, columns === 2 && styles.displayBtnActive]}
-                                onPress={() => setColumns(2)}
+                                onPress={() => modColumns(2)}
                             >
                                 <FontAwesome name="th-large" size={20} color={columns === 2 ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, columns === 2 && { color: '#fff' }]}>2 Col</Text>
@@ -162,7 +162,7 @@ export default function SettingsModal({
 
                             <TouchableOpacity
                                 style={[styles.displayBtn, columns === 3 && styles.displayBtnActive]}
-                                onPress={() => setColumns(3)}
+                                onPress={() => modColumns(3)}
                             >
                                 <FontAwesome name="th" size={20} color={columns === 3 ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, columns === 3 && { color: '#fff' }]}>3 Col</Text>
@@ -174,21 +174,21 @@ export default function SettingsModal({
                         <View style={styles.sortButtonsRow}>
                             <TouchableOpacity
                                 style={[styles.sortBtn, sortOption === 'title_origin_asc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('title_origin_asc')}
+                                onPress={() => modSort('title_origin_asc')}
                             >
                                 <FontAwesome name="sort-alpha-asc" size={16} color={sortOption === 'title_origin_asc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'title_origin_asc' && { color: '#fff', fontSize: 13 }]}>Titre Original</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.sortBtn, sortOption === 'title_origin_desc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('title_origin_desc')}
+                                onPress={() => modSort('title_origin_desc')}
                             >
                                 <FontAwesome name="sort-alpha-desc" size={16} color={sortOption === 'title_origin_desc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'title_origin_desc' && { color: '#fff', fontSize: 13 }]}>Titre Original</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.sortBtn, sortOption === 'title_asc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('title_asc')}
+                                onPress={() => modSort('title_asc')}
                             >
                                 <FontAwesome name="sort-alpha-asc" size={16} color={sortOption === 'title_asc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'title_asc' && { color: '#fff' }]}>A-Z</Text>
@@ -196,7 +196,7 @@ export default function SettingsModal({
 
                             <TouchableOpacity
                                 style={[styles.sortBtn, sortOption === 'title_desc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('title_desc')}
+                                onPress={() => modSort('title_desc')}
                             >
                                 <FontAwesome name="sort-alpha-desc" size={16} color={sortOption === 'title_desc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'title_desc' && { color: '#fff' }]}>Z-A</Text>
@@ -204,7 +204,7 @@ export default function SettingsModal({
 
                             <TouchableOpacity
                                 style={[styles.sortBtn,  sortOption === 'year_desc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('year_desc')}
+                                onPress={() => modSort('year_desc')}
                             >
                                 <FontAwesome name="calendar" size={16} color={sortOption === 'year_desc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'year_desc' && { color: '#fff', fontSize: 13 }]}>Récent</Text>
@@ -212,7 +212,7 @@ export default function SettingsModal({
 
                             <TouchableOpacity
                                 style={[styles.sortBtn, sortOption === 'year_asc' && styles.displayBtnActive]}
-                                onPress={() => setSortOption('year_asc')}
+                                onPress={() => modSort('year_asc')}
                             >
                                 <FontAwesome name="history" size={16} color={sortOption === 'year_asc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'year_asc' && { color: '#fff', fontSize: 13 }]}>Ancien</Text>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
@@ -12,8 +12,7 @@ import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { removedMovieFromStore, logout, updateNotifications } from '../reducers/user';
-import { useDispatch } from 'react-redux';
+import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 
@@ -28,14 +27,15 @@ const { width } = Dimensions.get('window');
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
 
+  const user = useSelector((state: any) => state.user.value);
+  const movies = useSelector((state: any) => state.user.value.movies);
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [columns, setColumns] = useState(2);
+  const [columns, setColumns] = useState(user.columns ? user.columns : 2);
   const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
 
   const dispatch = useDispatch();
-  const user = useSelector((state: any) => state.user.value);
-  const movies = useSelector((state: any) => state.user.value.movies);
+
   useEffect(() => {
     if (!user.token) {
       navigation.navigate('Home')
@@ -51,12 +51,20 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const [sortOption, setSortOption] = useState<string>('title_asc');
+  const [sortOption, setSortOption] = useState<string>(user.sort ? user.sort : 'title_asc');
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   const [activeNotification, setActiveNotification] = useState<any>(null);
   
+  const modColumns = (number: number) => {
+    setColumns(number);
+    dispatch(settingColumns(number));
+  }
   
+  const modSort = (string: string) => {
+    setSortOption(string);
+    dispatch(settingSort(string));
+  }
 //reception notifications
 useFocusEffect(
     useCallback(() => {
@@ -460,6 +468,7 @@ const handleDeleteNotification = async (notificationId: string) => {
 
               <View style={{ position: 'relative', margin: columns > 1 ? 5 : 0 }}>
                 <MovieGrid
+                  mode='add'
                   titleOriginal={sortOption}
                   movie={item}
                   columns={columns}
@@ -506,12 +515,12 @@ const handleDeleteNotification = async (notificationId: string) => {
           visible={isSettingsVisible}
           onClose={() => setIsSettingsVisible(false)}
           columns={columns}
-          setColumns={setColumns}
+          modColumns={modColumns}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           movies={filtredMovies}
           sortOption={sortOption}
-          setSortOption={setSortOption}
+          modSort={modSort}
         />
       </View>
       {/*LA MODALE DETAIL DE FILM*/}

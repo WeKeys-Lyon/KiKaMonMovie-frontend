@@ -23,7 +23,7 @@ type MovieCardScreenProps = {
   requester?: any;
   notificationId?: string;
   onFilterClick?: (type: string, value: string) => void;
-  onDeleteClick: () => void;
+  onDeleteClick?: () => void;
   onAddSuccess?: () => void;
   onAskMovie?: () => void;
   ownerId?: string;
@@ -268,7 +268,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         keyboardVerticalOffset={50}
         >
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-          <TouchableOpacity onPress={() => handleLike()}  style={{marginLeft:'90%'}}>
+          <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{marginLeft:'90%'}}>
           {drawHeart()}
           </TouchableOpacity>
           <View style={styles.posterContainer}>

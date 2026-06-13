@@ -52,7 +52,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     {/* Texte au centre */}
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#d9534f', fontWeight: 'bold'}}>refusé</Text> ta demande pour le film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>.
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#d9534f', fontWeight: 'bold'}}>refusé</Text> votre demande pour le film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || ' '}</Text>.
                         </Text>
                     </View>
 
@@ -79,7 +79,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     {/* Texte au centre */}
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#5cb85c', fontWeight: 'bold'}}>accepté</Text> ta demande ! Tu peux aller récupérer <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>.
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#5cb85c', fontWeight: 'bold'}}>accepté</Text> votre demande ! Vous pouvez aller récupérer <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>.
                         </Text>
                     </View>
 
@@ -103,7 +103,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            <Text style={styles.bold}>{item.senderId?.username}</Text> (Code: {item.senderId?.friendCode}) souhaite t'ajouter à sa liste d'amis.
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> (Code: {item.senderId?.friendCode}) souhaite vous ajouter à sa liste d'amis.
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                             <View style={{ flex: 1 }}>
@@ -139,7 +139,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            <Text style={{color: '#ff4d4d', fontWeight: 'bold'}}>Date dépassée !</Text> Tu as prêté <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text> à <Text style={styles.bold}>{borrowerName}</Text> et la date de retour est arrivée.
+                            <Text style={{color: '#ff4d4d', fontWeight: 'bold'}}>Date dépassée !</Text> Vous avez prêté <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text> à <Text style={styles.bold}>{borrowerName}</Text> et la date de retour est arrivée.
                         </Text>
                         
                         {/* On affiche le bouton "Réclamer" SEULEMENT si c'est un utilisateur de l'application */}
@@ -172,7 +172,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            <Text style={{color: '#e8be4b', fontWeight: 'bold'}}>Rappel :</Text> <Text style={styles.bold}>{item.senderId?.username}</Text> aimerait récupérer son film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>. Pense à lui rendre prochainement !
+                            <Text style={{color: '#e8be4b', fontWeight: 'bold'}}>Rappel :</Text> <Text style={styles.bold}>{item.senderId?.username}</Text> aimerait récupérer son film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || ' '}</Text>. Pensez à lui rendre prochainement !
                         </Text>
                     </View>
                     {/* Corbeille pour que l'emprunteur puisse effacer l'alerte */}
@@ -194,7 +194,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            Bonne nouvelle ! <Text style={styles.bold}>{item.senderId?.username}</Text> a accepté ta demande d'ami. Vous êtes désormais connectés ! 🎬
+                            Bonne nouvelle ! <Text style={styles.bold}>{item.senderId?.username}</Text> a accepté votre demande d'ami. Vous êtes désormais connectés ! 🎬
                         </Text>
                     </View>
                     
@@ -217,7 +217,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
-                            Ta demande d'ami envoyée à <Text style={styles.bold}>{item.senderId?.username}</Text> n'a pas pu aboutir.
+                            Votre demande d'ami envoyée à <Text style={styles.bold}>{item.senderId?.username}</Text> n'a pas pu aboutir.
                         </Text>
                     </View>
                     
