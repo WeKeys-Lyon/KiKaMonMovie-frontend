@@ -10,8 +10,7 @@ import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
 import StarRating from '../components/starRating';
 import FontAwesome  from '@react-native-vector-icons/fontawesome';
-import {iLikeThisMovie} from '../reducers/user';
-
+import { iLikeThisMovie } from '../reducers/user';
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -28,7 +27,6 @@ type MovieCardScreenProps = {
   onAskMovie?: () => void;
   ownerId?: string;
 };
-
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId }: MovieCardScreenProps) {
 
@@ -48,13 +46,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
 
+  // 🌟 NOUVEAUX ÉTATS POUR LES RÉPONSES
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
   const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
     ? datas.pastLoans[datas.pastLoans.length - 1] 
     : null;
 
   const didIMakeAReview = () => {
     if (moviedata.reviews) {
-        const myReview = moviedata.reviews.find((avis) => avis.userid == user._id)
+        const myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id)
         if (myReview) {
           return true
         } else {
@@ -63,9 +65,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     } else {
       return false
     }
-    
-
-    
   };
   
   useEffect(() => {
@@ -75,14 +74,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         const response = await fetch(encodeURI(myURL));
         const data = await response.json();
         if (data.result) {
-          setDatas(data.answer);
+          // On garde la fusion pour ne pas perdre nos reviews
+          setDatas(prevDatas => ({ ...prevDatas, ...data.answer }));
         }
       }
     }
     init()
   }, [])
-
-
 
    const handleAddMovie = async () => {
       const BACKEND_URL = process.env.BACKEND_URL;  
@@ -145,11 +143,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: imageUrl = false;
   }
 
-  //aller sur la modale de prêt
   const onLendClick = () => {
     setIsLoanModalVisible(true);
   };
-  const indexMovie = user.movies.findIndex(film => moviedata.tmdb_id == film.tmdb_id);
+  const indexMovie = user.movies.findIndex((film: any) => moviedata.tmdb_id == film.tmdb_id);
 
   const handleLike = async () => {
       setIsLiked(!isLiked);
@@ -165,13 +162,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const data = await response.json();
       dispatch(iLikeThisMovie({index: indexMovie}))    
     }
+    
     const drawHeart = () => {
       if (mode == 'add') {
         return (<></>)
       } else {
         return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
       }
-      
     }
 
   const handleRefuse = async () => {
@@ -197,7 +194,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  //poster un avis (si on a emprunté le film)
   const handlePublishReview = async () => {
     if (rating === 0 && reviewText.trim() === '') {
       Alert.alert("Oups", "Veuillez laisser une note ou un commentaire.");
@@ -210,7 +206,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: user.token,
-          ownerId: ownerId || user._id, // Si pas d'ownerId, on envoie mon propre ID
+          ownerId: ownerId || user._id,
           tmdb_id: datas.tmdb_id,
           rating: rating,
           comment: reviewText
@@ -221,11 +217,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
       if (data.result) {
         Alert.alert("Succès", data.message);
-      const newReview = {
+        const newReview = {
           userid: { username: user.username }, 
           rating: rating,
           comment: reviewText,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          likes: [], // Initialisation
+          replies: [] // Initialisation
         };
         
         setDatas({
@@ -236,7 +234,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
         }
 
-        // On vide le formulaire
         setRating(0); 
         setReviewText('');
       } else {
@@ -248,31 +245,80 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  // Formater la date proprement (ex: 12 juin 2026)
+  // 🌟 NOUVELLE FONCTION : Liker un avis
+  const handleLikeReview = async (reviewId: string) => {
+    if (!reviewId) return; // Si l'avis vient d'être créé et n'a pas encore de vrai _id
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/like-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId }),
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        const updatedReviews = datas.reviews.map((r: any) => {
+          if (r._id === reviewId) {
+            const hasLiked = r.likes?.includes(user._id);
+            return {
+              ...r,
+              likes: hasLiked ? r.likes.filter((id: string) => id !== user._id) : [...(r.likes || []), user._id]
+            };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // 🌟 NOUVELLE FONCTION : Répondre à un avis
+  const handleReplyReview = async (reviewId: string) => {
+    if (!replyText.trim() || !reviewId) return;
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/reply-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, text: replyText }),
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        const newReply = { userid: user._id, text: replyText, createdAt: new Date().toISOString() };
+        const updatedReviews = datas.reviews.map((r: any) => {
+          if (r._id === reviewId) {
+            return { ...r, replies: [...(r.replies || []), newReply] };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+        setReplyingTo(null);
+        setReplyText('');
+      } else {
+        Alert.alert("Erreur", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const formatReviewDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // Retrouver le pseudo en fonction de l'ID
   const getReviewerName = (reviewerId: any) => {
     if (!reviewerId) return 'Inconnu';
-    
-    // CAS 1 : C'est notre avis généré instantanément (avec le pseudo)
     if (reviewerId.username) {
       if (reviewerId.username === user.username) return 'Moi';
       return reviewerId.username;
     }
-
-    // CAS 2 : C'est un ID brut venant du backend
     const id = reviewerId._id || reviewerId;
-    
-    // On cherche dans la liste de tes amis
     const friend = user.friends?.find((f: any) => (f.userid?._id || f.userid) === id || f._id === id);
     if (friend) return friend.username;
-
-    // 🌟 ASTUCE : Si l'auteur n'est pas dans tes amis, c'est forcément que c'est TON avis !
     return 'Moi'; 
   };
 
@@ -296,8 +342,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
 
-          {/* 🌟 NOUVEAU : Menu des onglets */}
-          {mode !== 'add' && ( // On n'affiche pas l'onglet "Avis" lors de la première recherche TMDB
+          {mode !== 'add' && (
             <View style={styles.tabsContainer}>
               <TouchableOpacity 
                 style={[styles.tabButton, activeTab === 'details' && styles.activeTabButton]}
@@ -315,9 +360,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             </View>
           )}
 
-          {/* 🌟 CONTENU CONDITIONNEL SELON L'ONGLET */}
           {activeTab === 'details' ? (
-            // --- VUE DÉTAILS TECHNIQUES ---
             <View style={styles.modalInfoGrid}>
               {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
               <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
@@ -342,7 +385,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               )}
             </View>
           ) : (
-            // --- 🌟 NOUVEAU : VUE SOCIALE (AVIS) ---
             <View style={styles.reviewsContainer}>
               {/* Formulaire pour laisser un avis */}
               {(didIMakeAReview()) ? (<></>) : (<View style={styles.reviewFormContainer}>
@@ -382,7 +424,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
                       </View>
                       
-                      {/* Note : disabled={true} car on est juste en lecture ! */}
                       <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
                         <StarRating rating={review.rating} size={14} disabled={true} />
                       </View>
@@ -390,6 +431,50 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       {review.comment ? (
                         <Text style={styles.reviewText}>{review.comment}</Text>
                       ) : null}
+
+                      {/* 🌟 NOUVEAU : BOUTONS LIKE ET RÉPONDRE (Uniquement pour le propriétaire) */}
+                      {mode !== 'friend' && review._id && (
+                        <View style={styles.reviewActions}>
+                          <TouchableOpacity onPress={() => handleLikeReview(review._id)} style={styles.actionBtn}>
+                            <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold' }}>
+                              {review.likes?.includes(user._id) ? '❤️' : '🤍'} {review.likes?.length || 0}
+                            </Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
+                            <Text style={styles.actionText}>💬 Répondre</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      {/* 🌟 NOUVEAU : CHAMP DE TEXTE POUR RÉPONDRE */}
+                      {replyingTo === review._id && (
+                        <View style={styles.replyInputBox}>
+                          <TextInput
+                            style={styles.replyInput}
+                            placeholder="Écrivez votre réponse..."
+                            placeholderTextColor="#888"
+                            value={replyText}
+                            onChangeText={setReplyText}
+                            autoFocus={true}
+                          />
+                          <TouchableOpacity onPress={() => handleReplyReview(review._id)} style={styles.replySendBtn}>
+                            <Text style={styles.replySendText}>OK</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      {/* 🌟 NOUVEAU : AFFICHAGE DES RÉPONSES (Visible par tout le monde) */}
+                      {review.replies && review.replies.length > 0 && (
+                        <View style={styles.repliesList}>
+                          {review.replies.map((reply: any, rIndex: number) => (
+                            <View key={rIndex} style={styles.replyItem}>
+                              <Text style={styles.replyAuthor}>Le propriétaire :</Text>
+                              <Text style={styles.replyTextContent}>{reply.text}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
 
                     </View>
                     
@@ -408,7 +493,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
         <View style={styles.modalButtonsRow}>
           {mode === 'manage_request' ? (
-            // 🚨 MODE DÉCISION (Venant d'une notification)
             <>
               <View style={{ flex: 1 }}>
                 <Buttons 
@@ -427,17 +511,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               </View>
             </>
           ) : (
-            // 🏠 MODES CLASSIQUES
             <>
               <View style={{ flex: 1 }}>
                 <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
               </View>
               <View style={{ flex: 1 }}>
                 {mode === 'add' ? (
-                  // 1️⃣ MODE AJOUT
                   <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
                 ) : mode === 'friend' ? (
-                  // 2️⃣ MODE AMI
                   datas?.isLoaned ? (
                     <View style={{ backgroundColor: 'rgba(217, 83, 79, 0.2)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9534f', alignItems: 'center' }}>
                       <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
@@ -446,7 +527,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                     <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
                   )
                 ) : (
-                  // 3️⃣ MODE COLLECTION (Par défaut)
                   datas?.isLoaned ? (
                     <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
                   ) : (
@@ -497,7 +577,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 }
 
 const styles = StyleSheet.create({
-  // Styles de la Modale
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -556,7 +635,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  // 🌟 NOUVEAU : Styles pour les onglets
   tabsContainer: {
     flexDirection: 'row',
     width: '100%',
@@ -582,8 +660,6 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: '#e8be4b',
   },
-
- // --- Styles pour la zone des avis ---
   reviewsContainer: {
     width: '100%',
     paddingVertical: 10,
@@ -610,13 +686,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     minHeight: 100,
-    textAlignVertical: 'top', // Très important pour les champs multiline sur Android
+    textAlignVertical: 'top',
     marginBottom: 15,
     borderWidth: 1,
     borderColor: 'rgba(232, 190, 75, 0.3)',
-
   },
-  // --- Styles des avis ---
   reviewsList: {
     width: '100%',
     marginBottom: 20,
@@ -650,5 +724,73 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 8,
     lineHeight: 22,
+  },
+  
+  // 🌟 NOUVEAUX STYLES : Boutons d'action et champs de réponse
+  reviewActions: {
+    flexDirection: 'row',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 8,
+  },
+  actionBtn: {
+    marginRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionText: {
+    color: '#aaa',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  replyInputBox: {
+    flexDirection: 'row',
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  replyInput: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    color: '#fff',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 13,
+  },
+  replySendBtn: {
+    marginLeft: 10,
+    backgroundColor: '#e8be4b',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  replySendText: {
+    color: '#111',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  repliesList: {
+    marginTop: 10,
+    paddingLeft: 15,
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(232, 190, 75, 0.5)',
+  },
+  replyItem: {
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    padding: 8,
+    borderRadius: 5,
+  },
+  replyAuthor: {
+    color: '#e8be4b',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  replyTextContent: {
+    color: '#ddd',
+    fontSize: 13,
+    fontStyle: 'italic',
   },
 });
