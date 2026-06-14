@@ -9,7 +9,7 @@ import Poster from '../components/poster';
 import LoanModal from './loanModal';
 import LoanDetailsModal from './loanDetailsModale';
 import StarRating from '../components/starRating';
-import FontAwesome  from '@react-native-vector-icons/fontawesome';
+import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { iLikeThisMovie } from '../reducers/user';
 
 type MovieCardScreenProps = {
@@ -56,23 +56,23 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0 
-    ? datas.pastLoans[datas.pastLoans.length - 1] 
+  const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0
+    ? datas.pastLoans[datas.pastLoans.length - 1]
     : null;
 
   const didIMakeAReview = () => {
     if (moviedata.reviews) {
-        const myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id)
-        if (myReview) {
-          return true
-        } else {
-          return false
-        }
+      const myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id)
+      if (myReview) {
+        return true
+      } else {
+        return false
+      }
     } else {
       return false
     }
   };
-  
+
   useEffect(() => {
     const init = async () => {
       if (drawStyle) {
@@ -88,34 +88,34 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     init()
   }, [])
 
-   const handleAddMovie = async () => {
-      const BACKEND_URL = process.env.BACKEND_URL;  
-      try {
-        const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: user.token,
-            movie: datas,
-          }),
-        });
-  
-        const data = await response.json();
-        
-        if (data.result) {
-          setIsModalVisible(false);
-          datas.isLoaned = false;
-          datas.isLiked = false;
-          dispatch(addMovieToStore(datas));
-          if (onAddSuccess) onAddSuccess();
-          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
-        } else {
-          console.log("Erreur lors de l'ajout", data.error);
-        }
-      } catch (error) {
-        console.error(error);
+  const handleAddMovie = async () => {
+    const BACKEND_URL = process.env.BACKEND_URL;
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          movie: datas,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        setIsModalVisible(false);
+        datas.isLoaned = false;
+        datas.isLiked = false;
+        dispatch(addMovieToStore(datas));
+        if (onAddSuccess) onAddSuccess();
+        navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+      } else {
+        console.log("Erreur lors de l'ajout", data.error);
       }
-    };
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
     if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
@@ -146,7 +146,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   if (mode == 'add') {
     datas.poster_path ? imageUrl = `https://image.tmdb.org/t/p/w500${datas.poster_path}` : imageUrl = false;
   } else {
-    datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}`: imageUrl = false;
+    datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}` : imageUrl = false;
   }
 
   const onLendClick = () => {
@@ -155,27 +155,27 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const indexMovie = user.movies.findIndex((film: any) => moviedata.tmdb_id == film.tmdb_id);
 
   const handleLike = async () => {
-      setIsLiked(!isLiked);
-      const myURL = `${BACKEND_URL}/users/isLiked`;
-      const response = await fetch(encodeURI(myURL), {
-         method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: user.token,
-            tmdb_id: moviedata.tmdb_id
-          }),
-      });
-      const data = await response.json();
-      dispatch(iLikeThisMovie({index: indexMovie}))    
+    setIsLiked(!isLiked);
+    const myURL = `${BACKEND_URL}/users/isLiked`;
+    const response = await fetch(encodeURI(myURL), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: user.token,
+        tmdb_id: moviedata.tmdb_id
+      }),
+    });
+    const data = await response.json();
+    dispatch(iLikeThisMovie({ index: indexMovie }))
+  }
+
+  const drawHeart = () => {
+    if (mode == 'add') {
+      return (<></>)
+    } else {
+      return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
     }
-    
-    const drawHeart = () => {
-      if (mode == 'add') {
-        return (<></>)
-      } else {
-        return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
-      }
-    }
+  }
 
   const handleRefuse = async () => {
     try {
@@ -183,17 +183,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: user.token, 
+          token: user.token,
           tmdb_id: moviedata.tmdb_id,
           notificationId: notificationId,
           requesterId: requester._id
         })
       });
       const data = await response.json();
-      
+
       if (data.result) {
         Alert.alert("Refusé", "La demande a été refusée.");
-        setIsModalVisible(false); 
+        setIsModalVisible(false);
       }
     } catch (error) {
       console.error("Erreur lors du refus :", error);
@@ -224,14 +224,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       if (data.result) {
         Alert.alert("Succès", data.message);
         const newReview = {
-          userid: { username: user.username }, 
+          userid: { username: user.username },
           rating: rating,
           comment: reviewText,
           createdAt: new Date().toISOString(),
           likes: [], // Initialisation
           replies: [] // Initialisation
         };
-        
+
         setDatas({
           ...datas,
           reviews: [...(datas.reviews || []), newReview]
@@ -240,7 +240,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
         }
 
-        setRating(0); 
+        setRating(0);
         setReviewText('');
       } else {
         Alert.alert("Accès refusé", data.error);
@@ -325,38 +325,38 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     const id = reviewerId._id || reviewerId;
     const friend = user.friends?.find((f: any) => (f.userid?._id || f.userid) === id || f._id === id);
     if (friend) return friend.username;
-    return 'Moi'; 
+    return 'Moi';
   };
 
   // Calcul de moyenne des notes
   const getAverageRating = () => {
     if (!datas.reviews || datas.reviews.length === 0) return 0;
-    const ratedReviews = datas.reviews.filter((r: any) => r.rating && r.rating > 0); 
+    const ratedReviews = datas.reviews.filter((r: any) => r.rating && r.rating > 0);
     if (ratedReviews.length === 0) return 0;
     const total = ratedReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
     return total / ratedReviews.length;
   };
 
-    
 
- return (            
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : 'height'}
-        keyboardVerticalOffset={-110} style={styles.modalOverlay}>
+  return (
+
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : 'height'}
+      keyboardVerticalOffset={-110} style={styles.modalOverlay}>
       <View style={styles.modalContent}>
-        
+
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
-          <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{marginLeft:'90%'}}>
-          {drawHeart()}
+          <TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{ marginLeft: '90%' }}>
+            {drawHeart()}
           </TouchableOpacity>
           <View style={styles.posterContainer}>
             <Poster
               imageUrl={imageUrl}
               isLoaned={datas.isLoaned}
-              columns={2} 
-            /> 
+              columns={2}
+            />
           </View>
-          
+
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
           <View style={{ alignItems: 'center', marginBottom: 15, marginTop: -10 }}>
             {getAverageRating() > 0 ? (
@@ -375,14 +375,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           {mode !== 'add' && (
             <View style={styles.tabsContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.tabButton, activeTab === 'details' && styles.activeTabButton]}
                 onPress={() => setActiveTab('details')}
               >
                 <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>Détails</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[styles.tabButton, activeTab === 'reviews' && styles.activeTabButton]}
                 onPress={() => setActiveTab('reviews')}
               >
@@ -403,7 +403,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               {renderClickableNames(datas?.MusicBy, 'composer')}
               <Text style={styles.modalLabel}>Casting :</Text>
               {renderClickableNames(datas?.Cast, 'actor', 15)}
-              
+
               {mode === 'collection' && (
                 <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
                   <Buttons
@@ -420,45 +420,45 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               {/* Formulaire pour laisser un avis */}
               {(didIMakeAReview()) ? (<></>) : (<View style={styles.reviewFormContainer}>
                 <Text style={styles.modalLabel}>Laissez votre avis :</Text>
-                
-                <StarRating 
-                  rating={rating} 
-                  onRatingPress={(newRating) => setRating(newRating)} 
+
+                <StarRating
+                  rating={rating}
+                  onRatingPress={(newRating) => setRating(newRating)}
                 />
                 <>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Qu'avez-vous pensé de ce film ?"
-                  placeholderTextColor="#888"
-                  multiline={true}
-                  numberOfLines={4}
-                  value={reviewText}
-                  onChangeText={setReviewText}
-                />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Qu'avez-vous pensé de ce film ?"
+                    placeholderTextColor="#888"
+                    multiline={true}
+                    numberOfLines={4}
+                    value={reviewText}
+                    onChangeText={setReviewText}
+                  />
                 </>
-                <Buttons 
-                  title="Publier mon avis" 
+                <Buttons
+                  title="Publier mon avis"
                   onPress={handlePublishReview}
-                  variant="outline" 
+                  variant="outline"
                 />
               </View>)}
-            
-                           
-             {/* 🌟 LA LISTE DES AVIS */}
+
+
+              {/* 🌟 LA LISTE DES AVIS */}
               {datas.reviews && datas.reviews.length > 0 ? (
                 <View style={styles.reviewsList}>
                   {datas.reviews.map((review: any, index: number) => (
                     <View key={index} style={styles.reviewItem}>
-                      
+
                       <View style={styles.reviewHeader}>
                         <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
                         <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
                       </View>
-                      
+
                       <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
                         <StarRating rating={review.rating} size={14} disabled={true} />
                       </View>
-                      
+
                       {review.comment ? (
                         <Text style={styles.reviewText}>{review.comment}</Text>
                       ) : null}
@@ -466,15 +466,27 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       {/* 🌟 NOUVEAU : BOUTONS LIKE ET RÉPONDRE (Uniquement pour le propriétaire) */}
                       {mode !== 'friend' && review._id && (
                         <View style={styles.reviewActions}>
+
+                          {/* BOUTON LIKE */}
                           <TouchableOpacity onPress={() => handleLikeReview(review._id)} style={styles.actionBtn}>
-                            <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold' }}>
-                              {review.likes?.includes(user._id) ? '❤️' : '🤍'} {review.likes?.length || 0}
+                            <FontAwesome
+                              name={review.likes?.includes(user._id) ? "heart" : "heart-o"}
+                              size={15}
+                              color={review.likes?.includes(user._id) ? "#e8be4b" : "#aaa"}
+                            />
+                            <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
+                              {review.likes?.length || 0}
                             </Text>
                           </TouchableOpacity>
 
+                          {/* BOUTON RÉPONDRE */}
                           <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
-                            <Text style={styles.actionText}>💬 Répondre</Text>
+                            <FontAwesome name="comment-o" size={15} color="#aaa" />
+                            <Text style={[styles.actionText, { marginLeft: 6 }]}>
+                              Répondre
+                            </Text>
                           </TouchableOpacity>
+
                         </View>
                       )}
 
@@ -508,7 +520,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       )}
 
                     </View>
-                    
+
                   ))}
                 </View>
               ) : (
@@ -517,7 +529,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                 </Text>
               )}
 
-              
+
             </View>
           )}
         </ScrollView>
@@ -526,18 +538,18 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           {mode === 'manage_request' ? (
             <>
               <View style={{ flex: 1 }}>
-                <Buttons 
-                  title="Refuser" 
+                <Buttons
+                  title="Refuser"
                   onPress={handleRefuse}
-                  variant="primary" 
-                  style={{ backgroundColor: '#d9534f' }} 
+                  variant="primary"
+                  style={{ backgroundColor: '#d9534f' }}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Buttons 
-                  title={`Prêter à ${requester?.username}`} 
-                  onPress={() => setIsLoanModalVisible(true)} 
-                  variant="primary" 
+                <Buttons
+                  title={`Prêter à ${requester?.username}`}
+                  onPress={() => setIsLoanModalVisible(true)}
+                  variant="primary"
                 />
               </View>
             </>
@@ -568,10 +580,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             </>
           )}
         </View>
-  
-      </View> 
 
-      <LoanModal 
+      </View>
+
+      <LoanModal
         visible={isLoanModalVisible}
         onClose={() => setIsLoanModalVisible(false)}
         movie={datas}
@@ -579,22 +591,22 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         preselectedUser={requester}
         notificationId={notificationId}
         onSuccess={(updatedPastLoans) => {
-            setDatas({ 
-                ...datas, 
-                isLoaned: true, 
-                pastLoans: updatedPastLoans
-            });
+          setDatas({
+            ...datas,
+            isLoaned: true,
+            pastLoans: updatedPastLoans
+          });
 
-            setIsLoanModalVisible(false);
-            if (typeof setIsModalVisible === 'function') {
-                setIsModalVisible(false);
-            } else if (typeof setModalVisible === 'function') {
-                setModalVisible();
-            }
+          setIsLoanModalVisible(false);
+          if (typeof setIsModalVisible === 'function') {
+            setIsModalVisible(false);
+          } else if (typeof setModalVisible === 'function') {
+            setModalVisible();
+          }
         }}
       />
-      
-      <LoanDetailsModal 
+
+      <LoanDetailsModal
         visible={isLoanDetailsVisible}
         onClose={() => setIsLoanDetailsVisible(false)}
         movieName={datas?.title_fr || datas?.original_title || 'ce film'}
@@ -602,7 +614,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         currentLoan={currentLoan}
         onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
       />
-      
+
     </KeyboardAvoidingView>
   );
 }
@@ -709,8 +721,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     marginTop: 5,
-    marginBottom: 10, 
-   },
+    marginBottom: 10,
+  },
   textInput: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     color: '#fff',
@@ -756,7 +768,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 22,
   },
-  
+
   // 🌟 NOUVEAUX STYLES : Boutons d'action et champs de réponse
   reviewActions: {
     flexDirection: 'row',
