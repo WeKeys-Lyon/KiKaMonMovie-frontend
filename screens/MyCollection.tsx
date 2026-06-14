@@ -55,6 +55,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   const [activeNotification, setActiveNotification] = useState<any>(null);
+  const [movieOwnerId, setMovieOwnerId] = useState<string | null>(null);
+  const [targetTab, setTargetTab] = useState<string>('details');
   
   const modColumns = (number: number) => {
     setColumns(number);
@@ -376,6 +378,24 @@ const handleDeleteNotification = async (notificationId: string) => {
     }
   };
 
+  //laisser une review
+  const handleLeaveReview = (notification: any) => {
+    setSelectedMovie(notification.movieId); // On charge le film
+    setMovieOwnerId(notification.senderId._id); // On mémorise que ce film appartient à l'ami
+    setTargetTab('reviews')
+    setIsNotificationModalVisible(false); // On ferme les notifications
+    setIsModalVisible(true); // On ouvre la carte du film
+  };
+
+  const handleViewReview = (notification: any) => {
+    const fullMovieFromMyCollection = movies.find((m: any) => m.tmdb_id === notification.movieId.tmdb_id);
+    setSelectedMovie(fullMovieFromMyCollection || notification.movieId);// On charge le film
+    setMovieOwnerId(null); // Pas besoin d'ID d'ami, c'est ton propre film !
+    setTargetTab('reviews');
+    setIsNotificationModalVisible(false); // On ferme les notifications
+    setIsModalVisible(true); // On ouvre la carte du film
+  };
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -581,6 +601,8 @@ const handleDeleteNotification = async (notificationId: string) => {
             drawStyle={false}
             clickable={false}
             navigation={navigation}
+            ownerId={movieOwnerId}
+            initialTab={targetTab}
 
           />
         )}
@@ -595,6 +617,8 @@ const handleDeleteNotification = async (notificationId: string) => {
         onMarkAllAsRead={handleMarkAllAsRead}
         onManageFriendRequest={handleManageFriendRequest}
         onRemindFriend={handleRemindFriend}
+        onLeaveReview={handleLeaveReview}
+        onViewReview={handleViewReview}
       />
     </ImageBackground>
   );

@@ -26,9 +26,10 @@ type MovieCardScreenProps = {
   onAddSuccess?: () => void;
   onAskMovie?: () => void;
   ownerId?: string;
+  initialTab?: string;
 };
 
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId }: MovieCardScreenProps) {
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -42,6 +43,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
   const [activeTab, setActiveTab] = useState<'details' | 'reviews'>('details');
+  useEffect(() => {
+    if (initialTab === 'reviews' || initialTab === 'details') {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
@@ -322,6 +328,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     return 'Moi'; 
   };
 
+  // Calcul de moyenne des notes
+  const getAverageRating = () => {
+    if (!datas.reviews || datas.reviews.length === 0) return 0;
+    const ratedReviews = datas.reviews.filter((r: any) => r.rating && r.rating > 0); 
+    if (ratedReviews.length === 0) return 0;
+    const total = ratedReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+    return total / ratedReviews.length;
+  };
+
+    
+
  return (            
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : 'height'}
@@ -341,6 +358,20 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           </View>
           
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
+          <View style={{ alignItems: 'center', marginBottom: 15, marginTop: -10 }}>
+            {getAverageRating() > 0 ? (
+              <>
+                <Text style={{ color: '#e8be4b', fontSize: 13, fontWeight: 'bold', marginBottom: 4 }}>
+                  Note globale : {getAverageRating().toFixed(1)} / 5
+                </Text>
+                <StarRating rating={Math.round(getAverageRating() * 2) / 2} size={16} disabled={true} />
+              </>
+            ) : (
+              <Text style={{ color: '#aaa', fontSize: 13, fontStyle: 'italic' }}>
+                Aucune note pour le moment
+              </Text>
+            )}
+          </View>
 
           {mode !== 'add' && (
             <View style={styles.tabsContainer}>
@@ -469,7 +500,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         <View style={styles.repliesList}>
                           {review.replies.map((reply: any, rIndex: number) => (
                             <View key={rIndex} style={styles.replyItem}>
-                              <Text style={styles.replyAuthor}>Le propriétaire :</Text>
+                              <Text style={styles.replyAuthor}>{getReviewerName(reply.userid)} :</Text>
                               <Text style={styles.replyTextContent}>{reply.text}</Text>
                             </View>
                           ))}
