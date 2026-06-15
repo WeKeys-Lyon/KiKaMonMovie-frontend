@@ -99,8 +99,18 @@ export const userSlice = createSlice({
     },
     settingSort: (state, action: PayloadAction<any>) => {
       state.value.sort = action.payload;
-    }
+    },
+    updateMovieInStore: (state, action) => {
+      const updatedMovie = action.payload;
+      // On cherche l'index du film dans la collection de l'utilisateur
+      const index = state.value.movies.findIndex((film) => film.tmdb_id === updatedMovie.tmdb_id);
+      
+      // Si le film existe, on écrase l'ancienne version par la nouvelle
+      if (index !== -1) {
+        state.value.movies[index] = updatedMovie;
+      }
+    },
 }});
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore } = userSlice.actions;
 export default userSlice.reducer;

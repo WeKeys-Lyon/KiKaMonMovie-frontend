@@ -13,9 +13,14 @@ type NotificationModalProps = {
     onMarkAllAsRead?: () => void;
     onManageFriendRequest?: (notification: any, action: 'accept' | 'refuse') => void;
     onRemindFriend?: (notification: any) => void;
+    // 🌟 NOUVEAU : Fonctions pour gérer les avis
+    onLeaveReview?: (notification: any) => void;
+    onViewReview?: (notification: any) => void;
 };
 
-export default function NotificationModal({ visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend }: NotificationModalProps) {
+export default function NotificationModal({ 
+    visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend, onLeaveReview, onViewReview 
+}: NotificationModalProps) {
 
    const renderNotification = ({ item }: { item: any }) => {
         // 1️⃣ Cas : Demande de prêt
@@ -44,19 +49,14 @@ export default function NotificationModal({ visible, onClose, notifications, onM
         if (item.type === 'loan_refused') {
             return (
                 <View style={styles.notificationCard}>
-                    {/* Icône de gauche */}
                     <View style={styles.iconContainer}>
                         <FontAwesome name="times-circle" size={22} color="#d9534f" />
                     </View>
-                    
-                    {/* Texte au centre */}
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
                             <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#d9534f', fontWeight: 'bold'}}>refusé</Text> votre demande pour le film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || ' '}</Text>.
                         </Text>
                     </View>
-
-                    {/* Corbeille à l'extrême droite */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5 }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -71,19 +71,14 @@ export default function NotificationModal({ visible, onClose, notifications, onM
         if (item.type === 'loan_accepted') {
             return (
                 <View style={styles.notificationCard}>
-                    {/* Icône de gauche */}
                     <View style={styles.iconContainer}>
                         <FontAwesome name="check-circle" size={22} color="#5cb85c" />
                     </View>
-                    
-                    {/* Texte au centre */}
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
                             <Text style={styles.bold}>{item.senderId?.username}</Text> a <Text style={{color: '#5cb85c', fontWeight: 'bold'}}>accepté</Text> votre demande ! Vous pouvez aller récupérer <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>.
                         </Text>
                     </View>
-
-                    {/* Corbeille à l'extrême droite */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5 }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -94,7 +89,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
             );
         }
 
-        //Cas: demande d'ami
+        // 4️⃣ Cas : Demande d'ami
         if (item.type === 'friend_request') {
             return (
                 <View style={styles.notificationCard}>
@@ -126,12 +121,11 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                     </View>
                 </View>
             )
-    };
-    // ⏳ Cas : Date de prêt EXPIRÉE (Notification automatique pour le prêteur)
+        }
+
+        // ⏳ Cas : Date de prêt EXPIRÉE
         if (item.type === 'loan_expired') {
-            // On vérifie si c'est un ami de l'application ou un prêt manuel
             const borrowerName = item.senderId?.username || "ton ami";
-            
             return (
                 <View style={styles.notificationCard}>
                     <View style={styles.iconContainer}>
@@ -141,8 +135,6 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                         <Text style={styles.notificationText}>
                             <Text style={{color: '#ff4d4d', fontWeight: 'bold'}}>Date dépassée !</Text> Vous avez prêté <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text> à <Text style={styles.bold}>{borrowerName}</Text> et la date de retour est arrivée.
                         </Text>
-                        
-                        {/* On affiche le bouton "Réclamer" SEULEMENT si c'est un utilisateur de l'application */}
                         {item.senderId && (
                             <Buttons 
                                 title={`💬 Réclamer à ${borrowerName}`} 
@@ -152,8 +144,6 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                             />
                         )}
                     </View>
-                    
-                    {/* Petite corbeille pour effacer l'alerte si on veut */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -163,7 +153,8 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
-        // ⚠️ Cas : Rappel de retour (Notification pour l'emprunteur)
+
+        // ⚠️ Cas : Rappel de retour
         if (item.type === 'loan_reminder') {
             return (
                 <View style={styles.notificationCard}>
@@ -175,7 +166,6 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                             <Text style={{color: '#e8be4b', fontWeight: 'bold'}}>Rappel :</Text> <Text style={styles.bold}>{item.senderId?.username}</Text> aimerait récupérer son film <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || ' '}</Text>. Pensez à lui rendre prochainement !
                         </Text>
                     </View>
-                    {/* Corbeille pour que l'emprunteur puisse effacer l'alerte */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -185,7 +175,8 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
-        // Cas : Demande d'ami acceptée (Notification de confirmation)
+
+        // ✅ Cas : Demande d'ami acceptée
         if (item.type === 'friend_accepted') {
             return (
                 <View style={styles.notificationCard}>
@@ -197,8 +188,6 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                             Bonne nouvelle ! <Text style={styles.bold}>{item.senderId?.username}</Text> a accepté votre demande d'ami. Vous êtes désormais connectés ! 🎬
                         </Text>
                     </View>
-                    
-                    {/* Petite corbeille pour effacer la notification une fois lue */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -208,6 +197,7 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
+
         // 🚫 Cas : Demande d'ami refusée
         if (item.type === 'friend_refused') {
             return (
@@ -220,8 +210,6 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                             Votre demande d'ami envoyée à <Text style={styles.bold}>{item.senderId?.username}</Text> n'a pas pu aboutir.
                         </Text>
                     </View>
-                    
-                    {/* Petite corbeille pour effacer la notification */}
                     <TouchableOpacity 
                         style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
                         onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
@@ -231,7 +219,63 @@ export default function NotificationModal({ visible, onClose, notifications, onM
                 </View>
             );
         }
-}
+
+        // 🌟 NOUVEAU 1 : Le film a été récupéré par le propriétaire, l'emprunteur peut laisser un avis
+        if (item.type === 'loan_returned') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="pencil-square-o" size={22} color="#e8be4b" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> a bien récupéré <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text> ! Souhaitez-vous laisser un avis ?
+                        </Text>
+                        <Buttons 
+                            title="Laisser un avis" 
+                            onPress={() => onLeaveReview && onLeaveReview(item)} 
+                            variant="primary" 
+                            style={{ marginTop: 10, paddingVertical: 8, backgroundColor: '#e8be4b' }} 
+                        />
+                    </View>
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        // 🌟 NOUVEAU 2 : Un avis a été publié par l'emprunteur
+        if (item.type === 'review_posted') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="star" size={22} color="#e8be4b" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> a laissé un avis sur son emprunt de <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text>.
+                        </Text>
+                        <Buttons 
+                            title="Voir l'avis" 
+                            onPress={() => onViewReview && onViewReview(item)} 
+                            variant="primary" 
+                            style={{ marginTop: 10, paddingVertical: 8 }} 
+                        />
+                    </View>
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+    };
 
     return (
         <Modal visible={visible} animationType="slide" transparent={true}>

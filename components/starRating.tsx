@@ -12,6 +12,17 @@ interface StarRatingProps {
 export default function StarRating({ rating, onRatingPress, size = 30, disabled = false }: StarRatingProps) {
   const stars = [1, 2, 3, 4, 5];
 
+  //calcul de note 0,5
+  const getStarIconName = (star: number, currentRating: number) => {
+    if (currentRating >= star) {
+      return "star";
+    } else if (currentRating >= star - 0.5) {
+      return "star-half-o";
+    } else {
+      return "star-o";
+    }
+  }
+
   return (
     <View style={styles.container}>
       {stars.map((star) => (
@@ -22,7 +33,7 @@ export default function StarRating({ rating, onRatingPress, size = 30, disabled 
           onPress={() => onRatingPress && onRatingPress(star)}
         >
           <FontAwesome
-            name={star <= rating ? "star" : "star-o"} 
+            name={getStarIconName(star, rating)}
             size={size}
             color="#e8be4b"
             style={styles.star}

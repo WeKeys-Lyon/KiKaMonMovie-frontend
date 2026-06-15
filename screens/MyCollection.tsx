@@ -15,6 +15,22 @@ import { useFocusEffect } from '@react-navigation/native';
 import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => {
+    return {
+      shouldShowBanner: true, // 👈 Nouveau standard iOS/Expo
+      shouldShowList: true,   // 👈 Nouveau standard iOS/Expo
+      shouldPlaySound: true, 
+      shouldSetBadge: false,
+    };
+  },
+});
+
 
 
 type MyCollectionProps = {
@@ -38,7 +54,24 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
   useEffect(() => {
     if (!user.token) {
-      navigation.navigate('Home')
+      navigation.navigate('Home');
+    } else {
+      // 1. On génère le token
+      registerForPushNotificationsAsync();
+
+      // 2. On écoute le clic
+      const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+        const data = response.notification.request.content.data;
+        console.log("👆 Notification cliquée ! Données reçues :", data);
+        
+        // On ouvre la modale directement !
+        setIsNotificationModalVisible(true);
+      }); 
+
+      // 3. Le nettoyage
+      return () => {
+        responseListener.remove();
+      };
     }
   }, []);
 
@@ -55,6 +88,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   const [activeNotification, setActiveNotification] = useState<any>(null);
+  const [movieOwnerId, setMovieOwnerId] = useState<string | null>(null);
+  const [targetTab, setTargetTab] = useState<string>('details');
   
   const modColumns = (number: number) => {
     setColumns(number);
@@ -65,6 +100,68 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
     setSortOption(string);
     dispatch(settingSort(string));
   }
+
+  //Demande de permission et récupération du token 
+  const registerForPushNotificationsAsync = async () => {
+    console.log("🚀 [1] Lancement de la demande de Push Token...");
+    let token;
+
+    try {
+      if (!Device.isDevice) {
+        console.log("❌ [Arrêt] Tu es sur un simulateur. Prends ton vrai téléphone !");
+        return;
+      }
+
+      console.log("📱 [2] Appareil physique détecté. Vérification des permissions...");
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        console.log("⚠️ [3] Permission non accordée. Ouverture de la popup...");
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        console.log("❌ [Arrêt] L'utilisateur a refusé les notifications.");
+        return;
+      }
+
+      console.log("✅ [4] Permissions accordées ! Génération du Token Expo...");
+      
+      // 🌟 NOUVEAU : Récupération du Project ID (obligatoire sur Expo SDK 49+)
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      
+      token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      console.log("🎟️ [5] VICTOIRE ! Push Token généré :", token);
+
+      if (token && user.token) {
+        await fetch(`${process.env.BACKEND_URL}/users/save-push-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: user.token, pushToken: token })
+        });
+        console.log("💾 [6] Push Token sauvegardé dans la base de données !");
+      }
+
+    } catch (error) {
+      // 🌟 LE FILET DE SÉCURITÉ : S'il y a une erreur invisible, on l'attrape ici !
+      console.error("🚨 ERREUR LORS DE LA GÉNÉRATION DU TOKEN :", error);
+    }
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#e8be4b',
+      });
+    }
+
+    return token;
+  };
+  
+
 //reception notifications
 useFocusEffect(
     useCallback(() => {
@@ -376,6 +473,24 @@ const handleDeleteNotification = async (notificationId: string) => {
     }
   };
 
+  //laisser une review
+  const handleLeaveReview = (notification: any) => {
+    setSelectedMovie(notification.movieId); // On charge le film
+    setMovieOwnerId(notification.senderId._id); // On mémorise que ce film appartient à l'ami
+    setTargetTab('reviews')
+    setIsNotificationModalVisible(false); // On ferme les notifications
+    setIsModalVisible(true); // On ouvre la carte du film
+  };
+
+  const handleViewReview = (notification: any) => {
+    const fullMovieFromMyCollection = movies.find((m: any) => m.tmdb_id === notification.movieId.tmdb_id);
+    setSelectedMovie(fullMovieFromMyCollection || notification.movieId);// On charge le film
+    setMovieOwnerId(null); // Pas besoin d'ID d'ami, c'est ton propre film !
+    setTargetTab('reviews');
+    setIsNotificationModalVisible(false); // On ferme les notifications
+    setIsModalVisible(true); // On ouvre la carte du film
+  };
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -407,7 +522,6 @@ const handleDeleteNotification = async (notificationId: string) => {
           </View>
         }
       />
-
 
       <View style={styles.container}>
         {/*Pastille de recherche actie*/}
@@ -581,6 +695,8 @@ const handleDeleteNotification = async (notificationId: string) => {
             drawStyle={false}
             clickable={false}
             navigation={navigation}
+            ownerId={movieOwnerId}
+            initialTab={targetTab}
 
           />
         )}
@@ -595,6 +711,8 @@ const handleDeleteNotification = async (notificationId: string) => {
         onMarkAllAsRead={handleMarkAllAsRead}
         onManageFriendRequest={handleManageFriendRequest}
         onRemindFriend={handleRemindFriend}
+        onLeaveReview={handleLeaveReview}
+        onViewReview={handleViewReview}
       />
     </ImageBackground>
   );
