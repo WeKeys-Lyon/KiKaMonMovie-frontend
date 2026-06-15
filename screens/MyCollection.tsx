@@ -23,7 +23,6 @@ import Constants from 'expo-constants';
 Notifications.setNotificationHandler({
   handleNotification: async () => {
     return {
-      shouldShowAlert: true,  // Pour la rétrocompatibilité (anciens téléphones)
       shouldShowBanner: true, // 👈 Nouveau standard iOS/Expo
       shouldShowList: true,   // 👈 Nouveau standard iOS/Expo
       shouldPlaySound: true, 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Buttons } from '../components/buttons';
-import { addMovieToStore, addReviewToStore } from '../reducers/user';
+import { addMovieToStore, addReviewToStore, updateMovieInStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
@@ -49,12 +49,26 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   }, [initialTab]);
 
+  useEffect(() => {
+    if (mode === 'collection' && datas) {
+      dispatch(updateMovieInStore(datas));
+    }
+  }, [datas]);
+
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
 
   // 🌟 NOUVEAUX ÉTATS POUR LES RÉPONSES
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+
+  //etats pour la modification de reviews
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+
+  //modifier ou supprimer les réponses aux reviews
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editReplyText, setEditReplyText] = useState('');
 
   const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0
     ? datas.pastLoans[datas.pastLoans.length - 1]
@@ -207,15 +221,24 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/add-review`, {
-        method: 'POST',
+      // 🌟 DÉTECTION : Mode Création ou Mode Édition ?
+      const url = isEditing ? `${BACKEND_URL}/users/edit-review` : `${BACKEND_URL}/users/add-review`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: user.token,
-          ownerId: ownerId || user._id,
+          ownerId: ownerId || user._id, 
           tmdb_id: datas.tmdb_id,
-          rating: rating,
-          comment: reviewText
+          // Variables spécifiques à l'édition :
+          reviewId: editingReviewId, 
+          newRating: rating,         
+          newComment: reviewText,    
+          // Variables spécifiques à la création :
+          rating: rating,            
+          comment: reviewText        
         }),
       });
 
@@ -223,25 +246,46 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
       if (data.result) {
         Alert.alert("Succès", data.message);
-        const newReview = {
-          userid: { username: user.username },
-          rating: rating,
-          comment: reviewText,
-          createdAt: new Date().toISOString(),
-          likes: [], // Initialisation
-          replies: [] // Initialisation
-        };
 
-        setDatas({
-          ...datas,
-          reviews: [...(datas.reviews || []), newReview]
-        });
-        if (mode === 'collection' && indexMovie !== -1) {
-          dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
+        if (isEditing) {
+          // 🔄 MISE À JOUR LOCALE (Mode Édition)
+          const updatedReviews = datas.reviews.map((r: any) => {
+            if (r._id === editingReviewId) {
+              return { ...r, rating: rating, comment: reviewText };
+            }
+            return r;
+          });
+          setDatas({ ...datas, reviews: updatedReviews });
+          
+          // On ferme le mode édition
+          setIsEditing(false);
+          setEditingReviewId(null);
+          setRating(0);
+          setReviewText('');
+
+        } else {
+          // ➕ AJOUT LOCAL (Mode Création)
+          const newReview = {
+            _id: data.reviewId,
+            userid: { username: user.username, _id: user._id },
+            rating: rating,
+            comment: reviewText,
+            createdAt: new Date().toISOString(),
+            likes: [], 
+            replies: [] 
+          };
+
+          setDatas({
+            ...datas,
+            reviews: [...(datas.reviews || []), newReview]
+          });
+          if (mode === 'collection' && indexMovie !== -1) {
+            dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
+          }
+
+          setRating(0);
+          setReviewText('');
         }
-
-        setRating(0);
-        setReviewText('');
       } else {
         Alert.alert("Accès refusé", data.error);
       }
@@ -251,7 +295,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  // 🌟 NOUVELLE FONCTION : Liker un avis
+  // Liker un avis
   const handleLikeReview = async (reviewId: string) => {
     if (!reviewId) return; // Si l'avis vient d'être créé et n'a pas encore de vrai _id
     try {
@@ -280,7 +324,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  // 🌟 NOUVELLE FONCTION : Répondre à un avis
+  // Répondre à un avis
   const handleReplyReview = async (reviewId: string) => {
     if (!replyText.trim() || !reviewId) return;
     try {
@@ -336,6 +380,121 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     const total = ratedReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
     return total / ratedReviews.length;
   };
+
+  //supprimer un avis
+  const handleDeleteReview = async (reviewId: string) => {
+    console.log("🗑️ Clic suppression ! ID de l'avis à supprimer :", reviewId);
+    Alert.alert(
+      "Supprimer l'avis",
+      "Êtes-vous sûr de vouloir supprimer cet avis ?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${BACKEND_URL}/users/delete-review`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  token: user.token,
+                  tmdb_id: datas.tmdb_id,
+                  reviewId: reviewId
+                }),
+              });
+              const data = await response.json();
+              console.log("📥 Réponse du Backend pour la suppression :", data);
+              if (data.result) {
+                const updatedReviews = datas.reviews.filter((r: any) => r._id !== reviewId);
+                setDatas({ ...datas, reviews: updatedReviews });
+                Alert.alert("Succès", "L'avis a été supprimé avec succès.");
+              } else {
+                Alert.alert("Erreur", "Impossible de supprimer l'avis.");
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Modifier une réponse
+  const submitEditReply = async (reviewId: string, replyId: string) => {
+    if (!editReplyText.trim()) return;
+    try {
+      const response = await fetch(`${BACKEND_URL}/users/edit-reply`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId, newText: editReplyText }),
+      });
+      const data = await response.json();
+      if (data.result) {
+        const updatedReviews = datas.reviews.map((r: any) => {
+          if (r._id === reviewId) {
+            const updatedReplies = r.replies.map((rep: any) => {
+              if (rep._id === replyId) return { ...rep, text: editReplyText };
+              return rep;
+            });
+            return { ...r, replies: updatedReplies };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+        setEditingReplyId(null);
+        setEditReplyText('');
+      } else {
+        Alert.alert("Erreur", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Supprimer une réponse
+  const handleDeleteReply = async (reviewId: string, replyId: string) => {
+    Alert.alert(
+      "Supprimer la réponse",
+      "Confirmez-vous la suppression de cette réponse ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${BACKEND_URL}/users/delete-reply`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId }),
+              });
+              const data = await response.json();
+              if (data.result) {
+                const updatedReviews = datas.reviews.map((r: any) => {
+                  if (r._id === reviewId) {
+                    return { ...r, replies: r.replies.filter((rep: any) => rep._id !== replyId) };
+                  }
+                  return r;
+                });
+                setDatas({ ...datas, reviews: updatedReviews });
+              } else {
+                Alert.alert("Erreur", data.error);
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+
 
 
 
@@ -417,15 +576,17 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             </View>
           ) : (
             <View style={styles.reviewsContainer}>
-              {/* Formulaire pour laisser un avis */}
-              {(didIMakeAReview()) ? (<></>) : (<View style={styles.reviewFormContainer}>
-                <Text style={styles.modalLabel}>Laissez votre avis :</Text>
+              
+              {/* Formulaire pour laisser un NOUVEL avis UNIQUEMENT */}
+              {didIMakeAReview() ? null : (
+                <View style={styles.reviewFormContainer}>
+                  <Text style={styles.modalLabel}>Laissez votre avis :</Text>
 
-                <StarRating
-                  rating={rating}
-                  onRatingPress={(newRating) => setRating(newRating)}
-                />
-                <>
+                  <StarRating
+                    rating={rating}
+                    onRatingPress={(newRating) => setRating(newRating)}
+                  />
+                  
                   <TextInput
                     style={styles.textInput}
                     placeholder="Qu'avez-vous pensé de ce film ?"
@@ -435,101 +596,227 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                     value={reviewText}
                     onChangeText={setReviewText}
                   />
-                </>
-                <Buttons
-                  title="Publier mon avis"
-                  onPress={handlePublishReview}
-                  variant="outline"
-                />
-              </View>)}
-
+                  
+                  <Buttons
+                    title="Publier mon avis"
+                    onPress={handlePublishReview}
+                    variant="outline"
+                  />
+                </View>
+              )}
 
               {/* 🌟 LA LISTE DES AVIS */}
               {datas.reviews && datas.reviews.length > 0 ? (
                 <View style={styles.reviewsList}>
-                  {datas.reviews.map((review: any, index: number) => (
-                    <View key={index} style={styles.reviewItem}>
+                  {datas.reviews.map((review: any, index: number) => {
+                    // 🔒 LOGIQUE DE MODÉRATION
+                    const isMyReview = review.userid?._id === user._id || review.userid === user._id;
+                    const isMyCollection = mode !== 'friend' && mode !== 'add';
 
-                      <View style={styles.reviewHeader}>
-                        <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
-                        <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
-                      </View>
+                    // Sommes-nous en train de modifier CE commentaire précis ?
+                    const isEditingThisReview = isEditing && editingReviewId === review._id;
 
-                      <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
-                        <StarRating rating={review.rating} size={14} disabled={true} />
-                      </View>
+                    return (
+                      <View key={index} style={styles.reviewItem}>
 
-                      {review.comment ? (
-                        <Text style={styles.reviewText}>{review.comment}</Text>
-                      ) : null}
-
-                      {/* 🌟 NOUVEAU : BOUTONS LIKE ET RÉPONDRE (Uniquement pour le propriétaire) */}
-                      {mode !== 'friend' && review._id && (
-                        <View style={styles.reviewActions}>
-
-                          {/* BOUTON LIKE */}
-                          <TouchableOpacity onPress={() => handleLikeReview(review._id)} style={styles.actionBtn}>
-                            <FontAwesome
-                              name={review.likes?.includes(user._id) ? "heart" : "heart-o"}
-                              size={15}
-                              color={review.likes?.includes(user._id) ? "#e8be4b" : "#aaa"}
-                            />
-                            <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
-                              {review.likes?.length || 0}
-                            </Text>
-                          </TouchableOpacity>
-
-                          {/* BOUTON RÉPONDRE */}
-                          <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
-                            <FontAwesome name="comment-o" size={15} color="#aaa" />
-                            <Text style={[styles.actionText, { marginLeft: 6 }]}>
-                              Répondre
-                            </Text>
-                          </TouchableOpacity>
-
+                        <View style={styles.reviewHeader}>
+                          <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
+                          <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
                         </View>
-                      )}
 
-                      {/* 🌟 NOUVEAU : CHAMP DE TEXTE POUR RÉPONDRE */}
-                      {replyingTo === review._id && (
-                        <View style={styles.replyInputBox}>
-                          <TextInput
-                            style={styles.replyInput}
-                            placeholder="Écrivez votre réponse..."
-                            placeholderTextColor="#888"
-                            value={replyText}
-                            onChangeText={setReplyText}
-                            autoFocus={true}
-                          />
-                          <TouchableOpacity onPress={() => handleReplyReview(review._id)} style={styles.replySendBtn}>
-                            <Text style={styles.replySendText}>OK</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-
-                      {/* 🌟 NOUVEAU : AFFICHAGE DES RÉPONSES (Visible par tout le monde) */}
-                      {review.replies && review.replies.length > 0 && (
-                        <View style={styles.repliesList}>
-                          {review.replies.map((reply: any, rIndex: number) => (
-                            <View key={rIndex} style={styles.replyItem}>
-                              <Text style={styles.replyAuthor}>{getReviewerName(reply.userid)} :</Text>
-                              <Text style={styles.replyTextContent}>{reply.text}</Text>
+                        {/* 🌟 MAGIE IN-LINE : Affichage ou Modification ? */}
+                        {isEditingThisReview ? (
+                          
+                          /* MODE ÉDITION : Le commentaire devient un formulaire */
+                          <View style={{ marginTop: 10 }}>
+                            <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
+                              <StarRating rating={rating} onRatingPress={(newRating) => setRating(newRating)} />
                             </View>
-                          ))}
-                        </View>
-                      )}
+                            
+                            <TextInput
+                              style={styles.textInput}
+                              multiline={true}
+                              value={reviewText}
+                              onChangeText={setReviewText}
+                              autoFocus={true} // Ouvre le clavier directement !
+                            />
+                            
+                            <View style={{ flexDirection: 'row', gap: 10, marginTop: 5 }}>
+                              <View style={{ flex: 1 }}>
+                                <Buttons title="Enregistrer" onPress={handlePublishReview} variant="outline" />
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Buttons
+                                  title="Annuler"
+                                  onPress={() => {
+                                    setIsEditing(false);
+                                    setEditingReviewId(null);
+                                    setRating(0);
+                                    setReviewText('');
+                                  }}
+                                  variant="primary"
+                                  style={{ backgroundColor: '#555' }}
+                                />
+                              </View>
+                            </View>
+                          </View>
 
-                    </View>
+                        ) : (
+                          
+                          /* MODE LECTURE : L'affichage classique */
+                          <>
+                            <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
+                              <StarRating rating={review.rating} size={14} disabled={true} />
+                            </View>
 
-                  ))}
+                            {review.comment ? (
+                              <Text style={styles.reviewText}>{review.comment}</Text>
+                            ) : null}
+                          </>
+                          
+                        )}
+
+                        {/* On cache ces boutons si on est en train de modifier */}
+                        {!isEditingThisReview && (
+                          <>
+                            {/* 🌟 BOUTONS LIKE ET RÉPONDRE */}
+                            {mode !== 'friend' && review._id && (
+                              <View style={styles.reviewActions}>
+                                <TouchableOpacity onPress={() => handleLikeReview(review._id)} style={styles.actionBtn}>
+                                  <FontAwesome
+                                    name={review.likes?.includes(user._id) ? "heart" : "heart-o"}
+                                    size={15}
+                                    color={review.likes?.includes(user._id) ? "#e8be4b" : "#aaa"}
+                                  />
+                                  <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
+                                    {review.likes?.length || 0}
+                                  </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
+                                  <FontAwesome name="comment-o" size={15} color="#aaa" />
+                                  <Text style={[styles.actionText, { marginLeft: 6 }]}>
+                                    Répondre
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+
+                            {/* 🌟 BOUTONS MODIFIER / SUPPRIMER POUR L'AVIS */}
+                            {(isMyReview || isMyCollection) && (
+                              <View style={{ flexDirection: 'row', marginLeft: 'auto', gap: 15, marginTop: 10 }}>
+                                {/* Le crayon n'est visible que pour l'auteur */}
+                                {isMyReview && (
+                                  <TouchableOpacity
+                                    style={{ padding: 4 }}
+                                    onPress={() => {
+                                      setIsEditing(true);
+                                      setEditingReviewId(review._id);
+                                      setRating(review.rating || 0);  
+                                      setReviewText(review.comment || ''); 
+                                    }}
+                                  >
+                                    <FontAwesome name="pencil" size={16} color="#aaa" />
+                                  </TouchableOpacity>
+                                )}
+
+                                {/* La poubelle est visible pour l'auteur ET le proprio de la collection */}
+                                <TouchableOpacity style={{ padding: 4 }} onPress={() => handleDeleteReview(review._id)}>
+                                  <FontAwesome name="trash-o" size={16} color="#d9534f" />
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </>
+                        )}
+
+                        {/* 🌟 CHAMP DE TEXTE POUR RÉPONDRE */}
+                        {replyingTo === review._id && (
+                          <View style={styles.replyInputBox}>
+                            <TextInput
+                              style={styles.replyInput}
+                              placeholder="Écrivez votre réponse..."
+                              placeholderTextColor="#888"
+                              value={replyText}
+                              onChangeText={setReplyText}
+                              autoFocus={true}
+                            />
+                            <TouchableOpacity onPress={() => handleReplyReview(review._id)} style={styles.replySendBtn}>
+                              <Text style={styles.replySendText}>OK</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+
+                        {/* 🌟 AFFICHAGE DES RÉPONSES */}
+                        {review.replies && review.replies.length > 0 && (
+                          <View style={styles.repliesList}>
+                            {review.replies.map((reply: any, rIndex: number) => {
+                              
+                              // 🔒 LOGIQUE DE MODÉRATION POUR LES RÉPONSES
+                              const isMyReply = reply.userid?._id === user._id || reply.userid === user._id;
+
+                              return (
+                                <View key={rIndex} style={styles.replyItem}>
+                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text style={styles.replyAuthor}>{getReviewerName(reply.userid)} :</Text>
+                                    
+                                    {/* Actions Modifier / Supprimer la réponse */}
+                                    {(isMyReply || isMyCollection) && (
+                                      <View style={{ flexDirection: 'row', gap: 18, paddingLeft: 10 }}>
+                                        {isMyReply && (
+                                          <TouchableOpacity 
+                                            style={{ padding: 4 }}
+                                            onPress={() => {
+                                              setEditingReplyId(reply._id);
+                                              setEditReplyText(reply.text);
+                                            }}
+                                          >
+                                            <FontAwesome name="pencil" size={18} color="#aaa" />
+                                          </TouchableOpacity>
+                                        )}
+                                        <TouchableOpacity 
+                                          style={{ padding: 4 }}
+                                          onPress={() => handleDeleteReply(review._id, reply._id)}
+                                        >
+                                          <FontAwesome name="trash-o" size={18} color="#d9534f" />
+                                        </TouchableOpacity>
+                                      </View>
+                                    )}
+                                  </View>
+
+                                  {/* Si on est en train de modifier cette réponse précise */}
+                                  {editingReplyId === reply._id ? (
+                                    <View style={{ flexDirection: 'row', marginTop: 5, alignItems: 'center' }}>
+                                      <TextInput
+                                        style={[styles.replyInput, { flex: 1, paddingVertical: 4 }]}
+                                        value={editReplyText}
+                                        onChangeText={setEditReplyText}
+                                        autoFocus={true}
+                                      />
+                                      <TouchableOpacity onPress={() => submitEditReply(review._id, reply._id)} style={[styles.replySendBtn, { paddingHorizontal: 8, paddingVertical: 6 }]}>
+                                        <Text style={styles.replySendText}>OK</Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity onPress={() => setEditingReplyId(null)} style={[styles.replySendBtn, { backgroundColor: '#555', paddingHorizontal: 8, paddingVertical: 6 }]}>
+                                        <Text style={[styles.replySendText, { color: '#fff' }]}>X</Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  ) : (
+                                    <Text style={styles.replyTextContent}>{reply.text}</Text>
+                                  )}
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+
+                      </View>
+                    );
+                  })}
                 </View>
               ) : (
                 <Text style={styles.reviewPlaceholder}>
                   Aucun avis pour le moment. Soyez le premier !
                 </Text>
               )}
-
-
             </View>
           )}
         </ScrollView>
@@ -617,7 +904,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
     </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   modalOverlay: {
