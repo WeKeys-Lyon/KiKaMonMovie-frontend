@@ -497,37 +497,27 @@ const handleDeleteNotification = async (notificationId: string) => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const urlAppelee = `${BACKEND_URL}/users/collection/${user.token}`;
-      console.log("🔄 Tentative de fetch sur :", urlAppelee);
+      // 🎬 1. On va chercher la collection fraîche
+      const colResponse = await fetch(`${BACKEND_URL}/users/collection/${user.token}`);
+      const colData = await colResponse.json(); 
 
-      const response = await fetch(urlAppelee);
-      
-      // 🕵️‍♂️ MOUCHARD : On regarde le statut de la réponse (200 = OK, 404 = Introuvable, 500 = Erreur serveur)
-      console.log("📥 Statut de la réponse :", response.status);
+      if (colData.result) {
+        dispatch(setCollection(colData.movies)); 
+      }
 
-      // On lit la réponse en texte brut d'abord pour voir ce que c'est VRAIMENT
-      const texteBrut = await response.text(); 
-      
-      try {
-        // On essaie de le transformer en JSON
-        const data = JSON.parse(texteBrut); 
-        
-        if (data.result) {
-          dispatch(setCollection(data.movies)); 
-          console.log("✅ Collection mise à jour !");
-        } else {
-          console.log("❌ Le backend a renvoyé une erreur :", data.error);
-        }
-      } catch (parseError) {
-        // Si ça plante ici, c'est que texteBrut contient du HTML !
-        console.log("🚨 ALERTE HTML : Le serveur n'a pas renvoyé du JSON. Voici ce qu'il a renvoyé :");
-        console.log(texteBrut.substring(0, 200) + "..."); // On affiche les 200 premiers caractères
+      // 🔔 2. On va chercher les notifications fraîches dans la foulée
+      const notifResponse = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+      const notifData = await notifResponse.json();
+
+      if (notifData.result) {
+        dispatch(updateNotifications(notifData.notifications));
       }
 
     } catch (error) {
-      console.error("Erreur réseau (serveur éteint ?) :", error);
+      console.error("Erreur lors du rafraîchissement global :", error);
     } finally {
-      setRefreshing(false);
+      // 🌟 Quoi qu'il arrive, on arrête la roue de chargement
+      setRefreshing(false); 
     }
   }, [user.token, dispatch]);
 
