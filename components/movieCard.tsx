@@ -118,7 +118,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const didIMakeAReview = () => {
     
     if (datas.reviews) {
-      const myReview = datas.reviews.find((avis: any) => avis.userid == user._id);
+      const myReview = datas.reviews.find((avis: any) => avis.userid._id == user._id);
       if (myReview) {
         return true
       } else {
@@ -309,7 +309,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           // ➕ AJOUT LOCAL (Mode Création)
           const newReview = {
             _id: data.reviewId,
-            userid: user._id,
+            userid: { _id: user._id, username: user.username },
             rating: rating,
             comment: reviewText,
             createdAt: new Date().toISOString(),
