@@ -74,9 +74,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             });
             const data = await response.json();
             if (data.result) freshMovies = data.movies;
+            
           }
           const freshMovie = freshMovies.find((m: any) => m.tmdb_id === datas.tmdb_id);
-
+          console.log(freshMovie)
           if (freshMovie && freshMovie.reviews) {
             // On met à jour silencieusement les données du composant (sans fermer la modale !)
             setDatas((prevDatas: any) => ({
@@ -116,13 +117,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
   const didIMakeAReview = () => {
     
-    if (moviedata.reviews) {
-      let myReview = null;
-      if (mode == 'collection') {
-        myReview = user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.find((avis: any) => avis.userid == user._id);
-      } else {
-         myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id);
-      }
+    if (datas.reviews) {
+      const myReview = datas.reviews.find((avis: any) => avis.userid == user._id);
       if (myReview) {
         return true
       } else {
@@ -568,7 +564,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             {getAverageRating() > 0 ? (
               <>
                 <Text style={{ color: '#e8be4b', fontSize: 13, fontWeight: 'bold', marginBottom: 4 }}>
-                  Note des utilisateurs ({(mode == 'friend') ? datas.reviews.length : user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.length } avis)
+                  Note des utilisateurs ({datas.reviews.length} avis)
                 </Text>
                 <StarRating rating={Math.round(getAverageRating() * 2) / 2} size={16} disabled={true} />
               </>
