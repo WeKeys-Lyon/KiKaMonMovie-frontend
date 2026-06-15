@@ -55,6 +55,46 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   }, [datas]);
 
+  //silent refresh
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      const fetchFreshReviews = async () => {
+        
+        try {
+          let freshMovies = [];
+          if (mode === 'collection') {
+            const response = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
+            const data = await response.json();
+            if (data.result) freshMovies = data.movies;
+          } else if (mode === 'friend' && ownerId) {
+            const response = await fetch(`${process.env.BACKEND_URL}/users/friend-collection`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: user.token, friendId: ownerId })
+            });
+            const data = await response.json();
+            if (data.result) freshMovies = data.movies;
+          }
+          const freshMovie = freshMovies.find((m: any) => m.tmdb_id === datas.tmdb_id);
+
+          if (freshMovie && freshMovie.reviews) {
+            // On met à jour silencieusement les données du composant (sans fermer la modale !)
+            setDatas((prevDatas: any) => ({
+              ...prevDatas,
+              reviews: freshMovie.reviews
+            }));
+          }
+
+        } catch (error) {
+          console.error("Erreur lors du silent refresh :", error);
+        }
+      };
+
+      fetchFreshReviews();
+    }
+  }, [activeTab]);
+
+  
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
 

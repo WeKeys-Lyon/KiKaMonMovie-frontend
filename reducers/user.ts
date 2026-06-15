@@ -100,6 +100,9 @@ export const userSlice = createSlice({
     settingSort: (state, action: PayloadAction<any>) => {
       state.value.sort = action.payload;
     },
+    setCollection: (state, action: PayloadAction<any[]>) => {
+      state.value.movies = action.payload;
+    },
     updateMovieInStore: (state, action) => {
       const updatedMovie = action.payload;
       // On cherche l'index du film dans la collection de l'utilisateur
@@ -112,5 +115,5 @@ export const userSlice = createSlice({
     },
 }});
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore, setCollection } = userSlice.actions;
 export default userSlice.reducer;

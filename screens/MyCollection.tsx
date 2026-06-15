@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert, RefreshControl } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -12,7 +12,7 @@ import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort } from '../reducers/user';
+import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort, setCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 import * as Device from 'expo-device';
@@ -49,6 +49,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [columns, setColumns] = useState(user.columns ? user.columns : 2);
   const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -491,6 +492,45 @@ const handleDeleteNotification = async (notificationId: string) => {
     setIsModalVisible(true); // On ouvre la carte du film
   };
 
+  //rafraichir sa liste: 
+  
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const urlAppelee = `${BACKEND_URL}/users/collection/${user.token}`;
+      console.log("🔄 Tentative de fetch sur :", urlAppelee);
+
+      const response = await fetch(urlAppelee);
+      
+      // 🕵️‍♂️ MOUCHARD : On regarde le statut de la réponse (200 = OK, 404 = Introuvable, 500 = Erreur serveur)
+      console.log("📥 Statut de la réponse :", response.status);
+
+      // On lit la réponse en texte brut d'abord pour voir ce que c'est VRAIMENT
+      const texteBrut = await response.text(); 
+      
+      try {
+        // On essaie de le transformer en JSON
+        const data = JSON.parse(texteBrut); 
+        
+        if (data.result) {
+          dispatch(setCollection(data.movies)); 
+          console.log("✅ Collection mise à jour !");
+        } else {
+          console.log("❌ Le backend a renvoyé une erreur :", data.error);
+        }
+      } catch (parseError) {
+        // Si ça plante ici, c'est que texteBrut contient du HTML !
+        console.log("🚨 ALERTE HTML : Le serveur n'a pas renvoyé du JSON. Voici ce qu'il a renvoyé :");
+        console.log(texteBrut.substring(0, 200) + "..."); // On affiche les 200 premiers caractères
+      }
+
+    } catch (error) {
+      console.error("Erreur réseau (serveur éteint ?) :", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [user.token, dispatch]);
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -577,6 +617,15 @@ const handleDeleteNotification = async (notificationId: string) => {
             columnWrapperStyle={columns > 1 ? styles.row : null}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#e8be4b"
+              colors={['#e8be4b']}
+              progressBackgroundColor="#e8be4b"
+              />
+            }
             renderItem={({ item }) => (
 
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions, ImageBackground, RefreshControl } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import Header from '../components/header';
@@ -31,6 +31,8 @@ const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [columns, setColumns] = useState(2);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('year_desc');
+  const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
     fetchFriendCollection();
   }, []);
@@ -121,6 +123,18 @@ const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
     return 0;
   });
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true); // Fait apparaître la roue jaune
+    try {
+      // On réutilise simplement ta fonction existante !
+      await fetchFriendCollection();
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement ami :", error);
+    } finally {
+      setRefreshing(false); // Cache la roue jaune
+    }
+  }, [user.token, friendId]);
+
 return (
     <ImageBackground source={require('../assets/arriereplan.png')} style={styles.background}>
       <Header 
@@ -151,6 +165,14 @@ return (
             data={filteredAndSortedMovies} 
             keyExtractor={(item, index) => item?.tmdb_id?.toString() || item?._id?.toString() || index.toString()}
             numColumns={columns}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                tintColor="#e8be4b" 
+                colors={["#e8be4b"]} 
+              />
+            }
             
             columnWrapperStyle={columns > 1 ? {
               justifyContent: 'flex-start',
