@@ -75,8 +75,9 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     : null;
 
   const didIMakeAReview = () => {
+    
     if (moviedata.reviews) {
-      const myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id)
+      const myReview = user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.find((avis: any) => avis.userid == user._id);
       if (myReview) {
         return true
       } else {
@@ -267,7 +268,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           // ➕ AJOUT LOCAL (Mode Création)
           const newReview = {
             _id: data.reviewId,
-            userid: { username: user.username, _id: user._id },
+            userid: user._id,
             rating: rating,
             comment: reviewText,
             createdAt: new Date().toISOString(),
@@ -280,6 +281,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             reviews: [...(datas.reviews || []), newReview]
           });
           if (mode === 'collection' && indexMovie !== -1) {
+            console.log(newReview)
             dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
           }
 
