@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert, RefreshControl } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -12,7 +12,7 @@ import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort } from '../reducers/user';
+import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort, setCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 import * as Device from 'expo-device';
@@ -49,6 +49,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [columns, setColumns] = useState(user.columns ? user.columns : 2);
   const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -491,6 +492,35 @@ const handleDeleteNotification = async (notificationId: string) => {
     setIsModalVisible(true); // On ouvre la carte du film
   };
 
+  //rafraichir sa liste: 
+  
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // 🎬 1. On va chercher la collection fraîche
+      const colResponse = await fetch(`${BACKEND_URL}/users/collection/${user.token}`);
+      const colData = await colResponse.json(); 
+
+      if (colData.result) {
+        dispatch(setCollection(colData.movies)); 
+      }
+
+      // 🔔 2. On va chercher les notifications fraîches dans la foulée
+      const notifResponse = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+      const notifData = await notifResponse.json();
+
+      if (notifData.result) {
+        dispatch(updateNotifications(notifData.notifications));
+      }
+
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement global :", error);
+    } finally {
+      // 🌟 Quoi qu'il arrive, on arrête la roue de chargement
+      setRefreshing(false); 
+    }
+  }, [user.token, dispatch]);
+
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
@@ -577,6 +607,15 @@ const handleDeleteNotification = async (notificationId: string) => {
             columnWrapperStyle={columns > 1 ? styles.row : null}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#e8be4b"
+              colors={['#e8be4b']}
+              progressBackgroundColor="#e8be4b"
+              />
+            }
             renderItem={({ item }) => (
 
 
