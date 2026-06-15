@@ -138,7 +138,7 @@ export default function SettingsModal({
                                             >
                                                 <FontAwesome name={iconName as any} size={14} color="#e8be4b" style={{ width: 20, textAlign: 'center', marginRight: 10 }} />
                                                 <Text style={styles.suggestionText} numberOfLines={1}>
-                                                    {item.value} <Text style={styles.suggestionType}>({item.type})</Text>
+                                                    {item.value} <Text >({item.type})</Text>
                                                 </Text>
                                             </TouchableOpacity>
                                         );
