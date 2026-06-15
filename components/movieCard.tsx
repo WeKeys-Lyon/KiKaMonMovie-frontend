@@ -77,7 +77,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const didIMakeAReview = () => {
     
     if (moviedata.reviews) {
-      const myReview = user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.find((avis: any) => avis.userid == user._id);
+      let myReview = null;
+      if (mode == 'collection') {
+        myReview = user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.find((avis: any) => avis.userid == user._id);
+      } else {
+         myReview = moviedata.reviews.find((avis: any) => avis.userid == user._id);
+      }
       if (myReview) {
         return true
       } else {
@@ -523,7 +528,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             {getAverageRating() > 0 ? (
               <>
                 <Text style={{ color: '#e8be4b', fontSize: 13, fontWeight: 'bold', marginBottom: 4 }}>
-                  Note globale : {getAverageRating().toFixed(1)} / 5
+                  Note des utilisateurs ({(mode == 'friend') ? datas.reviews.length : user.movies.find((film) => film.tmdb_id == moviedata.tmdb_id).reviews.length } avis)
                 </Text>
                 <StarRating rating={Math.round(getAverageRating() * 2) / 2} size={16} disabled={true} />
               </>
