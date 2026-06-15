@@ -19,8 +19,8 @@ interface MovieGridProps {
   onLongPress?: () => void;
 }
 
-export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal, mode }: MovieGridProps) {
-  
+export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal, mode}: MovieGridProps) {
+
   const BACKEND_URL = process.env.BACKEND_URL;
   const user = useSelector((state: any) => state.user.value);
   const dispatch = useDispatch();
@@ -33,8 +33,6 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
   const title = (titleOriginal == 'title_origin_asc' || titleOriginal == 'title_origin_desc' ) ? movie.original_title : movie.title_fr;
   
   
-  const [isLiked, setIsLiked] = useState<boolean>(movie.isLiked);
-  
   //données en mode liste//
   const originalTitle = movie.original_title;
   const showVO = movie.title_fr && movie.title_fr !== movie.original_title;
@@ -45,7 +43,6 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
   const indexMovie = user.movies.findIndex(film => movie.tmdb_id == film.tmdb_id);
 
   const handleLike = async () => {
-    setIsLiked(!isLiked);
     const myURL = `${BACKEND_URL}/users/isLiked`;
     const response = await fetch(encodeURI(myURL), {
        method: 'POST',
@@ -56,6 +53,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
         }),
     });
     const data = await response.json();
+    data;
     dispatch(iLikeThisMovie({index: indexMovie}))    
   }
   // --- MODE LISTE (1 colonne) ---
@@ -91,7 +89,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         </View>
         <TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{justifyContent: 'center'}}>
-          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity>
         
 
@@ -107,11 +105,11 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}
         {(columns === 3) ? (<TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{alignItems: 'flex-end'}}>
-          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity>) : (<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between'}}>
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{}}>
-          {(isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
           </TouchableOpacity></View>) }
         
           

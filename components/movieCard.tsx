@@ -30,7 +30,6 @@ type MovieCardScreenProps = {
 };
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
-
   const BACKEND_URL = process.env.BACKEND_URL;
 
   const user = useSelector((state: any) => state.user.value);

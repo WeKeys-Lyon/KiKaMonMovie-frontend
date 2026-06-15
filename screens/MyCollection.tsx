@@ -257,8 +257,7 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
     // 3. Filtres optionnel
    .filter((movie: any) => {
       if (likedActivated) {
-        const moviesLiked = user.movies.some((film:any) => film._id == movie._id && film.isLiked);
-        return moviesLiked;
+        if (movie.isLiked) return true;
       } else {
         return true;
       }
