@@ -12,7 +12,10 @@ type SettingsModalProps = {
     setSearchQuery: (query: string) => void;
     movies: any[];
     sortOption: string;
+    sortOption2: string;
     modSort: (option: string) => void;
+    modSort2: (option: string) => void;
+    likedActivated: boolean;
 };
 
 export default function SettingsModal({
@@ -24,7 +27,10 @@ export default function SettingsModal({
     setSearchQuery,
     movies,
     sortOption,
+    sortOption2,
     modSort,
+    modSort2,
+    likedActivated
 }: SettingsModalProps) {
 
     //recherche par suggestions
@@ -222,7 +228,14 @@ export default function SettingsModal({
                         {/* 🏷️ SECTION 3 : FILTRES (Structure prête pour la suite) */}
                         <Text style={styles.sectionTitle}>Filtres</Text>
                         <View style={styles.filtersContainer}>
-                            <Text style={styles.placeholderText}>⏳ Les filtres (Année, Réalisateur, Genre) arriveront ici...</Text>
+                            {/* Les films likés */}
+                            <TouchableOpacity
+                                style={[styles.sortBtn, likedActivated && styles.displayBtnActive]}
+                                onPress={() => modSort2('liked')}
+                            >
+                                <FontAwesome name="heart" size={16} color={likedActivated ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, likedActivated && { color: '#fff', fontSize: 13 }]}>Favoris</Text>
+                            </TouchableOpacity>
                             {/* Ici nous ajouterons des menus déroulants (Pickers) ou des boutons */}
                         </View>
 
@@ -321,6 +334,7 @@ const styles = StyleSheet.create({
 
     // Styles Filtres
     filtersContainer: {
+        flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         padding: 20,
         borderRadius: 10,

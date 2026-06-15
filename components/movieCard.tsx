@@ -118,6 +118,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const didIMakeAReview = () => {
     
     if (datas.reviews) {
+      
       const myReview = datas.reviews.find((avis: any) => avis.userid._id == user._id);
       if (myReview) {
         return true
