@@ -61,13 +61,63 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       registerForPushNotificationsAsync();
 
       // 2. On écoute le clic
-      const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+         const responseListener = Notifications.addNotificationResponseReceivedListener(async response => {
         const data = response.notification.request.content.data;
+        
+        // 🕵️‍♂️ MOUCHARD : Regarde ton terminal pour voir si le backend a bien envoyé le tmdb_id
         console.log("👆 Notification cliquée ! Données reçues :", data);
         
-        // On ouvre la modale directement !
-        setIsNotificationModalVisible(true);
-      }); 
+        if (data && data.tmdb_id) {
+          navigation.navigate('Ma Collection'); 
+
+          try {
+            // 🛡️ 1. On ignore le cache et on télécharge ta VRAIE collection
+            const colResponse = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
+            const colData = await colResponse.json();
+            
+            let targetMovie = null;
+            let ownerToPass = null;
+
+            if (colData.result) {
+              targetMovie = colData.movies.find((m: any) => 
+                String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id)
+              );
+            }
+
+            // 🛡️ 2. Si c'est introuvable, on cherche dans tes VRAIES notifications
+            if (!targetMovie) {
+              const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
+              const notifData = await notifResponse.json();
+
+              if (notifData.result) {
+                const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
+                if (notifItem) {
+                  targetMovie = notifItem.movieId;
+                  ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
+                }
+              }
+            }
+
+            // 🎯 3. On ouvre enfin la bonne modale
+            if (targetMovie) {
+              setSelectedMovie(targetMovie);
+              setMovieOwnerId(ownerToPass); 
+              setTargetTab(data.type === 'review' ? 'reviews' : 'details');
+              setIsModalVisible(true);
+            } else {
+              setIsNotificationModalVisible(true);
+            }
+
+          } catch (error) {
+            console.error("Erreur Deep Link :", error);
+            setIsNotificationModalVisible(true);
+          }
+
+        } else {
+          navigation.navigate('Ma Collection');
+          setIsNotificationModalVisible(true);
+        }
+      });
 
       // 3. Le nettoyage
       return () => {
@@ -194,12 +244,15 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
   useEffect(() => {
     if (!isModalVisible) {
       setActiveNotification(null);
+      setMovieOwnerId(null);
     }
   }, [isModalVisible]);
 
   const handleOpenMovie = (movie: any) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
+    setMovieOwnerId(null); // On réinitialise l'ownerId à null pour les films de notre collection
+    setTargetTab('details');
   };
 
   const handleLogout = () => {
@@ -475,22 +528,31 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   //laisser une review
-  const handleLeaveReview = (notification: any) => {
-    setSelectedMovie(notification.movieId); // On charge le film
-    setMovieOwnerId(notification.senderId._id); // On mémorise que ce film appartient à l'ami
-    setTargetTab('reviews')
-    setIsNotificationModalVisible(false); // On ferme les notifications
-    setIsModalVisible(true); // On ouvre la carte du film
+ const processReviewNotification = (notification: any) => {
+    // 1. On vérifie si on possède ce film dans notre propre collection
+    const isMyMovie = user.movies?.some((m: any) => 
+      String(m.tmdb_id) === String(notification.movieId?.tmdb_id) || 
+      String(m.movieid?.tmdb_id) === String(notification.movieId?.tmdb_id)
+    );
+
+    // 2. On récupère toutes les infos du film (les nôtres, ou celles de la notif)
+    const fullMovie = isMyMovie 
+      ? user.movies.find((m: any) => String(m.tmdb_id) === String(notification.movieId?.tmdb_id) || String(m.movieid?.tmdb_id) === String(notification.movieId?.tmdb_id))
+      : notification.movieId;
+
+    setSelectedMovie(fullMovie);
+    
+    // 3. LA SÉCURITÉ : Si c'est mon film, ownerId est null. Sinon, c'est l'ID de l'ami.
+    setMovieOwnerId(isMyMovie ? null : (notification.senderId?._id || notification.senderId));
+    
+    setTargetTab('reviews');
+    setIsNotificationModalVisible(false);
+    setIsModalVisible(true);
   };
 
-  const handleViewReview = (notification: any) => {
-    const fullMovieFromMyCollection = movies.find((m: any) => m.tmdb_id === notification.movieId.tmdb_id);
-    setSelectedMovie(fullMovieFromMyCollection || notification.movieId);// On charge le film
-    setMovieOwnerId(null); // Pas besoin d'ID d'ami, c'est ton propre film !
-    setTargetTab('reviews');
-    setIsNotificationModalVisible(false); // On ferme les notifications
-    setIsModalVisible(true); // On ouvre la carte du film
-  };
+  // On relie tes deux fonctions à notre nouvelle logique blindée
+  const handleLeaveReview = (notification: any) => processReviewNotification(notification);
+  const handleViewReview = (notification: any) => processReviewNotification(notification);
 
   //rafraichir sa liste: 
   
@@ -681,7 +743,7 @@ const handleDeleteNotification = async (notificationId: string) => {
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         {selectedMovie && (
           <MovieCard
-            mode={activeNotification ? "manage_request" : "collection"}
+            mode={activeNotification ? "manage_request" : (movieOwnerId ? "friend" : "collection")}
             requester={activeNotification?.senderId}
             notificationId={activeNotification?._id}
             moviedata={selectedMovie}
