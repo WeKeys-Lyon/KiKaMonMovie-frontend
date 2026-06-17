@@ -270,7 +270,6 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
     .filter((movie:any) => {
       // Filtrer par année de sortie
       if (selectedYear > 0) {
-        console.log(parseInt(movie.release_date?.slice(0,4)) == selectedYear)
        if (parseInt(movie.release_date?.slice(0,4)) == selectedYear) {
         return true
        } else { return false}
