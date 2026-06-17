@@ -86,6 +86,9 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [sortOption, setSortOption] = useState<string>(user.sort ? user.sort : 'title_asc');
+  const [sortOption2, setSortOption2] = useState<string>('');
+  const [likedActivated, setLikedActivated] = useState<boolean>(false);
+  const [selectedYear, setSelectedYear] = useState<number>(0);
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false);
   const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
   const [activeNotification, setActiveNotification] = useState<any>(null);
@@ -100,6 +103,13 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const modSort = (string: string) => {
     setSortOption(string);
     dispatch(settingSort(string));
+  }
+  const modSort2 = (string: string) => {
+    setSortOption2(string);
+    setLikedActivated(!likedActivated)
+  }
+  const modSelectedYear = (number: number) => {
+    setSelectedYear(number);
   }
 
   //Demande de permission et récupération du token 
@@ -248,7 +258,26 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
 
       return false;
     })
-    // 3. LE TRI 
+    // 3. Filtres optionnel
+   .filter((movie: any) => {
+      // Affichage des favoris
+      if (likedActivated) {
+        if (movie.isLiked) return true;
+      } else {
+        return true;
+      }
+    })
+    .filter((movie:any) => {
+      // Filtrer par année de sortie
+      if (selectedYear > 0) {
+       if (parseInt(movie.release_date?.slice(0,4)) == selectedYear) {
+        return true
+       } else { return false}
+      } else {
+        return true
+      }
+    })
+    // 4. LE TRI 
     .sort((a: any, b: any) => {
       // Tri Alphabétique (A-Z)
       if (sortOption === 'title_asc') {
@@ -674,6 +703,10 @@ const handleDeleteNotification = async (notificationId: string) => {
           movies={filtredMovies}
           sortOption={sortOption}
           modSort={modSort}
+          sortOption2={sortOption2}
+          modSort2={modSort2}
+          likedActivated = {likedActivated}
+          modSelectedYear = {modSelectedYear}
         />
       </View>
       {/*LA MODALE DETAIL DE FILM*/}
