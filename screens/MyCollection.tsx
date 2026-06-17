@@ -700,7 +700,7 @@ const handleDeleteNotification = async (notificationId: string) => {
           modColumns={modColumns}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          movies={filtredMovies}
+          movies={movies}
           sortOption={sortOption}
           modSort={modSort}
           sortOption2={sortOption2}
