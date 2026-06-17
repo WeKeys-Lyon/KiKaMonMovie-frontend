@@ -15,19 +15,20 @@ type yearCarouselProps = {
     selectedYear: number;
     modSelectedYear: (number: number) => void;
     onClose: () => void;
+    movies: any[]
 }
 
-export default function YearCarousel({visible, selectedYear, modSelectedYear, onClose} : yearCarouselProps) {
+export default function YearCarousel({visible, selectedYear, modSelectedYear, onClose, movies} : yearCarouselProps) {
     const moviesRedux = useSelector((state : any) => state.user.value.movies)
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const [carouselYear, setCarouselYear] = useState<number>(selectedYear)
+
 
         //Obtenir les années de sorties des films dans la collection sans doublons
         let allYears : any[] = [];
         const getYearOfRelease = () => {
-            moviesRedux.forEach((film: any) => {
+            movies.forEach((film: any) => {
                 allYears.push(parseInt(film.release_date.slice(0,4)));            
             })
             allYears = [...new Set(allYears)].sort((a, b) => b - a);

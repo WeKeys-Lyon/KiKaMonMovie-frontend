@@ -34,7 +34,7 @@ export default function SettingsModal({
     modSort,
     modSort2,
     likedActivated,
-    modSelectedYear
+    modSelectedYear,
 }: SettingsModalProps) {
     
     //recherche par suggestions
@@ -84,15 +84,17 @@ export default function SettingsModal({
         return uniqueSuggestions.slice(0, 5); // On garde les 5 meilleurs
     };
     
-    const handleYearCarousel = (number: number) => {
-        modSelectedYear(number);
-        setSelectedYear(number)
-    }
+
 
 
     const [selectedYear, setSelectedYear] = useState<number>(0);
     const [carouselVisible, setCarouselVisible] = useState<boolean>(false)
     const suggestions = getGlobalSuggestions();
+
+    const handleYearCarousel = (number: number) => {
+        modSelectedYear(number);
+        setSelectedYear(number)
+    }
 
 
     return (
@@ -238,7 +240,7 @@ export default function SettingsModal({
                                 <Text style={[styles.displayBtnText, sortOption === 'year_asc' && { color: '#fff', fontSize: 13 }]}>Ancien</Text>
                             </TouchableOpacity>
                         </View>
-                             <YearCarousel visible={carouselVisible} selectedYear={selectedYear} modSelectedYear={(value) => handleYearCarousel(value)} onClose={() => setCarouselVisible(!carouselVisible)}/>
+                             <YearCarousel movies={movies} visible={carouselVisible} selectedYear={selectedYear} modSelectedYear={(value) => handleYearCarousel(value)} onClose={() => setCarouselVisible(!carouselVisible)}/>
                         {/* 🏷️ SECTION 3 : FILTRES (Structure prête pour la suite) */}
                         <Text style={styles.sectionTitle}>Filtres</Text>
                         <View style={styles.filtersContainer}>
