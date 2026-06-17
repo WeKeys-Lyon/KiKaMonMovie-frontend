@@ -73,12 +73,12 @@ export default function YearCarousel({visible, selectedYear, modSelectedYear, on
                         modSelectedYear(value);
                         }}
                         selectedValue={selectedYear}
-                        style={{width: '100%', height: 'auto'}}
+                        style={{width: '100%', height: 'auto', marginBottom: 20, marginTop: 90}}
                     >
                         <Picker.Item label="Aucune" value={0} />
                         {renderYearList()}
                     </Picker>
-                    <Buttons title="valider" onPress={() => onClose()} variant='secondary'/>
+                    <Buttons title="Valider" onPress={() => onClose()} variant='secondary' style={{marginBottom: 60}}/>
                 </Animated.View>   
                 </View>
                         )
@@ -100,7 +100,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0)',
+        backgroundColor: '#1C2942',
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
     },
     keyboardView: {
         flex: 1,
@@ -111,6 +113,8 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     modalContent: {
+        flex: 1,
+        justifyContent: 'center',
         backgroundColor: '#1C2942',
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
