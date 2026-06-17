@@ -86,7 +86,7 @@ export default function YearCarousel({visible, selectedYear, modSelectedYear, on
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        top: 0,
+        top: 350,
         bottom: 0,
         left: 0,
         right: 0,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     keyboardView: {
         flex: 1,
