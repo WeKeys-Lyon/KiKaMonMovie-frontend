@@ -17,6 +17,7 @@ export default function BarcodeScanner({
 }: BarcodeScannerProps) {
 
   const [isScanning, setIsScanning] = useState(true);
+  const [isPaused, setIsPaused] = useState<boolean>(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editableTitle, setEditableTitle] = useState("");
@@ -32,7 +33,7 @@ export default function BarcodeScanner({
 
   const handleBarCodeScanned = async ({ type, data }: { type: string, data: string }) => {
     console.log("Code-barres détecté :", data, "de type", type);
-    
+    setIsPaused(!isPaused);
     if (!isScanning) return;
     setIsScanning(false); 
 
@@ -74,9 +75,10 @@ export default function BarcodeScanner({
     <View style={styles.cameraContainer}>
 
       {/* --- AFFICHAGE CONDITIONNEL EN 3 ÉTAPES --- */}
-      {isScanning ? (
-        // ÉTAPE 1 : LA CAMÉRA
+      
+        {/* // ÉTAPE 1 : LA CAMÉRA */}
         <CameraView
+          active={isPaused}
           style={styles.camera}
           facing="back"
           autofocus="on"
@@ -84,9 +86,9 @@ export default function BarcodeScanner({
           barcodeScannerSettings={{
             barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"], 
           }}
-          onBarcodeScanned={handleBarCodeScanned}
+          onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
         />
-      ) : !scannedTitle ? (
+      {!scannedTitle ? (
         
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingLogo}>🎞️</Text>
@@ -96,7 +98,7 @@ export default function BarcodeScanner({
       ) : (
         
         <View style={styles.resultBackground} />
-      )}
+      ) }
 
 
       
