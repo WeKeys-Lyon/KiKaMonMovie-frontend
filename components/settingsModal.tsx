@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from './buttons';
+import YearCarousel from './yearCarousel';
 
 type SettingsModalProps = {
     visible: boolean;
@@ -16,6 +17,8 @@ type SettingsModalProps = {
     modSort: (option: string) => void;
     modSort2: (option: string) => void;
     likedActivated: boolean;
+    modSelectedYear: (option: number) => void;
+
 };
 
 export default function SettingsModal({
@@ -30,9 +33,10 @@ export default function SettingsModal({
     sortOption2,
     modSort,
     modSort2,
-    likedActivated
+    likedActivated,
+    modSelectedYear
 }: SettingsModalProps) {
-
+    
     //recherche par suggestions
     const getGlobalSuggestions = () => {
         if (searchQuery.trim().length <= 1) return [];
@@ -79,7 +83,15 @@ export default function SettingsModal({
 
         return uniqueSuggestions.slice(0, 5); // On garde les 5 meilleurs
     };
+    
+    const handleYearCarousel = (number: number) => {
+        modSelectedYear(number);
+        setSelectedYear(number)
+    }
 
+
+    const [selectedYear, setSelectedYear] = useState<number>(0);
+    const [carouselVisible, setCarouselVisible] = useState<boolean>(false)
     const suggestions = getGlobalSuggestions();
 
 
@@ -87,14 +99,16 @@ export default function SettingsModal({
         <Modal visible={visible} animationType="slide" transparent={true}>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-
                     <View style={styles.modalHeader}>
+                        
                         <Text style={styles.modalTitle}>Réglages & Filtres</Text>
+
                         <TouchableOpacity onPress={onClose} style={styles.closeIcon}>
                             <FontAwesome name="times-circle" size={28} color="#ff4d4d" />
                         </TouchableOpacity>
-                    </View>
 
+                    </View>                        
+                        
                     <ScrollView style={styles.scrollArea}>
 
                         {/* 🔍 SECTION 1 : RECHERCHE */}
@@ -224,10 +238,11 @@ export default function SettingsModal({
                                 <Text style={[styles.displayBtnText, sortOption === 'year_asc' && { color: '#fff', fontSize: 13 }]}>Ancien</Text>
                             </TouchableOpacity>
                         </View>
-
+                             <YearCarousel visible={carouselVisible} selectedYear={selectedYear} modSelectedYear={(value) => handleYearCarousel(value)} onClose={() => setCarouselVisible(!carouselVisible)}/>
                         {/* 🏷️ SECTION 3 : FILTRES (Structure prête pour la suite) */}
                         <Text style={styles.sectionTitle}>Filtres</Text>
                         <View style={styles.filtersContainer}>
+
                             {/* Les films likés */}
                             <TouchableOpacity
                                 style={[styles.sortBtn, likedActivated && styles.displayBtnActive]}
@@ -236,6 +251,15 @@ export default function SettingsModal({
                                 <FontAwesome name="heart" size={16} color={likedActivated ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, likedActivated && { color: '#fff', fontSize: 13 }]}>Favoris</Text>
                             </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.sortBtn, selectedYear > 0 && styles.displayBtnActive, {marginLeft: 10}]}
+                                onPress={() => setCarouselVisible(!carouselVisible)}
+                            >
+                                <FontAwesome name="calendar" size={16} color={ selectedYear > 0 ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText,  selectedYear > 0 && { color: '#fff', fontSize: 13, textAlign: 'center' }]}>{ selectedYear > 0 ? "Année : " + selectedYear : 'Année de sortie'}</Text>
+                            </TouchableOpacity>
+                           
+
                             {/* Ici nous ajouterons des menus déroulants (Pickers) ou des boutons */}
                         </View>
 
@@ -250,6 +274,29 @@ export default function SettingsModal({
         </Modal>
     );
 }
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 26,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 4,
+    color: 'white',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: 'purple',
+    borderRadius: 8,
+    color: 'black',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+});
 
 const styles = StyleSheet.create({
     modalOverlay: {
@@ -335,6 +382,7 @@ const styles = StyleSheet.create({
     // Styles Filtres
     filtersContainer: {
         flex: 1,
+        flexDirection: 'row',
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         padding: 20,
         borderRadius: 10,
