@@ -269,22 +269,22 @@ const styles = StyleSheet.create({
   },
   rulesContainer: {
     width: '80%',
-    flexDirection: 'row', // Pour aligner en ligne
-    flexWrap: 'wrap',     // Pour passer à la ligne automatiquement (2 colonnes)
+    flexDirection: 'row', 
+    flexWrap: 'wrap',    
     justifyContent: 'space-between',
     marginBottom: 15,
   },
   ruleText: {
-    width: '48%',         // Prend la moitié de la largeur
+    width: '48%',         
     fontSize: 11,
     marginBottom: 4,
     fontWeight: 'bold',
   },
   ruleValid: {
-    color: '#4caf50',     // Vert si la règle est respectée
+    color: '#4caf50',    
   },
   ruleInvalid: {
-    color: '#ff4d4d',     // Rouge/Grisé si elle manque
+    color: '#ff4d4d',     
   },
 
 });
