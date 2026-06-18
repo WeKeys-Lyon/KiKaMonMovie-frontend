@@ -60,7 +60,7 @@ export const userSlice = createSlice({
       state.value.notifications = action.payload;
     },
     logout:(state) => {
-      // 🌟 CORRECTION : On remet TOUT à zéro proprement !
+      
       state.value = initialState.value;
     },
     iLikeThisMovie: (state, action: PayloadAction<any>) => {

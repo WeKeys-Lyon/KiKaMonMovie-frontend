@@ -76,7 +76,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             
           }
           const freshMovie = freshMovies.find((m: any) => m.tmdb_id === datas.tmdb_id);
-          console.log(freshMovie)
+
           if (freshMovie && freshMovie.reviews) {
             // On met à jour silencieusement les données du composant (sans fermer la modale !)
             setDatas((prevDatas: any) => ({
@@ -606,7 +606,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               <Text style={styles.modalLabel}>Casting :</Text>
               {renderClickableNames(datas?.Cast, 'actor', 15)}
 
-              {mode === 'collection' && (
+              {mode === 'collection' && (!ownerId || ownerId === user._id) && (
                 <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
                   <Buttons
                     title="🗑️ Supprimer le film"
@@ -899,12 +899,22 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                   ) : (
                     <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
                   )
+                ) : ownerId && ownerId !== user._id ? (
+                  
+                  // 🌟 CORRECTION 2 : Le film appartient à quelqu'un d'autre (via une notification)
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#aaa', alignItems: 'center' }}>
+                    <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Film emprunté</Text>
+                  </View>
+                  
                 ) : (
+                  
+                  // C'est VRAIMENT mon film
                   datas?.isLoaned ? (
                     <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
                   ) : (
                     <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
                   )
+                  
                 )}
               </View>
             </>
