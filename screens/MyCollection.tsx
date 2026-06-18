@@ -51,7 +51,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [columns, setColumns] = useState(user.columns ? user.columns : 2);
   const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastNotificationResponse, setLastNotificationResponse] = useState<any>(null);
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
 
 
   const dispatch = useDispatch();
