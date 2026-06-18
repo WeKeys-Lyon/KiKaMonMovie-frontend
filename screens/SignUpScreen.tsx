@@ -86,6 +86,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         const userMovies = (data.answer.movies) ? data.answer.movies : [];
 
         dispatch(login({
+          _id: data.answer._id,
           email: email, 
           username: username, 
           token: data.answer.token,
@@ -157,6 +158,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               style={styles.input}
               secureTextEntry
             />
+            <Text style={{color: '#fff', fontSize: 16, marginBottom: 5}}>Au moins :</Text>
             <View style={styles.rulesContainer}>
               <Text style={[styles.ruleText, isLengthValid ? styles.ruleValid : styles.ruleInvalid]}>
                 {isLengthValid ? '✅' : '❌'} 8 caractères
@@ -171,7 +173,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
                 {isNumberValid ? '✅' : '❌'} 1 Chiffre
               </Text>
               <Text style={[styles.ruleText, isSpecialValid ? styles.ruleValid : styles.ruleInvalid]}>
-                {isSpecialValid ? '✅' : '❌'} 1 Spécial
+                {isSpecialValid ? '✅' : '❌'} 1 Charactère Spécial
               </Text>
             </View>
             <TextInput
@@ -268,11 +270,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   rulesContainer: {
-    width: '80%',
+    width: '90%',
     flexDirection: 'row', 
     flexWrap: 'wrap',    
     justifyContent: 'space-between',
     marginBottom: 15,
+    gap: 3
   },
   ruleText: {
     width: '48%',         

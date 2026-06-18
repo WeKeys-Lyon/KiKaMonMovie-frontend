@@ -201,13 +201,16 @@ export default function MyAccount({ navigation }: MyAccountProps) {
           />
         </View>
         {newPassword.length > 0 && (
+          <>
+          <Text style={{color: '#fff', fontSize: 16, marginBottom: 15, marginTop: -10}}>Au moins : </Text>
           <View style={styles.rulesContainer}>
             <Text style={[styles.ruleText, isLengthValid ? styles.ruleValid : styles.ruleInvalid]}>{isLengthValid ? '✅' : '❌'} 8 caractères</Text>
             <Text style={[styles.ruleText, isUpperValid ? styles.ruleValid : styles.ruleInvalid]}>{isUpperValid ? '✅' : '❌'} 1 Majuscule</Text>
             <Text style={[styles.ruleText, isLowerValid ? styles.ruleValid : styles.ruleInvalid]}>{isLowerValid ? '✅' : '❌'} 1 Minuscule</Text>
             <Text style={[styles.ruleText, isNumberValid ? styles.ruleValid : styles.ruleInvalid]}>{isNumberValid ? '✅' : '❌'} 1 Chiffre</Text>
-            <Text style={[styles.ruleText, isSpecialValid ? styles.ruleValid : styles.ruleInvalid]}>{isSpecialValid ? '✅' : '❌'} 1 Spécial</Text>
+            <Text style={[styles.ruleText, isSpecialValid ? styles.ruleValid : styles.ruleInvalid]}>{isSpecialValid ? '✅' : '❌'} 1 Charactère Spécial</Text>
           </View>
+          </>
         )}
 
         <Buttons 
@@ -326,6 +329,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
     marginTop: -5,
+    gap: 3
   },
   ruleText: {
     width: '48%',         
