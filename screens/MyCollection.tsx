@@ -12,6 +12,7 @@ import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
+
 import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort, setCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
@@ -50,8 +51,82 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const [columns, setColumns] = useState(user.columns ? user.columns : 2);
   const [titleOriginal ,setTitleOriginal] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastNotificationResponse, setLastNotificationResponse] = useState<any>(null);
+
 
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Si l'application vient d'être réveillée par une notification
+    if (
+      lastNotificationResponse && 
+      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
+    ) {
+      const data = lastNotificationResponse.notification.request.content.data;
+      console.log("🕸️ Démarrage à froid ! Données reçues :", data);
+      
+      if (data && data.tmdb_id) {
+        
+        const fetchColdStartData = async () => {
+          // 1. On navigue vers l'écran de la collection
+          navigation.navigate('Ma Collection'); 
+          
+          try {
+            // 🔄 2. LA CORRECTION : On télécharge les notifications fraîches ET on met à jour Redux
+            const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
+            const notifData = await notifResponse.json();
+            
+            if (notifData.result) {
+              dispatch(updateNotifications(notifData.notifications)); // 👈 Redux est maintenant à jour !
+            }
+
+            // 🛡️ 3. On télécharge la collection de l'utilisateur
+            const colResponse = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
+            const colData = await colResponse.json();
+            
+            let targetMovie = null;
+            let ownerToPass = null;
+
+            if (colData.result) {
+              targetMovie = colData.movies.find((m: any) => 
+                String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id)
+              );
+            }
+
+            // 🛡️ 4. Si c'est introuvable dans la collection, on cherche dans les notifications qu'on vient de télécharger
+            if (!targetMovie && notifData.result) {
+              const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
+              if (notifItem) {
+                targetMovie = notifItem.movieId;
+                ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
+              }
+            }
+
+            // 🎯 5. On ouvre enfin la modale
+            if (targetMovie) {
+              setSelectedMovie(targetMovie);
+              setMovieOwnerId(ownerToPass); 
+              setTargetTab(data.type === 'review' ? 'reviews' : 'details');
+              setIsModalVisible(true);
+            } else {
+              // La modale des notifications aura les données fraîches grâce au dispatch !
+              setIsNotificationModalVisible(true); 
+            }
+
+          } catch (error) {
+            console.error("Erreur Deep Link (Cold Start):", error);
+            setIsNotificationModalVisible(true);
+          }
+        };
+
+        fetchColdStartData();
+
+      } else {
+        navigation.navigate('Ma Collection');
+        setIsNotificationModalVisible(true);
+      }
+    }
+  }, [lastNotificationResponse, user.token, dispatch]); // 👈 Déclencheurs mis à jour
 
   useEffect(() => {
     if (!user.token) {
@@ -71,7 +146,15 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
           navigation.navigate('Ma Collection'); 
 
           try {
-            // 🛡️ 1. On ignore le cache et on télécharge ta VRAIE collection
+            // 🔄 1. LA CORRECTION EST ICI : On télécharge les notifications fraîches ET on met à jour Redux
+            const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
+            const notifData = await notifResponse.json();
+            
+            if (notifData.result) {
+              dispatch(updateNotifications(notifData.notifications)); // 👈 Magie : la modale et la cloche sont à jour !
+            }
+
+            // 🛡️ 2. On télécharge la collection
             const colResponse = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
             const colData = await colResponse.json();
             
@@ -84,28 +167,23 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
               );
             }
 
-            // 🛡️ 2. Si c'est introuvable, on cherche dans tes VRAIES notifications
-            if (!targetMovie) {
-              const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
-              const notifData = await notifResponse.json();
-
-              if (notifData.result) {
+            // 🛡️ 3. Si c'est introuvable dans la collection, on cherche dans les notifications qu'on vient de télécharger
+            if (!targetMovie && notifData.result) {
                 const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
                 if (notifItem) {
                   targetMovie = notifItem.movieId;
                   ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
                 }
-              }
             }
 
-            // 🎯 3. On ouvre enfin la bonne modale
+            // 🎯 4. On ouvre enfin la modale
             if (targetMovie) {
               setSelectedMovie(targetMovie);
               setMovieOwnerId(ownerToPass); 
               setTargetTab(data.type === 'review' ? 'reviews' : 'details');
               setIsModalVisible(true);
             } else {
-              setIsNotificationModalVisible(true);
+              setIsNotificationModalVisible(true); // Maintenant, la modale aura les données fraîches !
             }
 
           } catch (error) {
