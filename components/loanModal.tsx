@@ -9,11 +9,28 @@ import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 
 
 const { height } = Dimensions.get('window');
+type movieProps = {
+        tmdb_id: Number,
+        title_fr: String,
+        userid: Number,
+        original_title: String,
+        release_date?: String,
+        poster_path?: String,
+        DirectedBy?: [{name: String, popularity?: Number}],
+        Cast?: [{name: String, popularity?: Number}],
+        MusicBy?: [{name: String, popularity?: Number}],
+        Genres?: [{name: String}],
+        isLoaned: Boolean,
+        isLiked: Boolean,
+        isAsked?: [Number],
+        pastLoans?: [{Notification: Boolean, _id: Number, borrower?: String, dueDate?: Date, isSharedToUser: Boolean, movieid: Number, notes?: String, userid?: Number}],
+        reviews?: [{userid: Number, rating?: Number, comment?: String, likes?: [Number], replies?: [{userid: Number, text: String, createdAt: Date}], createdAt: Date }]
+    };
 
 type loanModalProps = {
     visible: boolean;
     onClose: () => void;
-    movie: any;
+    movie: movieProps;
     movieTmdbId: number;
     onSuccess: (updatedPastLoans: any[]) => void;
     preselectedUser?: any;
@@ -21,6 +38,7 @@ type loanModalProps = {
 }
 
 export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
+    console.log(movie)
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
@@ -32,13 +50,11 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(true);
     const [notes, setNotes] = useState('');
-
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [searchFriendID, setSearchFriendID] = useState<number>(0);
-    const [openSuggestions, setOpenSuggestions] = useState<boolean>(false);
 
     useEffect(() => {
         if (preselectedUser) {
@@ -98,7 +114,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
             if (data.result) {
                 console.log("Prêt enregistré avec succès !");
-                const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+                const indexMovie = user.movies.findIndex(movie: movieProps => movie.tmdb_id == movieTmdbId);
                 dispatch(setMovieLoaned({index: indexMovie, data: data.answer}));
                 onSuccess(data.answer)
                 // On vide les champs pour la prochaine fois
