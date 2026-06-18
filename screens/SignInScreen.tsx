@@ -29,6 +29,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
   const dispatch = useDispatch();
 
+
   
 
   const handleSubmit = async () => {
@@ -37,6 +38,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setError('Veuillez remplir tous les champs');
       return;
     }
+    
     try {
       const myURL = `${BACKEND_URL}/users/signin`;
       const response = await fetch(encodeURI(myURL), {
