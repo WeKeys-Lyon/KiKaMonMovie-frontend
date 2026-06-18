@@ -258,7 +258,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
           <View style={{flex:1, justifyContent: 'center', alignItems: 'center', width: '100%'}}>
-          <Text style={[styles.text, {textShadowColor: '#000', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 1, marginBottom: 50, marginTop: 0}]}>Veuillez rechercher un film en indicant son titre exact (titre original ou français){"\n"} ou bien en indicant le nom d'une personnalité ayant participé au film. </Text>
+          <Text style={[styles.text, {textShadowColor: '#000', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 1, marginBottom: 50, marginTop: 0}]}>Veuillez rechercher un film en indiquant son titre exact (titre original ou français){"\n"} ou bien en indicant le nom d'une personnalité ayant participé au film. </Text>
           <ManualSearch
             queryTitle={queryTitle}
             setQueryTitle={setQueryTitle}
