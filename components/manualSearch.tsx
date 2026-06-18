@@ -10,10 +10,12 @@ type ManualSearchProps = {
   launchSearchTitle: () => void;
   launchSearchPeople: () => void;
   cancelSearch: () => void;
+  error?: string;
+  error2?: string;
 };
 
 export default function ManualSearch({
-  queryTitle, setQueryTitle, queryPerson, setQueryPerson, launchSearchTitle, launchSearchPeople, cancelSearch
+  queryTitle, setQueryTitle, queryPerson, setQueryPerson, launchSearchTitle, launchSearchPeople, cancelSearch, error, error2
 }: ManualSearchProps) {
   return (
     <View style={styles.searchContainer}>
@@ -29,9 +31,10 @@ export default function ManualSearch({
           onSubmitEditing={launchSearchTitle}
         />
         <View style={styles.searchButtonsRow}>
-          <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
-          <Buttons title="Chercher" onPress={launchSearchTitle} variant="primary" />
+          <Buttons title="Annuler" onPress={cancelSearch} variant="secondary" />
+          <Buttons title="Chercher" onPress={launchSearchTitle} variant="secondary" />
         </View>
+        {(error) ? (<Text style={{color: 'red', fontSize: 26, textAlign: 'center', marginTop: 10}}>{error}</Text>) : ('')}
       </View>
 
       {/* Box Recherche par Personnalité */}
@@ -46,9 +49,10 @@ export default function ManualSearch({
           onSubmitEditing={launchSearchPeople}
         />
         <View style={styles.searchButtonsRow}>
-          <Buttons title="Annuler" onPress={cancelSearch} variant="primary" />
-          <Buttons title="Chercher" onPress={launchSearchPeople} variant="primary" />
+          <Buttons title="Annuler" onPress={cancelSearch} variant="secondary" />
+          <Buttons title="Chercher" onPress={launchSearchPeople} variant="secondary" />
         </View>
+        {(error2) ? (<Text style={{color: 'red', fontSize: 26, textAlign: 'center', marginTop: 10}}>{error2}</Text>) : ('')}
       </View>
     </View>
   );

@@ -39,6 +39,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
   const [searchOrigin, setSearchOrigin] = useState('manual');
+  const [error, setError] = useState<string>('')
+  const [error2, setError2] = useState<string>('')
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -76,9 +78,11 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
+        setDrawStyle(false);
         setQueryAsked(queryTitle);
         setSearchOrigin('manual');
       } else {
+        setError(data.error)
         console.log("Erreur backend", data.error);
       }
     } catch (error) {
@@ -99,9 +103,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
-        setDrawStyle(true)
+        setDrawStyle(true);
         setQueryAsked(data.people)
       } else {
+        setError2(data.error)
         console.log("Erreur backend", data.error);
       }
     } catch (error) {
@@ -252,6 +257,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
         {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
+          <View style={{flex:1, justifyContent: 'center', alignItems: 'center', width: '100%'}}>
+          <Text style={[styles.text, {textShadowColor: '#000', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 1, marginBottom: 50, marginTop: 0}]}>Veuillez rechercher un film en indicant son titre exact (titre original ou français){"\n"} ou bien en indicant le nom d'une personnalité ayant participé au film. </Text>
           <ManualSearch
             queryTitle={queryTitle}
             setQueryTitle={setQueryTitle}
@@ -260,7 +267,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             launchSearchTitle={launchSearch}
             launchSearchPeople={launchSearchPeople}
             cancelSearch={cancelSearch}
+            error={error}
+            error2={error2}
           />
+          </View>
         )}
 
         {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}

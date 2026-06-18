@@ -74,7 +74,7 @@ export default function SearchResults({
     <View style={styles.resultsContainer}>
       <View style={styles.backButtonContainer}>
         <Buttons title="Nouvelle recherche" onPress={backToSearch} variant="secondary" style={{width: '55%'}}/>
-        <Text style={styles.text}>Résultats pour {queryAsked}</Text>
+        <Text style={[styles.text, {textAlign: 'center', fontSize: 22 }]}>{drawStyle ? (`Voici les films où \n ${queryAsked} \na participé.`) : (`Voici les films ayant pour titre \n ${queryAsked}`)}</Text>
         {(checkedMovies.length > 0) ? (<Buttons title="Ajout groupé" onPress={handleAddMovies} variant="secondary" style={{backgroundColor: '#e8be4b', width: '55%'}}/>) : (<></>) }
       </View>
       
