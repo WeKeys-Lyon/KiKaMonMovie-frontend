@@ -76,7 +76,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             
           }
           const freshMovie = freshMovies.find((m: any) => m.tmdb_id === datas.tmdb_id);
-          console.log(freshMovie)
+
           if (freshMovie && freshMovie.reviews) {
             // On met à jour silencieusement les données du composant (sans fermer la modale !)
             setDatas((prevDatas: any) => ({
