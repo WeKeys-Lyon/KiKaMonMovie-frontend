@@ -23,11 +23,37 @@ export default function MyAccount({ navigation }: MyAccountProps) {
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  const isLengthValid = newPassword.length >= 8;
+  const isUpperValid = /[A-Z]/.test(newPassword);
+  const isLowerValid = /[a-z]/.test(newPassword);
+  const isNumberValid = /\d/.test(newPassword);
+  const isSpecialValid = /[^\da-zA-Z]/.test(newPassword) && newPassword.length > 0;
+
+  const isValidPassword = (pwd: string) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
+    return passwordRegex.test(pwd);
+  };
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   // 1. Fonction pour sauvegarder les modifications
   const handleSaveChanges = async () => {
-    // S'il n'a rien rempli, on ne fait pas de requête
     if (!newUsername && !newEmail && !newPassword) {
       Alert.alert('Info', 'Veuillez remplir au moins un champ pour le modifier.');
+      return;
+    }
+
+    // 🛡️ VÉRIFICATIONS DE SÉCURITÉ AVANT L'ENVOI
+    if (newEmail && !isValidEmail(newEmail)) {
+      Alert.alert('Erreur', 'Le format de la nouvelle adresse email est invalide.');
+      return;
+    }
+
+    if (newPassword && !isValidPassword(newPassword)) {
+      Alert.alert('Erreur', 'Le nouveau mot de passe ne respecte pas les règles de sécurité.');
       return;
     }
 
@@ -47,13 +73,11 @@ export default function MyAccount({ navigation }: MyAccountProps) {
 
       if (data.result) {
         Alert.alert('Succès', 'Votre profil a bien été mis à jour !');
-        // On vide les champs
         setNewUsername('');
         setNewEmail('');
         setNewPassword('');
-        // Optionnel : Tu pourrais aussi mettre à jour Redux ici si tu affiches le pseudo ailleurs
       } else {
-        Alert.alert('Erreur', data.error);
+        Alert.alert('Erreur', data.error || data.answer);
       }
     } catch (error) {
       Alert.alert('Erreur réseau', 'Impossible de joindre le serveur.');
@@ -145,7 +169,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
           <Text style={styles.label}>Nouveau nom d'utilisateur</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: MovieLover99"
+            placeholder={user.username ? `Actuel : ${user.username}` : "Ex: MovieLover99"}
             placeholderTextColor="#aaa"
             value={newUsername}
             onChangeText={setNewUsername}
@@ -176,6 +200,15 @@ export default function MyAccount({ navigation }: MyAccountProps) {
             onChangeText={setNewPassword}
           />
         </View>
+        {newPassword.length > 0 && (
+          <View style={styles.rulesContainer}>
+            <Text style={[styles.ruleText, isLengthValid ? styles.ruleValid : styles.ruleInvalid]}>{isLengthValid ? '✅' : '❌'} 8 caractères</Text>
+            <Text style={[styles.ruleText, isUpperValid ? styles.ruleValid : styles.ruleInvalid]}>{isUpperValid ? '✅' : '❌'} 1 Majuscule</Text>
+            <Text style={[styles.ruleText, isLowerValid ? styles.ruleValid : styles.ruleInvalid]}>{isLowerValid ? '✅' : '❌'} 1 Minuscule</Text>
+            <Text style={[styles.ruleText, isNumberValid ? styles.ruleValid : styles.ruleInvalid]}>{isNumberValid ? '✅' : '❌'} 1 Chiffre</Text>
+            <Text style={[styles.ruleText, isSpecialValid ? styles.ruleValid : styles.ruleInvalid]}>{isSpecialValid ? '✅' : '❌'} 1 Spécial</Text>
+          </View>
+        )}
 
         <Buttons 
           title="Sauvegarder" 
@@ -287,4 +320,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  rulesContainer: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',     
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    marginTop: -5,
+  },
+  ruleText: {
+    width: '48%',         
+    fontSize: 11,
+    marginBottom: 4,
+    fontWeight: 'bold',
+  },
+  ruleValid: {
+    color: '#4caf50',     
+  },
+  ruleInvalid: {
+    color: '#ff4d4d',    
+  },
 });
+
