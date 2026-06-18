@@ -55,9 +55,46 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
 
 
   const dispatch = useDispatch();
+  const processDeepLink = async (data: any) => {
+    navigation.navigate('Ma Collection'); 
+    try {
+      const notifResponse = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+      const notifData = await notifResponse.json();
+      if (notifData.result) dispatch(updateNotifications(notifData.notifications));
 
-  useEffect(() => {
-    // Si l'application vient d'être réveillée par une notification
+      const colResponse = await fetch(`${BACKEND_URL}/users/collection/${user.token}`);
+      const colData = await colResponse.json();
+      
+      let targetMovie = null;
+      let ownerToPass = null;
+
+      if (colData.result) {
+        targetMovie = colData.movies.find((m: any) => String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id));
+      }
+
+      if (!targetMovie && notifData.result) {
+        const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
+        if (notifItem) {
+          targetMovie = notifItem.movieId;
+          ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
+        }
+      }
+
+      if (targetMovie) {
+        setSelectedMovie(targetMovie);
+        setMovieOwnerId(ownerToPass); 
+        setTargetTab(data.type === 'review' ? 'reviews' : 'details');
+        setIsModalVisible(true);
+      } else {
+        setIsNotificationModalVisible(true); 
+      }
+    } catch (error) {
+      console.error("Erreur Deep Link :", error);
+      setIsNotificationModalVisible(true);
+    }
+  };
+
+ useEffect(() => {
     if (
       lastNotificationResponse && 
       lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
@@ -65,132 +102,35 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       const data = lastNotificationResponse.notification.request.content.data;
       console.log("🕸️ Démarrage à froid ! Données reçues :", data);
       
+      // 🧹 ON VIDE LA MÉMOIRE EXPO POUR ÉVITER LA BOUCLE INFINIE
+      Notifications.clearLastNotificationResponseAsync();
+      
       if (data && data.tmdb_id) {
-        
-        const fetchColdStartData = async () => {
-          // 1. On navigue vers l'écran de la collection
-          navigation.navigate('Ma Collection'); 
-          
-          try {
-            // 🔄 2. LA CORRECTION : On télécharge les notifications fraîches ET on met à jour Redux
-            const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
-            const notifData = await notifResponse.json();
-            
-            if (notifData.result) {
-              dispatch(updateNotifications(notifData.notifications)); // 👈 Redux est maintenant à jour !
-            }
-
-            // 🛡️ 3. On télécharge la collection de l'utilisateur
-            const colResponse = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
-            const colData = await colResponse.json();
-            
-            let targetMovie = null;
-            let ownerToPass = null;
-
-            if (colData.result) {
-              targetMovie = colData.movies.find((m: any) => 
-                String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id)
-              );
-            }
-
-            // 🛡️ 4. Si c'est introuvable dans la collection, on cherche dans les notifications qu'on vient de télécharger
-            if (!targetMovie && notifData.result) {
-              const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
-              if (notifItem) {
-                targetMovie = notifItem.movieId;
-                ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
-              }
-            }
-
-            // 🎯 5. On ouvre enfin la modale
-            if (targetMovie) {
-              setSelectedMovie(targetMovie);
-              setMovieOwnerId(ownerToPass); 
-              setTargetTab(data.type === 'review' ? 'reviews' : 'details');
-              setIsModalVisible(true);
-            } else {
-              // La modale des notifications aura les données fraîches grâce au dispatch !
-              setIsNotificationModalVisible(true); 
-            }
-
-          } catch (error) {
-            console.error("Erreur Deep Link (Cold Start):", error);
-            setIsNotificationModalVisible(true);
-          }
-        };
-
-        fetchColdStartData();
-
+        // 🚀 Appel magique de notre fonction allégée !
+        processDeepLink(data);
       } else {
         navigation.navigate('Ma Collection');
         setIsNotificationModalVisible(true);
       }
     }
-  }, [lastNotificationResponse, user.token, dispatch]); // 👈 Déclencheurs mis à jour
+  }, [lastNotificationResponse, user.token, dispatch]);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!user.token) {
       navigation.navigate('Home');
     } else {
       // 1. On génère le token
       registerForPushNotificationsAsync();
 
-      // 2. On écoute le clic
-         const responseListener = Notifications.addNotificationResponseReceivedListener(async response => {
+      // 2. On écoute le clic en direct
+      const responseListener = Notifications.addNotificationResponseReceivedListener(async response => {
         const data = response.notification.request.content.data;
         
-        // 🕵️‍♂️ MOUCHARD : Regarde ton terminal pour voir si le backend a bien envoyé le tmdb_id
         console.log("👆 Notification cliquée ! Données reçues :", data);
         
         if (data && data.tmdb_id) {
-          navigation.navigate('Ma Collection'); 
-
-          try {
-            // 🔄 1. LA CORRECTION EST ICI : On télécharge les notifications fraîches ET on met à jour Redux
-            const notifResponse = await fetch(`${process.env.BACKEND_URL}/users/notifications/${user.token}`);
-            const notifData = await notifResponse.json();
-            
-            if (notifData.result) {
-              dispatch(updateNotifications(notifData.notifications)); // 👈 Magie : la modale et la cloche sont à jour !
-            }
-
-            // 🛡️ 2. On télécharge la collection
-            const colResponse = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
-            const colData = await colResponse.json();
-            
-            let targetMovie = null;
-            let ownerToPass = null;
-
-            if (colData.result) {
-              targetMovie = colData.movies.find((m: any) => 
-                String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id)
-              );
-            }
-
-            // 🛡️ 3. Si c'est introuvable dans la collection, on cherche dans les notifications qu'on vient de télécharger
-            if (!targetMovie && notifData.result) {
-                const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
-                if (notifItem) {
-                  targetMovie = notifItem.movieId;
-                  ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
-                }
-            }
-
-            // 🎯 4. On ouvre enfin la modale
-            if (targetMovie) {
-              setSelectedMovie(targetMovie);
-              setMovieOwnerId(ownerToPass); 
-              setTargetTab(data.type === 'review' ? 'reviews' : 'details');
-              setIsModalVisible(true);
-            } else {
-              setIsNotificationModalVisible(true); // Maintenant, la modale aura les données fraîches !
-            }
-
-          } catch (error) {
-            console.error("Erreur Deep Link :", error);
-            setIsNotificationModalVisible(true);
-          }
-
+          // 🚀 Le même appel magique pour faire exactement la même chose !
+          processDeepLink(data);
         } else {
           navigation.navigate('Ma Collection');
           setIsNotificationModalVisible(true);
@@ -202,7 +142,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
         responseListener.remove();
       };
     }
-  }, []);
+  }, [user.token]);
 
   const getCardWidth = () => {
     if (columns === 1) return '100%';
