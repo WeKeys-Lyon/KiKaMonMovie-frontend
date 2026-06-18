@@ -30,7 +30,6 @@ type MovieCardScreenProps = {
 };
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
-
   const BACKEND_URL = process.env.BACKEND_URL;
 
   const user = useSelector((state: any) => state.user.value);
@@ -118,6 +117,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const didIMakeAReview = () => {
     
     if (datas.reviews) {
+      
       const myReview = datas.reviews.find((avis: any) => avis.userid._id == user._id);
       if (myReview) {
         return true

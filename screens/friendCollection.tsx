@@ -27,11 +27,15 @@ export default function FriendCollection({ navigation, route }: FriendCollection
   const [accessDenied, setAccessDenied] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [columns, setColumns] = useState(2);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('year_desc');
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<{ type: string, value: string } | null>(null);
+  const [sortOption, setSortOption] = useState<string>(user.sort ? user.sort : 'title_asc');
+  const [sortOption2, setSortOption2] = useState<string>('');
+  const [likedActivated, setLikedActivated] = useState<boolean>(false);
+  const [selectedYear, setSelectedYear] = useState<number>(0);
 
   useEffect(() => {
     fetchFriendCollection();
@@ -62,7 +66,20 @@ const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
       setIsLoading(false);
     }
   };
-
+ const modColumns = (number: number) => {
+    setColumns(number);
+  }
+  
+  const modSort = (string: string) => {
+    setSortOption(string);
+  }
+  const modSort2 = (string: string) => {
+    setSortOption2(string);
+    setLikedActivated(!likedActivated)
+  }
+  const modSelectedYear = (number: number) => {
+    setSelectedYear(number);
+  }
   //demander à emprunter un film:
   const handleAskForMovie = async () => {
     if (!selectedMovie) return;
@@ -96,32 +113,106 @@ const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
       Alert.alert('Erreur', 'Impossible d\'envoyer la demande.');
     }
   };
-  // 1. Filtrage par recherche
-  const filteredMovies = movies.filter((movie) => {
-    if (!searchQuery) return true; // Si la barre est vide, on garde tout
-    
-    const lowerQuery = searchQuery.toLowerCase();
-    const titleFr = (movie?.title_fr || '').toLowerCase();
-    const titleOriginal = (movie?.original_title || '').toLowerCase();
-    const year = movie?.release_date ? movie.release_date.substring(0, 4) : '';
-    
-    // On vérifie si la recherche correspond au titre ou à l'année
-    return titleFr.includes(lowerQuery) || titleOriginal.includes(lowerQuery) || year.includes(searchQuery);
-  });
 
-  // 2. Tri selon l'option choisie dans SettingsModal
-  const filteredAndSortedMovies = filteredMovies.sort((a, b) => {
-    if (sortOption === 'title_asc') {
-      return (a?.title_fr || a?.original_title || '').localeCompare(b?.title_fr || b?.original_title || '');
-    } else if (sortOption === 'title_desc') {
-      return (b?.title_fr || b?.original_title || '').localeCompare(a?.title_fr || a?.original_title || '');
-    } else if (sortOption === 'year_desc') {
-      return new Date(b?.release_date || 0).getTime() - new Date(a?.release_date || 0).getTime();
-    } else if (sortOption === 'year_asc') {
-      return new Date(a?.release_date || 0).getTime() - new Date(b?.release_date || 0).getTime();
-    }
-    return 0;
-  });
+  const safeMovies = movies || [];
+  // 1. Filtrage par recherche
+  const filteredMovies = safeMovies
+    // 1. LE FILTRE PAR CATÉGORIE (Genre, Réalisateur, etc.)
+    .filter((movie: any) => {
+      if (!activeFilter) return true;
+
+      if (activeFilter.type === 'genre') {
+        return movie.Genres?.some((genre: { name: string; }) => genre.name === activeFilter.value);
+      } else if (activeFilter.type === 'director') {
+        return movie.DirectedBy?.some((director: { name: string; }) => director.name === activeFilter.value);
+      } else if (activeFilter.type === 'actor') {
+        return movie.Cast?.some((actor: { name: string; }) => actor.name === activeFilter.value);
+      } else if (activeFilter.type === 'composer') {
+        return movie.MusicBy?.some((composer: { name: string; }) => composer.name === activeFilter.value);
+      }
+      return false;
+    })
+    // 2. LE FILTRE DE LA RECHERCHE GLOBALE
+    .filter((movie: any) => {
+      if (searchQuery.trim() === '') return true;
+      const lowerQuery = searchQuery.toLowerCase();
+
+      const title = (movie.title_fr || movie.original_title || '').toLowerCase();
+      if (title.includes(lowerQuery)) return true;
+
+      const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
+      if (year.includes(lowerQuery)) return true;
+
+      const hasDirector = movie.DirectedBy?.some((d: any) => d.name?.toLowerCase().includes(lowerQuery));
+      if (hasDirector) return true;
+
+      const hasActor = movie.Cast?.some((a: any) => a.name?.toLowerCase().includes(lowerQuery));
+      if (hasActor) return true;
+
+      const hasComposer = movie.MusicBy?.some((c: any) => c.name?.toLowerCase().includes(lowerQuery));
+      if (hasComposer) return true;
+
+      return false;
+    })
+    // 3. Filtres optionnel
+   .filter((movie: any) => {
+      // Affichage des favoris
+      if (likedActivated) {
+        if (movie.isLiked) return true;
+      } else {
+        return true;
+      }
+    })
+    .filter((movie:any) => {
+      // Filtrer par année de sortie
+      if (selectedYear > 0) {
+       if (parseInt(movie.release_date?.slice(0,4)) == selectedYear) {
+        return true
+       } else { return false}
+      } else {
+        return true
+      }
+    })
+    // 4. LE TRI 
+    .sort((a: any, b: any) => {
+      // Tri Alphabétique (A-Z)
+      if (sortOption === 'title_asc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      // Tri Alphabétique (Z-A)
+      if (sortOption === 'title_desc') {
+        const titleA = (a.title_fr || a.original_title || '').toLowerCase();
+        const titleB = (b.title_fr || b.original_title || '').toLowerCase();
+        return titleB.localeCompare(titleA);
+      }
+      // Tri par Année (Du plus récent au plus ancien)
+      if (sortOption === 'year_desc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearB - yearA;
+      }
+      // Tri par Année (Du plus ancien au plus récent)
+      if (sortOption === 'year_asc') {
+        const yearA = a.release_date ? parseInt(a.release_date.substring(0, 4)) : 0;
+        const yearB = b.release_date ? parseInt(b.release_date.substring(0, 4)) : 0;
+        return yearA - yearB;
+      }
+      // Tri Alphabétique Original (A-Z)
+      if (sortOption === 'title_origin_asc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+      if (sortOption === 'title_origin_desc') {
+        const titleA = (a.original_title).toLowerCase();
+        const titleB = (b.original_title).toLowerCase();
+        return titleB.localeCompare(titleA);
+      }
+      return 0;
+    }); 
+
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true); // Fait apparaître la roue jaune
@@ -162,7 +253,7 @@ return (
         <View style={{ flex: 1, padding: 10 }}>
           <FlatList
             key={columns} 
-            data={filteredAndSortedMovies} 
+            data={filteredMovies} 
             keyExtractor={(item, index) => item?.tmdb_id?.toString() || item?._id?.toString() || index.toString()}
             numColumns={columns}
             refreshControl={
@@ -231,12 +322,16 @@ return (
           visible={isSettingsModalVisible}
           onClose={() => setIsSettingsModalVisible(false)}
           columns={columns}
-          setColumns={setColumns}
+          modColumns={modColumns}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           movies={movies} 
           sortOption={sortOption}
-          setSortOption={setSortOption}
+          modSort={modSort}
+          sortOption2={sortOption2}
+          modSort2={modSort2}
+          likedActivated = {likedActivated}
+          modSelectedYear = {modSelectedYear}
       />
 
     </ImageBackground>
