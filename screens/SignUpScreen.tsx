@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Buttons } from '../components/buttons';
 import {
   Image,
@@ -14,6 +14,8 @@ import {
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/header';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import FontAwesome from '@react-native-vector-icons/fontawesome';
 
 
 import { useDispatch } from 'react-redux';
@@ -42,6 +44,62 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
     return passwordRegex.test(password);
   };
+
+  useEffect(() => {
+      GoogleSignin.configure({
+        webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
+        iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
+        
+        offlineAccess: true,
+      });
+    }, []);
+
+     const handleGoogleSignIn = async () => {
+        try {
+          await GoogleSignin.hasPlayServices();
+          const userInfo = await GoogleSignin.signIn();
+          const idToken = userInfo.idToken; 
+    
+          if (idToken) {
+            // Envoi au Backend
+            const response = await fetch(`${BACKEND_URL}/users/google-login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: idToken }),
+            });
+            const data = await response.json();
+    
+            if (data.result) {
+              dispatch(login({
+                _id: data.answer._id,
+                email: data.answer.email,
+                username: data.answer.username,
+                token: data.answer.token,
+                movies: data.answer.movies || [],
+                friends: data.answer.friends || [],
+                friendCode: data.answer.friendCode,
+                notifications: data.answer.notifications || []
+              }));
+    
+              if (!data.answer.movies || data.answer.movies.length === 0) {
+                navigation.navigate('OnboardingAddAMovie');
+              } else {
+                navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+              }
+            } else {
+              setError(data.error || "Erreur de connexion Backend.");
+            }
+          }
+        } catch (error: any) {
+          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            console.log("Annulé par l'utilisateur");
+          } else {
+            setError("Échec de la connexion via Google.");
+            console.error(error);
+          }
+        }
+      };
+    
 
 
 
@@ -192,6 +250,19 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
             <Buttons title="Retour" onPress={handleReturn} variant="actionButton"/>
             <Buttons title="Valider" onPress={() => handleSubmit()} variant="actionButton" />
           </View>
+          <View style={styles.separatorContainer}>
+            <View style={styles.separatorLine} />
+            <Text style={styles.separatorText}>ou</Text>
+            <View style={styles.separatorLine} />
+          </View>
+
+          {/* LE BOUTON GOOGLE NATIF */}
+          <View style={styles.googleButtonWrapper}>
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+              <FontAwesome name="google" size={20} color="#EA4335" style={styles.googleIcon} />
+              <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>
@@ -288,6 +359,51 @@ const styles = StyleSheet.create({
   },
   ruleInvalid: {
     color: '#ff4d4d',     
+  },
+  separatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 25,
+    width: '100%',
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  separatorText: {
+    color: '#ccc',
+    marginHorizontal: 10,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  googleButtonWrapper: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff', // Google exige un fond blanc (ou bleu très précis)
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: '100%',
+    justifyContent: 'center',
+    // Petite ombre pour le relief
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3, // Ombre pour Android
+  },
+  googleIcon: {
+    marginRight: 15,
+  },
+  googleButtonText: {
+    color: '#757575', // La couleur de texte officielle de Google
+    fontSize: 16,
+    fontWeight: '600',
   },
 
 });

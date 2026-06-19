@@ -1,91 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { Buttons } from '../components/buttons';
-import {
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Alert,
-  TouchableOpacity
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ImageBackground, TouchableOpacity } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import Header from '../components/header';
 import { useDispatch } from 'react-redux';
 import { login } from '../reducers/user';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+import Header from '../components/header';
+import { Buttons } from '../components/buttons';
+import { FontAwesome } from '@expo/vector-icons';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 
-
-WebBrowser.maybeCompleteAuthSession();
-
-
-type SignInScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
+type SignInScreenProps = { navigation: NavigationProp<ParamListBase>; };
+const BACKEND_URL = process.env.BACKEND_URL;
 
 export default function SignInScreen({ navigation }: SignInScreenProps) {
-  const [mylogin, setLogin] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [mylogin, setLogin] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const BACKEND_URL = process.env.BACKEND_URL;
   const dispatch = useDispatch();
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com',
-    iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com'
-  });
-
+  // INITIALISATION DE GOOGLE
   useEffect(() => {
-    if (response?.type === 'success' && response.authentication) {
-      // 🚀 On récupère le token d'identité sécurisé !
-      const idToken = response.authentication.idToken;
+    GoogleSignin.configure({
+      webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
+      
+      
+      iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
+      
+      offlineAccess: true,
+    });
+  }, []);
 
-      console.log("Token récupéré avec succès :", idToken);
-
-      // On l'envoie à ton backend
-      handleBackendGoogleLogin(idToken);
-    }
-  }, [response]);
-
-  const handleBackendGoogleLogin = async (idToken: string | undefined) => {
-    if (!idToken) return;
-
+  // 🚀 LA FONCTION NATIVE
+  const handleGoogleSignIn = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/users/google-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: idToken }),
-      });
-      const data = await res.json();
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.idToken; 
 
-      if (data.result) {
-        dispatch(login({
-          _id: data.answer._id,
-          email: data.answer.email,
-          username: data.answer.username,
-          token: data.answer.token,
-          movies: data.answer.movies || [],
-          friends: data.answer.friends || [],
-          friendCode: data.answer.friendCode,
-          notifications: data.answer.notifications || []
-        }));
+      if (idToken) {
+        // Envoi au Backend
+        const response = await fetch(`${BACKEND_URL}/users/google-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: idToken }),
+        });
+        const data = await response.json();
 
-        if (!data.answer.movies || data.answer.movies.length === 0) {
-          navigation.navigate('OnboardingAddAMovie');
+        if (data.result) {
+          dispatch(login({
+            _id: data.answer._id,
+            email: data.answer.email,
+            username: data.answer.username,
+            token: data.answer.token,
+            movies: data.answer.movies || [],
+            friends: data.answer.friends || [],
+            friendCode: data.answer.friendCode,
+            notifications: data.answer.notifications || []
+          }));
+
+          if (!data.answer.movies || data.answer.movies.length === 0) {
+            navigation.navigate('OnboardingAddAMovie');
+          } else {
+            navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+          }
         } else {
-          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+          setError(data.error || "Erreur de connexion Backend.");
         }
-      } else {
-        setError(data.error || "Erreur lors de la connexion Google");
       }
-    } catch (err) {
-      console.error(err);
-      setError("Impossible de joindre le serveur.");
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("Annulé par l'utilisateur");
+      } else {
+        setError("Échec de la connexion via Google.");
+        console.error(error);
+      }
     }
   };
 
@@ -136,7 +123,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
 
   const handleReturn = () => {
-    navigation.navigate('Home'); // Remplace 'Home' par le vrai nom de ton écran d'accueil si différent
+    navigation.navigate('Home'); 
   };
 
   return (
@@ -177,24 +164,19 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <View style={styles.buttonContainer}>
-            <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
-            <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
+              <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
+              <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
           </View>
 
-          {/* --- LE SÉPARATEUR --- */}
           <View style={styles.separatorContainer}>
             <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>OU</Text>
+            <Text style={styles.separatorText}>ou</Text>
             <View style={styles.separatorLine} />
-          </View> 
+          </View>
 
-          {/* --- LE BOUTON GOOGLE (En dessous) --- */}
+          {/* LE BOUTON GOOGLE NATIF */}
           <View style={styles.googleButtonWrapper}>
-            <TouchableOpacity 
-              style={styles.googleButton} 
-              onPress={() => promptAsync()} 
-              disabled={!request}
-            >
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
               <FontAwesome name="google" size={20} color="#EA4335" style={styles.googleIcon} />
               <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
             </TouchableOpacity>
