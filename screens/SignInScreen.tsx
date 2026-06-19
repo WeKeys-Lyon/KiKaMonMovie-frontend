@@ -8,13 +8,19 @@ import {
   Text,
   TextInput,
   View,
-  Alert
+  Alert,
+  TouchableOpacity
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { useDispatch } from 'react-redux';
 import { login } from '../reducers/user';
-//import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+
+
+WebBrowser.maybeCompleteAuthSession();
 
 
 type SignInScreenProps = {
@@ -25,12 +31,65 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const [mylogin, setLogin] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState('');
-  
+
   const BACKEND_URL = process.env.BACKEND_URL;
   const dispatch = useDispatch();
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com',
+    iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com'
+  });
 
-  
+  useEffect(() => {
+    if (response?.type === 'success' && response.authentication) {
+      // 🚀 On récupère le token d'identité sécurisé !
+      const idToken = response.authentication.idToken;
+
+      console.log("Token récupéré avec succès :", idToken);
+
+      // On l'envoie à ton backend
+      handleBackendGoogleLogin(idToken);
+    }
+  }, [response]);
+
+  const handleBackendGoogleLogin = async (idToken: string | undefined) => {
+    if (!idToken) return;
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/users/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: idToken }),
+      });
+      const data = await res.json();
+
+      if (data.result) {
+        dispatch(login({
+          _id: data.answer._id,
+          email: data.answer.email,
+          username: data.answer.username,
+          token: data.answer.token,
+          movies: data.answer.movies || [],
+          friends: data.answer.friends || [],
+          friendCode: data.answer.friendCode,
+          notifications: data.answer.notifications || []
+        }));
+
+        if (!data.answer.movies || data.answer.movies.length === 0) {
+          navigation.navigate('OnboardingAddAMovie');
+        } else {
+          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+        }
+      } else {
+        setError(data.error || "Erreur lors de la connexion Google");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Impossible de joindre le serveur.");
+    }
+  };
+
+
 
   const handleSubmit = async () => {
     setError('');
@@ -38,7 +97,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setError('Veuillez remplir tous les champs');
       return;
     }
-    
+
     try {
       const myURL = `${BACKEND_URL}/users/signin`;
       const response = await fetch(encodeURI(myURL), {
@@ -74,7 +133,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
     }
   };
 
-  
+
 
   const handleReturn = () => {
     navigation.navigate('Home'); // Remplace 'Home' par le vrai nom de ton écran d'accueil si différent
@@ -88,10 +147,10 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         style={styles.container}
       >
         <View style={styles.formContainer}>
-          
+
           <Text style={styles.title}>Bon retour !</Text>
           <Text style={styles.subtitle}>Connectez-vous pour retrouver votre collection et vos amis</Text>
-          
+
           <View style={styles.inputContainer}>
             <TextInput
               placeholder="Votre nom d'utilisateur"
@@ -114,18 +173,33 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
               style={styles.input}
             />
           </View>
-          
+
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          
+
           <View style={styles.buttonContainer}>
-              <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
-              <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
+            <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
+            <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
           </View>
+
+          {/* --- LE SÉPARATEUR --- */}
           <View style={styles.separatorContainer}>
             <View style={styles.separatorLine} />
             <Text style={styles.separatorText}>OU</Text>
             <View style={styles.separatorLine} />
+          </View> 
+
+          {/* --- LE BOUTON GOOGLE (En dessous) --- */}
+          <View style={styles.googleButtonWrapper}>
+            <TouchableOpacity 
+              style={styles.googleButton} 
+              onPress={() => promptAsync()} 
+              disabled={!request}
+            >
+              <FontAwesome name="google" size={20} color="#EA4335" style={styles.googleIcon} />
+              <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
+            </TouchableOpacity>
           </View>
+
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>
@@ -144,7 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   formContainer: {
-   marginHorizontal: 20,
+    marginHorizontal: 20,
     padding: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     borderRadius: 15,
@@ -184,7 +258,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
- buttonContainer: {
+  buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -195,7 +269,7 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     flex: 1,
     marginHorizontal: 5,
-  
+
   },
   separatorContainer: {
     flexDirection: 'row',
@@ -217,6 +291,30 @@ const styles = StyleSheet.create({
   googleButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-  }
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff', // Google exige un fond blanc (ou bleu très précis)
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: '100%',
+    justifyContent: 'center',
+    // Petite ombre pour le relief
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3, // Ombre pour Android
+  },
+  googleIcon: {
+    marginRight: 15,
+  },
+  googleButtonText: {
+    color: '#757575', // La couleur de texte officielle de Google
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
 });
