@@ -11,7 +11,7 @@ import LoanDetailsModal from './loanDetailsModale';
 import StarRating from '../components/starRating';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { iLikeThisMovie } from '../reducers/user';
-import { movieProps, Review, User } from './types';
+import { movieProps, Reply, Review, User } from './types';
 import { encode } from 'node:punycode';
 
 type MovieCardScreenProps = {
@@ -368,7 +368,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
   // Répondre à un avis
   const handleReplyReview = async (reviewId: string) => {
-    console.log(reviewId)
     if (!replyText.trim() || !reviewId) return;
     try {
       const response = await fetch(`${BACKEND_URL}/users/reply-review`, {
@@ -379,10 +378,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const data = await response.json();
 
       if (data.result) {
-        const newReply = { userid: user._id, text: replyText, createdAt: new Date().toISOString() };
+        const newReply = {_id: data.answer._id, userid: {_id :user._id, username: user.username}, text: replyText, createdAt: new Date() };
         const updatedReviews = datas.reviews?.map((r: Review) => {
           if (r._id === reviewId) {
-            return { ...r, replies: [...(r.replies || []), newReply] };
+            return { ...r, replies: [...(r.replies as []), newReply] };
           }
           return r;
         });
@@ -404,11 +403,9 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   const getReviewerName = (reviewerId: {_id: string, username: string}) => {
-   
     if (!reviewerId) return 'Inconnu';
     if (reviewerId.username === user.username) return 'Moi';
     return reviewerId.username;
-    
   };
 
   // Calcul de moyenne des notes
@@ -786,10 +783,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         {/* 🌟 AFFICHAGE DES RÉPONSES */}
                         {review.replies && review.replies.length > 0 && (
                           <View style={styles.repliesList}>
-                            {review.replies.map((reply: any, rIndex: number) => {
+                            {review.replies.map((reply: Reply, rIndex: number) => {
                               
                               // 🔒 LOGIQUE DE MODÉRATION POUR LES RÉPONSES
-                              const isMyReply = reply.userid?._id === user._id || reply.userid === user._id;
+                              const isMyReply = reply.userid._id === user._id;
 
                               return (
                                 <View key={rIndex} style={styles.replyItem}>

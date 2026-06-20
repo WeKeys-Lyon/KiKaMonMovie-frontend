@@ -1,14 +1,16 @@
+export type Reply = {
+    _id: string,
+    userid: { _id: string, username: string };
+    text: string;
+    createdAt: Date;
+}
 export type Review = {
   _id: string;
   userid: { _id: string, username: string };
   rating?: number;
   comment?: string;
   likes?: string[];
-  replies?: {
-    userid: number;
-    text: string;
-    createdAt: Date;
-  }[];
+  replies?: Reply[];
   createdAt: Date;
 };
 
