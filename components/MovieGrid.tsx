@@ -1,18 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Poster from './poster';
 import FontAwesome  from '@react-native-vector-icons/fontawesome';
-import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {iLikeThisMovie} from '../reducers/user';
-
+import { movieProps, User } from './types';
 const { width } = Dimensions.get('window');
 
 
 interface MovieGridProps {
   mode: 'friend' | 'add',
   titleOriginal?: string,
-  movie: any;
+  movie: movieProps;
   columns: number;
   cardWidth: number | string;
   onPress: () => void;
@@ -22,7 +21,7 @@ interface MovieGridProps {
 export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPress, titleOriginal, mode}: MovieGridProps) {
 
   const BACKEND_URL = process.env.BACKEND_URL;
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
 
   const imageUrl = movie.poster_path 
@@ -68,7 +67,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
              imageUrl={imageUrl} 
              isLoaned={movie.isLoaned} 
              isListMode={true} 
-             shareType={movie.shareType}
+             
           />
         </View>
 
@@ -89,7 +88,7 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         </View>
         <TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{justifyContent: 'center'}}>
-          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' /> : <FontAwesome name="heart" size={20} color='#bebebe' />}
           </TouchableOpacity>
         
 
@@ -99,17 +98,17 @@ export default function MovieGrid({ movie, columns, cardWidth, onPress, onLongPr
 
   // MODE GRILLE (2 ou 3 colonnes)
   return (
-    <TouchableOpacity style={[styles.gridCard, { width: cardWidth }]} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
-      <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} shareType={movie.shareType} />
+    <TouchableOpacity style={[styles.gridCard, { width: typeof(cardWidth) == 'string' ? ('100%') : (cardWidth)  }]} onPress={onPress} activeOpacity={0.8} onLongPress={onLongPress}>
+      <Poster imageUrl={imageUrl} isLoaned={movie.isLoaned} />
       <View style={styles.infoContainer}>
         <Text style={styles.movieTitle} numberOfLines={1}>{title}</Text>
         {year !== 'N/A' ? <Text style={styles.movieYear}>{year}</Text> : null}
         {(columns === 3) ? (<TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{alignItems: 'flex-end'}}>
-          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000'  /> : <FontAwesome name="heart" size={20} color='#bebebe' />}
           </TouchableOpacity>) : (<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between'}}>
           <Text style={{color:'#fff'}}>{(numberLoan) ? `Partagé ${numberLoan} fois` : 'Jamais partagé'}</Text>
         <TouchableOpacity onPress={() => handleLike()}  disabled={(mode == 'friend') ? (true) : (false)} style={{}}>
-          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />}
+          {(movie.isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' /> : <FontAwesome name="heart" size={20} color='#bebebe' />}
           </TouchableOpacity></View>) }
         
           

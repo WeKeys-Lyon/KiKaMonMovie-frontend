@@ -6,26 +6,9 @@ import { Checkbox } from 'expo-checkbox';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieLoaned } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
-
+import {movieProps} from './types'
 
 const { height } = Dimensions.get('window');
-type movieProps = {
-        tmdb_id: Number,
-        title_fr: String,
-        userid: Number,
-        original_title: String,
-        release_date?: String,
-        poster_path?: String,
-        DirectedBy?: [{name: String, popularity?: Number}],
-        Cast?: [{name: String, popularity?: Number}],
-        MusicBy?: [{name: String, popularity?: Number}],
-        Genres?: [{name: String}],
-        isLoaned: Boolean,
-        isLiked: Boolean,
-        isAsked?: [Number],
-        pastLoans?: [{Notification: Boolean, _id: Number, borrower?: String, dueDate?: Date, isSharedToUser: Boolean, movieid: Number, notes?: String, userid?: Number}],
-        reviews?: [{userid: Number, rating?: Number, comment?: String, likes?: [Number], replies?: [{userid: Number, text: String, createdAt: Date}], createdAt: Date }]
-    };
 
 type loanModalProps = {
     visible: boolean;
@@ -114,7 +97,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
             if (data.result) {
                 console.log("Prêt enregistré avec succès !");
-                const indexMovie = user.movies.findIndex(movie: movieProps => movie.tmdb_id == movieTmdbId);
+                const indexMovie = user.movies.findIndex((movie: { tmdb_id: number; }) => movie.tmdb_id == movieTmdbId);
                 dispatch(setMovieLoaned({index: indexMovie, data: data.answer}));
                 onSuccess(data.answer)
                 // On vide les champs pour la prochaine fois
@@ -195,7 +178,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                                                     // On ferme la modale
                                                 }}
                                             >
-                                                <FontAwesome name="users" size={14} color="#e8be4b" style={styles.icon} />
+                                                <FontAwesome name="users" size={14} color="#e8be4b"/>
                                                 <Text style={styles.suggestionText} numberOfLines={1}>
                                                     {item.value} 
                                                 </Text>
@@ -210,7 +193,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                             <DateTimePicker 
                                 mode="date" 
                                 display="default" 
-                                onValueChange={(event, selectedDate) => setLoanDate(selectedDate || loanDate)}
+                                onValueChange={(selectedDate: any) => setLoanDate(selectedDate || loanDate)}
                                 value={loanDate} 
                                 style={styles.datepicker}
                                 minimumDate={new Date()}

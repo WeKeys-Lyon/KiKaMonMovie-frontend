@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 type PosterProps = {
-    imageUrl: string | boolean;
+    imageUrl: string | false;
     isLoaned: boolean;
     isListMode?: boolean;
     columns?: number;
-    shareType?: string[];
+    shareType?: string;
 }
 
 export default function Poster({ imageUrl, isLoaned, columns = 2, shareType}: PosterProps) {
@@ -30,10 +30,10 @@ export default function Poster({ imageUrl, isLoaned, columns = 2, shareType}: Po
       }
     }
 
-  const isBorrowed = shareType === 'borrowed';
-    const showBanner = isLoaned || isBorrowed; 
-    const bannerText = isBorrowed ? "Emprunté" : "Prêt en cours";
-    const bannerColor = isBorrowed ? "#e8be4b" : "#ff4d4d";
+  const isBorrowed = shareType === 'borrowed' ? true : false;
+  const showBanner = isLoaned || isBorrowed; 
+  const bannerText = isBorrowed ? "Emprunté" : "Prêt en cours";
+  const bannerColor = isBorrowed ? "#e8be4b" : "#ff4d4d";
 
 
     return (
