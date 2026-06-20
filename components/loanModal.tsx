@@ -21,7 +21,7 @@ type loanModalProps = {
 }
 
 export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
-    console.log(movie)
+
     const user = useSelector((state: any) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;

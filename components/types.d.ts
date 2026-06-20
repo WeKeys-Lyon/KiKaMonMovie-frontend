@@ -1,9 +1,9 @@
 export type Review = {
-  _id: number;
-  userid: { _id: number, username: string } | number;
+  _id: string;
+  userid: { _id: string, username: string };
   rating?: number;
   comment?: string;
-  likes?: number[];
+  likes?: string[];
   replies?: {
     userid: number;
     text: string;
@@ -14,7 +14,7 @@ export type Review = {
 
 export type PastLoans = {
     Notification: boolean, 
-    _id: number, 
+    _id: string, 
     borrower?: string, 
     dueDate?: Date, 
     isSharedToUser: boolean, 
@@ -26,7 +26,7 @@ export type PastLoans = {
 export type movieProps = {
         tmdb_id: number,
         title_fr: string,
-        userid: number,
+        userid: string,
         original_title: string,
         release_date?: string,
         poster_path?: string,
@@ -42,7 +42,7 @@ export type movieProps = {
     };
 
 export type Friends = {
-    userid: {_id: number, username: string}, 
+    userid: {_id: string, username: string}, 
     canSeeMyCollection: boolean, 
     canAskForMovies: boolean,
     canRate: boolean,
@@ -50,14 +50,14 @@ export type Friends = {
 };
 export type Notifications = {
     type: 'friend_request' | 'friend_accepted' | 'friend_refused' | 'loan_request' | 'loan_reminder' | 'loan_accepted' | 'loan_refused' | 'loan_expired' | 'loan_returned' | 'review_posted',
-    senderId?: number,
-    movieId?: number,
+    senderId?: string,
+    movieId?: string,
     isRead: boolean, 
     createdAt: Date
 };
 
 export type User = {
-    _id: number,
+    _id: string,
     username: string,
     password: string,
     email: string,

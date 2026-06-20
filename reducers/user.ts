@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type UserState = {
   value: {
-    _id: number | null;
+    _id: string | null;
     email: string | null;
     token: string | null;
     username: string | null;
@@ -23,7 +23,7 @@ export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{_id: number, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
+    login: (state, action: PayloadAction<{_id: string, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
       state.value._id = action.payload._id;
       state.value.email = action.payload.email;
       state.value.token = action.payload.token;

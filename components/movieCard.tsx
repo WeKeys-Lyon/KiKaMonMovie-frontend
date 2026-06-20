@@ -12,6 +12,7 @@ import StarRating from '../components/starRating';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { iLikeThisMovie } from '../reducers/user';
 import { movieProps, Review, User } from './types';
+import { encode } from 'node:punycode';
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -26,7 +27,7 @@ type MovieCardScreenProps = {
   onDeleteClick?: () => void;
   onAddSuccess?: () => void;
   onAskMovie?: () => void;
-  ownerId?: number;
+  ownerId?: string;
   initialTab?: string;
 };
 
@@ -100,12 +101,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const [reviewText, setReviewText] = useState<string>('');
 
   // 🌟 NOUVEAUX ÉTATS POUR LES RÉPONSES
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
   //etats pour la modification de reviews
   const [isEditing, setIsEditing] = useState(false);
-  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   //modifier ou supprimer les réponses aux reviews
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
@@ -337,7 +338,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   // Liker un avis
-  const handleLikeReview = async (reviewId: number) => {
+  const handleLikeReview = async (reviewId: string) => {
     if (!reviewId) return; // Si l'avis vient d'être créé et n'a pas encore de vrai _id
     try {
       const response = await fetch(`${BACKEND_URL}/users/like-review`, {
@@ -353,7 +354,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             const hasLiked = r.likes?.includes(user._id);
             return {
               ...r,
-              likes: hasLiked ? r.likes?.filter((id: number) => id !== user._id) : [...(r.likes || []), user._id]
+              likes: hasLiked ? r.likes?.filter((id: string) => id !== user._id) : [...(r.likes || []), user._id]
             };
           }
           return r;
@@ -366,7 +367,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   // Répondre à un avis
-  const handleReplyReview = async (reviewId: number) => {
+  const handleReplyReview = async (reviewId: string) => {
+    console.log(reviewId)
     if (!replyText.trim() || !reviewId) return;
     try {
       const response = await fetch(`${BACKEND_URL}/users/reply-review`, {
@@ -378,7 +380,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
       if (data.result) {
         const newReply = { userid: user._id, text: replyText, createdAt: new Date().toISOString() };
-        const updatedReviews = datas.reviews?.map((r: any) => {
+        const updatedReviews = datas.reviews?.map((r: Review) => {
           if (r._id === reviewId) {
             return { ...r, replies: [...(r.replies || []), newReply] };
           }
@@ -401,18 +403,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  const getReviewerName = (reviewerId: any) => {
-    
+  const getReviewerName = (reviewerId: {_id: string, username: string}) => {
+   
     if (!reviewerId) return 'Inconnu';
+    if (reviewerId.username === user.username) return 'Moi';
+    return reviewerId.username;
     
-    if (reviewerId.username) {
-      if (reviewerId.username === user.username) return 'Moi';
-      return reviewerId.username;
-    }
-    const id = reviewerId._id || reviewerId;
-    const friend = user.friends?.find((f) => (f.userid?._id || f.userid) === id );
-    if (friend) return friend.userid.username;
-    return 'Moi';
   };
 
   // Calcul de moyenne des notes
@@ -425,7 +421,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   //supprimer un avis
-  const handleDeleteReview = async (reviewId: number) => {
+  const handleDeleteReview = async (reviewId: string) => {
     console.log("🗑️ Clic suppression ! ID de l'avis à supprimer :", reviewId);
     Alert.alert(
       "Supprimer l'avis",
@@ -468,7 +464,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   // Modifier une réponse
-  const submitEditReply = async (reviewId: number, replyId: number) => {
+  const submitEditReply = async (reviewId: string, replyId: string) => {
     if (!editReplyText.trim()) return;
     try {
       const response = await fetch(`${BACKEND_URL}/users/edit-reply`, {
@@ -500,7 +496,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   };
 
   // Supprimer une réponse
-  const handleDeleteReply = async (reviewId: number, replyId: number) => {
+  const handleDeleteReply = async (reviewId: string, replyId: string) => {
     Alert.alert(
       "Supprimer la réponse",
       "Confirmez-vous la suppression de cette réponse ?",
@@ -536,9 +532,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       ]
     );
   };
-
-
-
 
 
   return (
@@ -654,7 +647,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                   {datas.reviews.map((review, index: number) => {
                     // 🔒 LOGIQUE DE MODÉRATION
                     
-                    const isMyReview = typeof(review.userid) == 'object' ? review.userid?._id  === user._id  : review.userid === user._id;
+                    const isMyReview = review.userid?._id  === user._id  
                     const isMyCollection = mode !== 'friend' && mode !== 'add';
 
                     // Sommes-nous en train de modifier CE commentaire précis ?
