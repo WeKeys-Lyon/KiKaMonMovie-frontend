@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView 
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from './buttons';
 import YearCarousel from './yearCarousel';
+import { movieProps } from './types';
 
 type SettingsModalProps = {
     visible: boolean;
@@ -11,7 +12,7 @@ type SettingsModalProps = {
     modColumns: (cols: number) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    movies: any[];
+    movies: movieProps[];
     sortOption: string;
     sortOption2: string;
     modSort: (option: string) => void;
@@ -42,7 +43,7 @@ export default function SettingsModal({
         if (searchQuery.trim().length <= 1) return [];
         const lowerText = searchQuery.toLowerCase();
         const allSuggestions:{ type:string; value: string }[] = [];
-            movies.forEach((movie: any) => {
+            movies.forEach((movie) => {
                 const title = movie.title_fr || movie.original_title || '';
                 if (title && title.toLowerCase().includes(lowerText)) {
                     allSuggestions.push({ type: 'Film', value: title });
@@ -52,7 +53,7 @@ export default function SettingsModal({
                     allSuggestions.push({ type: 'Année', value: year });
                 }
                 if (movie.Cast) {
-                movie.Cast.forEach((actor: any) => {
+                movie.Cast.forEach((actor) => {
                     if (actor.name && actor.name.toLowerCase().includes(lowerText)) {
                         allSuggestions.push({ type: 'Acteur', value: actor.name });
                     }
@@ -60,7 +61,7 @@ export default function SettingsModal({
             }
             // 4. Réalisateurs
             if (movie.DirectedBy) {
-                movie.DirectedBy.forEach((director: any) => {
+                movie.DirectedBy.forEach((director) => {
                     if (director.name && director.name.toLowerCase().includes(lowerText)) {
                         allSuggestions.push({ type: 'Réalisateur', value: director.name });
                     }
@@ -68,7 +69,7 @@ export default function SettingsModal({
             }
             // 5. Compositeurs
             if (movie.MusicBy) {
-                movie.MusicBy.forEach((composer: any) => {
+                movie.MusicBy.forEach((composer) => {
                     if (composer.name && composer.name.toLowerCase().includes(lowerText)) {
                         allSuggestions.push({ type: 'Compositeur', value: composer.name });
                     }

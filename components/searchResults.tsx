@@ -17,7 +17,7 @@ type SearchResultsProps = {
   queryAsked: string;
   drawStyle: boolean;
   backToSearch: () => void;
-  handleOpenModal: (movie: any) => void;
+  handleOpenModal: (movie: movieProps) => void;
 };
 
 export default function SearchResults({
@@ -29,7 +29,7 @@ export default function SearchResults({
   handleOpenModal,
 }: SearchResultsProps) {
 
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const [checkedMovies, setCheckedMovies] = useState<any[]>([]);
   const dispatch = useDispatch();
   const checkThisBox = (item: movieProps) => {
@@ -60,7 +60,7 @@ export default function SearchResults({
       if (data.result) {
         data.answer.forEach((movie:any) => {
           if (movie) {
-            if (user.movies.find((film) => film.tmdb_id == movie.tmdb_id)) {
+            if (user.movies.find((film: movieProps) => film.tmdb_id == movie.tmdb_id)) {
               console.log('niet')
             } else {
               dispatch(addMovieToStore(movie));

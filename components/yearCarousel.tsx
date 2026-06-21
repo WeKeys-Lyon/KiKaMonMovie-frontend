@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {Picker} from '@react-native-picker/picker';
-import { StyleSheet, Text, View, ScrollView, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Dimensions, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Animated, Dimensions } from 'react-native';
 import { Buttons } from '../components/buttons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Checkbox } from 'expo-checkbox';
-import { useSelector, useDispatch } from 'react-redux';
-import { setMovieLoaned } from '../reducers/user';
-import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+import { useSelector } from 'react-redux';
+import { movieProps, User } from './types';
 
 const { height } = Dimensions.get('window');
 
@@ -15,21 +12,21 @@ type yearCarouselProps = {
     selectedYear: number;
     modSelectedYear: (number: number) => void;
     onClose: () => void;
-    movies: any[]
+    movies: movieProps[]
 }
 
 export default function YearCarousel({visible, selectedYear, modSelectedYear, onClose, movies} : yearCarouselProps) {
-    const moviesRedux = useSelector((state : any) => state.user.value.movies)
+    const moviesRedux = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value.movies)
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
 
         //Obtenir les années de sorties des films dans la collection sans doublons
-        let allYears : any[] = [];
+        let allYears : number[] = [];
         const getYearOfRelease = () => {
-            movies.forEach((film: any) => {
-                allYears.push(parseInt(film.release_date.slice(0,4)));            
+            movies.forEach((film) => {
+                (film.release_date) ? allYears.push(parseInt(film.release_date.slice(0,4))) : '';                           
             })
             allYears = [...new Set(allYears)].sort((a, b) => b - a);
         }
