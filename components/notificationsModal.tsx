@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from './buttons';
+import { Notifications } from './types';
 
 type NotificationModalProps = {
     visible: boolean;
@@ -18,11 +19,15 @@ type NotificationModalProps = {
     onViewReview?: (notification: any) => void;
 };
 
+type NotificationsEnhanced = Notifications & {
+    _id: string
+};
+
 export default function NotificationModal({ 
     visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend, onLeaveReview, onViewReview 
 }: NotificationModalProps) {
 
-   const renderNotification = ({ item }: { item: any }) => {
+   const renderNotification = (item: NotificationsEnhanced) => {
         // 1️⃣ Cas : Demande de prêt
         if (item.type === 'loan_request') {
             return (
@@ -275,6 +280,8 @@ export default function NotificationModal({
                 </View>
             );
         }
+
+        return (<></>);
     };
 
     return (
@@ -308,7 +315,7 @@ export default function NotificationModal({
                         <FlatList
                             data={notifications}
                             keyExtractor={(item, index) => item._id?.toString() || index.toString()}
-                            renderItem={renderNotification}
+                            renderItem={({ item }) => renderNotification(item)}
                             contentContainerStyle={{ paddingBottom: 20 }}
                         />
                     )}
