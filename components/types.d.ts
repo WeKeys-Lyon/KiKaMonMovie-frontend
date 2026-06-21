@@ -51,6 +51,7 @@ export type Friends = {
     canComment: boolean
 };
 export type Notifications = {
+    _id: string,
     type: 'friend_request' | 'friend_accepted' | 'friend_refused' | 'loan_request' | 'loan_reminder' | 'loan_accepted' | 'loan_refused' | 'loan_expired' | 'loan_returned' | 'review_posted',
     senderId?: { _id: string, username: string, friendCode: string },
     movieId?: {_id: string, original_title: string, title_fr: string, poster_path: string, tmdb_id: number},
