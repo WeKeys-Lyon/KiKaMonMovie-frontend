@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "KiKaMonMovie",
-    "slug": "KiKaMonMovie",
+    "slug": "kikamonmovie",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,7 +12,8 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/3348c66c-22ab-4014-8199-6db9ee3dfebb"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -48,7 +49,7 @@
           "barcodeScannerEnabled": true
         }
       ],
-     [
+      [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh"
@@ -58,9 +59,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "bdfc4523-67c5-4111-8659-ee483b2b9470"
+        "projectId": "3348c66c-22ab-4014-8199-6db9ee3dfebb"
       }
     },
-    "owner": "torad"
+    "owner": "kikamonmovie",
+    "runtimeVersion": "1.0.0"
   }
 }
