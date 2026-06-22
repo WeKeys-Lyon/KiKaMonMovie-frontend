@@ -266,7 +266,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       // 🌟 DÉTECTION : Mode Création ou Mode Édition ?
       const url = isEditing ? `${BACKEND_URL}/users/edit-review` : `${BACKEND_URL}/users/add-review`;
       const method = isEditing ? 'PUT' : 'POST';
-      console.log('ownerId ' + ownerId);
+
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
@@ -285,7 +285,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       });
 
       const data = await response.json();
-      console.log(data)
+
       if (data.result) {
         Alert.alert("Succès", data.message);
 
