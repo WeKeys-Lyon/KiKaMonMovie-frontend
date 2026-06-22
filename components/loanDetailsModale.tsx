@@ -32,8 +32,9 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     useEffect(() => {
         if (currentLoan?.isSharedToUser && shareType === 'loaned') {
             const targetId = currentLoan.userid?._id || currentLoan.userid;
-            const friend = user.friends?.find((f) => f.userid._id == targetId);
-            if (friend) setFriendName(friend.userid.username);
+            console.log(user.friends)
+            const friend = user.friends?.find((f) => f._id == targetId);
+            if (friend) setFriendName(friend.username);
         }
     }, [currentLoan, user.friends, shareType]);
 

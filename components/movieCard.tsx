@@ -33,7 +33,7 @@ type MovieCardScreenProps = {
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
-  
+
   const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
   const setModalVisible = () => {
@@ -266,7 +266,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       // 🌟 DÉTECTION : Mode Création ou Mode Édition ?
       const url = isEditing ? `${BACKEND_URL}/users/edit-review` : `${BACKEND_URL}/users/add-review`;
       const method = isEditing ? 'PUT' : 'POST';
-
+      console.log('ownerId ' + ownerId);
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
@@ -285,7 +285,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       });
 
       const data = await response.json();
-
+      console.log(data)
       if (data.result) {
         Alert.alert("Succès", data.message);
 
@@ -313,13 +313,15 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             rating: rating,
             comment: reviewText,
             createdAt: new Date(),
-            likes: [], 
-            replies: [] 
+            like: [],
+            replies: []
           };
+
           setDatas({
             ...datas,
-            reviews: [...(datas.reviews as []), newReview]
+            reviews: [...(datas.reviews as Review[] || []), newReview]
           });
+
           if (mode === 'collection' && indexMovie !== -1) {
 
             dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
@@ -585,7 +587,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           {activeTab === 'details' ? (
             <View style={styles.modalInfoGrid}>
-              {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
+              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={styles.modalLabel}>Titre original : </Text><Text style={styles.modalText}>{datas?.original_title}</Text></>) : (<></>)}
               <Text style={styles.modalLabel}>Date de sortie : </Text><Text style={styles.modalText}>{datas?.release_date}</Text>
               <Text style={styles.modalLabel}>Réalisé par :</Text>
               {datas.DirectedBy ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
@@ -888,7 +890,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
                     </View>
                   ) : (
-                    <Buttons title="Demander" onPress={() => onAskMovie} variant="primary" />
+                    typeof(onAskMovie) == 'function' ? <Buttons title="Demander" onPress={() => onAskMovie()} variant="primary" /> : <></>
                   )
                 ) : ownerId && ownerId !== user._id ? (
                   
@@ -936,15 +938,15 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           }
         }}
       />
-
-      <LoanDetailsModal
+      {currentLoan ? (<LoanDetailsModal
         visible={isLoanDetailsVisible}
         onClose={() => setIsLoanDetailsVisible(false)}
         movieName={datas?.title_fr || datas?.original_title || 'ce film'}
         movieTmdbId={datas?.tmdb_id}
         currentLoan={currentLoan}
         onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
-      />
+      />) : (<></>)}
+
 
     </KeyboardAvoidingView>
   );

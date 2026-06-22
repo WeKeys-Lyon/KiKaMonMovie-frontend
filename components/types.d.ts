@@ -45,11 +45,8 @@ export type movieProps = {
     };
 
 export type Friends = {
-    userid: {_id: string, username: string}, 
-    canSeeMyCollection: boolean, 
-    canAskForMovies: boolean,
-    canRate: boolean,
-    canComment: boolean
+    _id: string, 
+    username: string 
 };
 export type notificationsProps = {
     _id: string,
