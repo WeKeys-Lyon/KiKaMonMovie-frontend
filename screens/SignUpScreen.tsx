@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Buttons } from '../components/buttons';
 import {
-  Image,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -12,23 +11,23 @@ import {
   View,
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/header';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
-
-
+import { FontAwesome } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { login } from '../reducers/user';
 
+// --- IMPORTS POUR EXPO AUTH SESSION ---
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 
+// OBLIGATOIRE : Permet à Expo de fermer le navigateur web
+WebBrowser.maybeCompleteAuthSession();
 
 type SignUpScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
-
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,98 +35,97 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [error, setError] = useState('');
 
   const dispatch = useDispatch();
-
   const BACKEND_URL = process.env.BACKEND_URL;
 
+  // --- 1. CONFIGURATION DE GOOGLE AUTH SESSION ---
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
+    iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
+    redirectUri: 'https://auth.expo.io/@torad/KiKaMonMovie', // 👈 AJOUTE CETTE LIGNE EXPLICITE
+  });
 
-    const isValidPassword = (password: string) => {
+  // --- 2. ECOUTE DE LA REPONSE DE GOOGLE ---
+  useEffect(() => {
+    if (response?.type === 'success' && response.authentication) {
+      const idToken = response.authentication.idToken; 
+      if (idToken) {
+        handleBackendGoogleSignUp(idToken);
+      }
+    } else if (response?.type === 'error' || response?.type === 'dismiss') {
+      console.log("Inscription annulée ou erreur :", response);
+    }
+  }, [response]);
+
+  // --- 3. ENVOI DU TOKEN AU BACKEND ---
+  const handleBackendGoogleSignUp = async (idToken: string) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/users/google-login`, { // Même route que le login en général
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: idToken }),
+      });
+      const data = await res.json();
+
+      if (data.result) {
+        dispatch(login({
+          _id: data.answer._id,
+          email: data.answer.email,
+          username: data.answer.username,
+          token: data.answer.token,
+          movies: data.answer.movies || [],
+          friends: data.answer.friends || [],
+          friendCode: data.answer.friendCode,
+          notifications: data.answer.notifications || []
+        }));
+
+        if (!data.answer.movies || data.answer.movies.length === 0) {
+          navigation.navigate('OnboardingAddAMovie');
+        } else {
+          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
+        }
+      } else {
+        setError(data.error || "Erreur de connexion Backend.");
+      }
+    } catch (error) {
+      setError("Échec de la communication avec le serveur.");
+      console.error(error);
+    }
+  };
+
+  // --- REGLES MOT DE PASSE ---
+  const isValidPassword = (password: string) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
     return passwordRegex.test(password);
   };
 
-  useEffect(() => {
-      GoogleSignin.configure({
-        webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
-        iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
-        
-        offlineAccess: true,
-      });
-    }, []);
+  const isLengthValid = password.length >= 8;
+  const isUpperValid = /[A-Z]/.test(password);
+  const isLowerValid = /[a-z]/.test(password);
+  const isNumberValid = /\d/.test(password);
+  const isSpecialValid = /[^\da-zA-Z]/.test(password) && password.length > 0;
 
-     const handleGoogleSignIn = async () => {
-        try {
-          await GoogleSignin.hasPlayServices();
-          const userInfo = await GoogleSignin.signIn();
-          const idToken = userInfo.idToken; 
-    
-          if (idToken) {
-            // Envoi au Backend
-            const response = await fetch(`${BACKEND_URL}/users/google-login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: idToken }),
-            });
-            const data = await response.json();
-    
-            if (data.result) {
-              dispatch(login({
-                _id: data.answer._id,
-                email: data.answer.email,
-                username: data.answer.username,
-                token: data.answer.token,
-                movies: data.answer.movies || [],
-                friends: data.answer.friends || [],
-                friendCode: data.answer.friendCode,
-                notifications: data.answer.notifications || []
-              }));
-    
-              if (!data.answer.movies || data.answer.movies.length === 0) {
-                navigation.navigate('OnboardingAddAMovie');
-              } else {
-                navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
-              }
-            } else {
-              setError(data.error || "Erreur de connexion Backend.");
-            }
-          }
-        } catch (error: any) {
-          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-            console.log("Annulé par l'utilisateur");
-          } else {
-            setError("Échec de la connexion via Google.");
-            console.error(error);
-          }
-        }
-      };
-    
-
-
-
+  // --- 4. INSCRIPTION CLASSIQUE ---
   const handleSubmit = async () => {
     setError('');
     
-    // 1. Vérification des champs vides
     if (!email || !username || !password || !confirmPassword) {
       setError('Veuillez remplir tous les champs');
       return;
     }
 
-    // 🛡️ 2. Vérification de la complexité du mot de passe
     if (!isValidPassword(password)) {
       setError('Le mot de passe doit contenir au moins 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.');
       return;
     }
 
-    // 3. Vérification de la correspondance
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
 
     try {
-      // (Petit rappel : encodeURI n'est pas nécessaire ici 😉)
       const myURL = `${BACKEND_URL}/users/signup`;
-      const response = await fetch(myURL, {
+      const res = await fetch(myURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +136,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           password,
         }),
       });
-      const data = await response.json();
+      const data = await res.json();
       
       if (data.result) {
         const userMovies = (data.answer.movies) ? data.answer.movies : [];
@@ -149,7 +147,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           username: username, 
           token: data.answer.token,
           movies: userMovies,
-          friendCode: data.answer.friendCode, // 🐛 CORRECTION DE LA FAUTE DE FRAPPE ICI
+          friendCode: data.answer.friendCode, 
           friends: data.answer.friends,
           notifications: data.answer.notifications
         }));
@@ -160,7 +158,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
         } 
       } else {
-        setError(data.answer); // Affiche l'erreur du backend (ex: "Email déjà utilisé")
+        setError(data.answer); 
       }
     } catch (error) {
       console.error(error);
@@ -171,13 +169,6 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const handleReturn = () => {
     navigation.navigate('Home');
   };
-
-  const isLengthValid = password.length >= 8;
-  const isUpperValid = /[A-Z]/.test(password);
-  const isLowerValid = /[a-z]/.test(password);
-  const isNumberValid = /\d/.test(password);
-  const isSpecialValid = /[^\da-zA-Z]/.test(password) && password.length > 0;
-
 
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -190,6 +181,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
           <Text style={styles.title}>Créer un compte</Text>
           <Text style={styles.subtitle}>Rentrez les informations ci-dessous pour créer votre collection et commencer à partager vos films</Text>
+          
           <View style={styles.inputContainer}>
             <TextInput
               placeholder='Votre email'
@@ -243,31 +235,35 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               secureTextEntry
             />
           </View>
-          {error ?
-            <Text style={styles.error}>{error}</Text>
-            : null}
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
           <View style={styles.buttonContainer}>
             <Buttons title="Retour" onPress={handleReturn} variant="actionButton"/>
-            <Buttons title="Valider" onPress={() => handleSubmit()} variant="actionButton" />
+            <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
           </View>
+
           <View style={styles.separatorContainer}>
             <View style={styles.separatorLine} />
             <Text style={styles.separatorText}>ou</Text>
             <View style={styles.separatorLine} />
           </View>
 
-          {/* LE BOUTON GOOGLE NATIF */}
+          {/* LE BOUTON GOOGLE EXPO */}
           <View style={styles.googleButtonWrapper}>
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+            <TouchableOpacity 
+              style={styles.googleButton} 
+              onPress={() => promptAsync()} 
+              disabled={!request}
+            >
               <FontAwesome name="google" size={20} color="#EA4335" style={styles.googleIcon} />
-              <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
+              <Text style={styles.googleButtonText}>S'inscrire avec Google</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>
-
-
   );
 }
 
@@ -384,26 +380,24 @@ const styles = StyleSheet.create({
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff', // Google exige un fond blanc (ou bleu très précis)
+    backgroundColor: '#ffffff',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     width: '100%',
     justifyContent: 'center',
-    // Petite ombre pour le relief
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 3, // Ombre pour Android
+    elevation: 3, 
   },
   googleIcon: {
     marginRight: 15,
   },
   googleButtonText: {
-    color: '#757575', // La couleur de texte officielle de Google
+    color: '#757575',
     fontSize: 16,
     fontWeight: '600',
   },
-
 });

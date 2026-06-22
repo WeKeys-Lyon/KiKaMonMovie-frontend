@@ -6,7 +6,11 @@ import { login } from '../reducers/user';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import { FontAwesome } from '@expo/vector-icons';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+
+// OBLIGATOIRE : Permet à Expo de fermer le navigateur web une fois l'authentification terminée
+WebBrowser.maybeCompleteAuthSession();
 
 type SignInScreenProps = { navigation: NavigationProp<ParamListBase>; };
 const BACKEND_URL = process.env.BACKEND_URL;
@@ -17,67 +21,62 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const [error, setError] = useState('');
   const dispatch = useDispatch();
 
-  // INITIALISATION DE GOOGLE
+// --- 1. CONFIGURATION DE GOOGLE AUTH SESSION ---
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
+    iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
+    redirectUri: 'https://auth.expo.io/@torad/KiKaMonMovie', // 👈 AJOUTE CETTE LIGNE EXPLICITE
+  });
+
+  // --- 2. ECOUTE DE LA REPONSE DE GOOGLE ---
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: '187088415795-98fvq75vn2t5o4kck36oe8ubbbb894t3.apps.googleusercontent.com', 
-      
-      
-      iosClientId: '187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh.apps.googleusercontent.com', 
-      
-      offlineAccess: true,
-    });
-  }, []);
-
-  // 🚀 LA FONCTION NATIVE
-  const handleGoogleSignIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.idToken; 
-
+    if (response?.type === 'success' && response.authentication) {
+      const idToken = response.authentication.idToken; 
       if (idToken) {
-        // Envoi au Backend
-        const response = await fetch(`${BACKEND_URL}/users/google-login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: idToken }),
-        });
-        const data = await response.json();
+        handleBackendGoogleLogin(idToken);
+      }
+    } else if (response?.type === 'error' || response?.type === 'dismiss') {
+      console.log("Connexion annulée ou erreur :", response);
+    }
+  }, [response]);
 
-        if (data.result) {
-          dispatch(login({
-            _id: data.answer._id,
-            email: data.answer.email,
-            username: data.answer.username,
-            token: data.answer.token,
-            movies: data.answer.movies || [],
-            friends: data.answer.friends || [],
-            friendCode: data.answer.friendCode,
-            notifications: data.answer.notifications || []
-          }));
+  // --- 3. ENVOI DU TOKEN AU BACKEND ---
+  const handleBackendGoogleLogin = async (idToken: string) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/users/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: idToken }),
+      });
+      const data = await res.json();
 
-          if (!data.answer.movies || data.answer.movies.length === 0) {
-            navigation.navigate('OnboardingAddAMovie');
-          } else {
-            navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
-          }
+      if (data.result) {
+        dispatch(login({
+          _id: data.answer._id,
+          email: data.answer.email,
+          username: data.answer.username,
+          token: data.answer.token,
+          movies: data.answer.movies || [],
+          friends: data.answer.friends || [],
+          friendCode: data.answer.friendCode,
+          notifications: data.answer.notifications || []
+        }));
+
+        if (!data.answer.movies || data.answer.movies.length === 0) {
+          navigation.navigate('OnboardingAddAMovie');
         } else {
-          setError(data.error || "Erreur de connexion Backend.");
+          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
         }
-      }
-    } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("Annulé par l'utilisateur");
       } else {
-        setError("Échec de la connexion via Google.");
-        console.error(error);
+        setError(data.error || "Erreur de connexion Backend.");
       }
+    } catch (error) {
+      setError("Échec de la communication avec le serveur.");
+      console.error(error);
     }
   };
 
-
-
+  // --- 4. CONNEXION CLASSIQUE ---
   const handleSubmit = async () => {
     setError('');
     if (!mylogin || !password) {
@@ -87,7 +86,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
     try {
       const myURL = `${BACKEND_URL}/users/signin`;
-      const response = await fetch(encodeURI(myURL), {
+      const res = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +96,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           password,
         }),
       });
-      const data = await response.json();
+      const data = await res.json();
 
       if (data.result) {
         dispatch(login({
@@ -119,8 +118,6 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setError('Une erreur est survenue lors de la connexion');
     }
   };
-
-
 
   const handleReturn = () => {
     navigation.navigate('Home'); 
@@ -174,9 +171,13 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
             <View style={styles.separatorLine} />
           </View>
 
-          {/* LE BOUTON GOOGLE NATIF */}
+          {/* LE BOUTON GOOGLE EXPO */}
           <View style={styles.googleButtonWrapper}>
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+            <TouchableOpacity 
+              style={styles.googleButton} 
+              onPress={() => promptAsync()} 
+              disabled={!request}
+            >
               <FontAwesome name="google" size={20} color="#EA4335" style={styles.googleIcon} />
               <Text style={styles.googleButtonText}>Se connecter avec Google</Text>
             </TouchableOpacity>
@@ -251,7 +252,6 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     flex: 1,
     marginHorizontal: 5,
-
   },
   separatorContainer: {
     flexDirection: 'row',
@@ -277,26 +277,24 @@ const styles = StyleSheet.create({
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff', // Google exige un fond blanc (ou bleu très précis)
+    backgroundColor: '#ffffff',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     width: '100%',
     justifyContent: 'center',
-    // Petite ombre pour le relief
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 3, // Ombre pour Android
+    elevation: 3, 
   },
   googleIcon: {
     marginRight: 15,
   },
   googleButtonText: {
-    color: '#757575', // La couleur de texte officielle de Google
+    color: '#757575',
     fontSize: 16,
     fontWeight: '600',
   },
-
 });

@@ -27,6 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>kikamonmovie</string>
           <string>com.torad.KiKaMonMovie</string>
         </array>
       </dict>
@@ -34,12 +35,6 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>exp+kikamonmovie</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.187088415795-grjv3hb03do40t49l0pvgnqq2i4aqlmh</string>
         </array>
       </dict>
     </array>
