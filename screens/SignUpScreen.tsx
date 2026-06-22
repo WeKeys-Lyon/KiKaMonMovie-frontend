@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { Buttons } from '../components/buttons';
 import {
-  Image,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/header';
 
 

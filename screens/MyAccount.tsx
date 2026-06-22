@@ -6,7 +6,7 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import { logout, removeCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
-
+import { User } from '../components/types';
 
 type MyAccountProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -16,7 +16,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 
 export default function MyAccount({ navigation }: MyAccountProps) {
   const dispatch = useDispatch();
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
 
   // Les variables d'état pour le formulaire
   const [newUsername, setNewUsername] = useState('');

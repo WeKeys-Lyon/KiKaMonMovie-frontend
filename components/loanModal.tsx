@@ -6,14 +6,15 @@ import { Checkbox } from 'expo-checkbox';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieLoaned } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
-
+import {movieProps} from './types'
+import { User } from '../components/types';
 
 const { height } = Dimensions.get('window');
 
 type loanModalProps = {
     visible: boolean;
     onClose: () => void;
-    movie: any;
+    movie: movieProps;
     movieTmdbId: number;
     onSuccess: (updatedPastLoans: any[]) => void;
     preselectedUser?: any;
@@ -21,7 +22,8 @@ type loanModalProps = {
 }
 
 export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
-    const user = useSelector((state: any) => state.user.value);
+
+    const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -32,13 +34,11 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
     const [loanDate, setLoanDate] = useState(dueDateDefault);
     const [reminder, setReminder] = useState(true);
     const [notes, setNotes] = useState('');
-
     const [isRendered, setIsRendered] = useState(visible);
     const slideAnim = useRef(new Animated.Value(height)).current; 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [searchFriendID, setSearchFriendID] = useState<number>(0);
-    const [openSuggestions, setOpenSuggestions] = useState<boolean>(false);
 
     useEffect(() => {
         if (preselectedUser) {
@@ -98,7 +98,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
 
             if (data.result) {
                 console.log("Prêt enregistré avec succès !");
-                const indexMovie = user.movies.findIndex(movie => movie.tmdb_id == movieTmdbId);
+                const indexMovie = user.movies.findIndex((movie: { tmdb_id: number; }) => movie.tmdb_id == movieTmdbId);
                 dispatch(setMovieLoaned({index: indexMovie, data: data.answer}));
                 onSuccess(data.answer)
                 // On vide les champs pour la prochaine fois
@@ -120,7 +120,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 if (loanTo.trim().length <= 3) return [];
                 const lowerText = loanTo.toLowerCase();
                 const allSuggestions:{value: string, _id: any }[] = [];
-                    user.friends.forEach((friend: {_id: any, username: string}) => {
+                    user.friends.forEach((friend) => {
                         if (friend.username && friend.username.toLowerCase().includes(lowerText)) {
                             allSuggestions.push({ value: friend.username, _id: friend._id });
                         }
@@ -179,7 +179,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                                                     // On ferme la modale
                                                 }}
                                             >
-                                                <FontAwesome name="users" size={14} color="#e8be4b" style={styles.icon} />
+                                                <FontAwesome name="users" size={14} color="#e8be4b"/>
                                                 <Text style={styles.suggestionText} numberOfLines={1}>
                                                     {item.value} 
                                                 </Text>
@@ -194,7 +194,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                             <DateTimePicker 
                                 mode="date" 
                                 display="default" 
-                                onValueChange={(event, selectedDate) => setLoanDate(selectedDate || loanDate)}
+                                onValueChange={(selectedDate: Date) => setLoanDate(selectedDate || loanDate)}
                                 value={loanDate} 
                                 style={styles.datepicker}
                                 minimumDate={new Date()}

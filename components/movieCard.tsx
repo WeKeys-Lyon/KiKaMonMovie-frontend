@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Alert, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Buttons } from '../components/buttons';
 import { addMovieToStore, addReviewToStore, updateMovieInStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
@@ -11,11 +11,13 @@ import LoanDetailsModal from './loanDetailsModale';
 import StarRating from '../components/starRating';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { iLikeThisMovie } from '../reducers/user';
+import { movieProps, Reply, Review, User } from './types';
+import { encode } from 'node:punycode';
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
   clickable: boolean,
-  moviedata: any,
+  moviedata: movieProps,
   setIsModalVisible: any,
   drawStyle: boolean
   mode?: 'add' | 'collection' | 'friend' | 'manage_request';
@@ -32,12 +34,12 @@ type MovieCardScreenProps = {
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
 
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
   const setModalVisible = () => {
     setIsModalVisible(false)
   }
-  const [datas, setDatas] = useState(moviedata)
+  const [datas, setDatas] = useState<movieProps>(moviedata)
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
@@ -118,7 +120,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     
     if (datas.reviews) {
       
-      const myReview = datas.reviews.find((avis: any) => avis.userid._id == user._id);
+      const myReview = datas.reviews.find((avis) => typeof(avis.userid) == 'object' ? avis.userid._id == user._id : avis.userid == user._id );
       if (myReview) {
         return true
       } else {
@@ -173,7 +175,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
+  const renderClickableNames = (items: {name: string, popularity?: number}[], type: string, maxItems?: number) => {
     if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
     const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
@@ -205,9 +207,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}` : imageUrl = false;
   }
 
-  const onLendClick = () => {
-    setIsLoanModalVisible(true);
-  };
+
   const indexMovie = user.movies.findIndex((film: any) => moviedata.tmdb_id == film.tmdb_id);
 
   const handleLike = async () => {
@@ -229,7 +229,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     if (mode == 'add') {
       return (<></>)
     } else {
-      return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' style={styles.icon} /> : <FontAwesome name="heart" size={20} color='#bebebe' style={styles.icon} />)
+      return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' /> : <FontAwesome name="heart" size={20} color='#bebebe' />)
     }
   }
 
@@ -291,7 +291,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
         if (isEditing) {
           // 🔄 MISE À JOUR LOCALE (Mode Édition)
-          const updatedReviews = datas.reviews.map((r: any) => {
+          const updatedReviews = datas.reviews?.map((r) => {
             if (r._id === editingReviewId) {
               return { ...r, rating: rating, comment: reviewText };
             }
@@ -312,17 +312,18 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             userid: { _id: user._id, username: user.username },
             rating: rating,
             comment: reviewText,
-            createdAt: new Date().toISOString(),
-            likes: [], 
-            replies: [] 
+            createdAt: new Date(),
+            like: [],
+            replies: []
           };
 
           setDatas({
             ...datas,
-            reviews: [...(datas.reviews || []), newReview]
+            reviews: [...(datas.reviews as Review[] || []), newReview]
           });
+
           if (mode === 'collection' && indexMovie !== -1) {
-            console.log(newReview)
+
             dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
           }
 
@@ -350,12 +351,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const data = await response.json();
 
       if (data.result) {
-        const updatedReviews = datas.reviews.map((r: any) => {
+        const updatedReviews = datas.reviews?.map((r: Review) => {
           if (r._id === reviewId) {
             const hasLiked = r.likes?.includes(user._id);
             return {
               ...r,
-              likes: hasLiked ? r.likes.filter((id: string) => id !== user._id) : [...(r.likes || []), user._id]
+              likes: hasLiked ? r.likes?.filter((id: string) => id !== user._id) : [...(r.likes || []), user._id]
             };
           }
           return r;
@@ -379,10 +380,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const data = await response.json();
 
       if (data.result) {
-        const newReply = { userid: user._id, text: replyText, createdAt: new Date().toISOString() };
-        const updatedReviews = datas.reviews.map((r: any) => {
+        const newReply = {_id: data.answer._id, userid: {_id :user._id, username: user.username}, text: replyText, createdAt: new Date() };
+        const updatedReviews = datas.reviews?.map((r: Review) => {
           if (r._id === reviewId) {
-            return { ...r, replies: [...(r.replies || []), newReply] };
+            return { ...r, replies: [...(r.replies as []), newReply] };
           }
           return r;
         });
@@ -397,22 +398,16 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  const formatReviewDate = (dateString: string) => {
+  const formatReviewDate = (dateString: Date) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  const getReviewerName = (reviewerId: any) => {
+  const getReviewerName = (reviewerId: {_id: string, username: string}) => {
     if (!reviewerId) return 'Inconnu';
-    if (reviewerId.username) {
-      if (reviewerId.username === user.username) return 'Moi';
-      return reviewerId.username;
-    }
-    const id = reviewerId._id || reviewerId;
-    const friend = user.friends?.find((f: any) => (f.userid?._id || f.userid) === id || f._id === id);
-    if (friend) return friend.username;
-    return 'Moi';
+    if (reviewerId.username === user.username) return 'Moi';
+    return reviewerId.username;
   };
 
   // Calcul de moyenne des notes
@@ -452,7 +447,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               const data = await response.json();
               console.log("📥 Réponse du Backend pour la suppression :", data);
               if (data.result) {
-                const updatedReviews = datas.reviews.filter((r: any) => r._id !== reviewId);
+                const updatedReviews = datas.reviews?.filter((r: any) => r._id !== reviewId);
                 setDatas({ ...datas, reviews: updatedReviews });
                 Alert.alert("Succès", "L'avis a été supprimé avec succès.");
               } else {
@@ -478,7 +473,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       });
       const data = await response.json();
       if (data.result) {
-        const updatedReviews = datas.reviews.map((r: any) => {
+        const updatedReviews = datas.reviews?.map((r: any) => {
           if (r._id === reviewId) {
             const updatedReplies = r.replies.map((rep: any) => {
               if (rep._id === replyId) return { ...rep, text: editReplyText };
@@ -518,7 +513,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               });
               const data = await response.json();
               if (data.result) {
-                const updatedReviews = datas.reviews.map((r: any) => {
+                const updatedReviews = datas.reviews?.map((r: any) => {
                   if (r._id === reviewId) {
                     return { ...r, replies: r.replies.filter((rep: any) => rep._id !== replyId) };
                   }
@@ -536,9 +531,6 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       ]
     );
   };
-
-
-
 
 
   return (
@@ -564,7 +556,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
             {getAverageRating() > 0 ? (
               <>
                 <Text style={{ color: '#e8be4b', fontSize: 13, fontWeight: 'bold', marginBottom: 4 }}>
-                  Note des utilisateurs ({datas.reviews.length} avis)
+                  Note des utilisateurs ({datas.reviews?.length} avis)
                 </Text>
                 <StarRating rating={Math.round(getAverageRating() * 2) / 2} size={16} disabled={true} />
               </>
@@ -595,22 +587,22 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           {activeTab === 'details' ? (
             <View style={styles.modalInfoGrid}>
-              {(datas?.title_fr !== datas?.original_title) ? (<Text style={styles.modalLabel}>Titre original : <Text style={styles.modalText}>{datas?.original_title}</Text></Text>) : (<></>)}
-              <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
+              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={styles.modalLabel}>Titre original : </Text><Text style={styles.modalText}>{datas?.original_title}</Text></>) : (<></>)}
+              <Text style={styles.modalLabel}>Date de sortie : </Text><Text style={styles.modalText}>{datas?.release_date}</Text>
               <Text style={styles.modalLabel}>Réalisé par :</Text>
-              {renderClickableNames(datas?.DirectedBy, 'director')}
+              {datas.DirectedBy ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
               <Text style={styles.modalLabel}>Genre :</Text>
-              {renderClickableNames(datas?.Genres, 'genre')}
+              {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : 'Inconnu'}
               <Text style={styles.modalLabel}>Compositeur : </Text>
-              {renderClickableNames(datas?.MusicBy, 'composer')}
+              {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : 'Inconnu'}
               <Text style={styles.modalLabel}>Casting :</Text>
-              {renderClickableNames(datas?.Cast, 'actor', 15)}
+              {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : 'Inconnu'}
 
               {mode === 'collection' && (!ownerId || ownerId === user._id) && (
                 <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
                   <Buttons
                     title="🗑️ Supprimer le film"
-                    onPress={onDeleteClick}
+                    onPress={() => onDeleteClick}
                     variant="primary"
                     style={{ backgroundColor: '#d9534f', width: '80%' }}
                   />
@@ -651,9 +643,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               {/* 🌟 LA LISTE DES AVIS */}
               {datas.reviews && datas.reviews.length > 0 ? (
                 <View style={styles.reviewsList}>
-                  {datas.reviews.map((review: any, index: number) => {
+                  {datas.reviews.map((review, index: number) => {
                     // 🔒 LOGIQUE DE MODÉRATION
-                    const isMyReview = review.userid?._id === user._id || review.userid === user._id;
+                    
+                    const isMyReview = review.userid?._id  === user._id  
                     const isMyCollection = mode !== 'friend' && mode !== 'add';
 
                     // Sommes-nous en train de modifier CE commentaire précis ?
@@ -709,7 +702,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                           /* MODE LECTURE : L'affichage classique */
                           <>
                             <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
-                              <StarRating rating={review.rating} size={14} disabled={true} />
+                              <StarRating rating={review.rating ? review.rating : 0} size={14} disabled={true} />
                             </View>
 
                             {review.comment ? (
@@ -792,10 +785,10 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         {/* 🌟 AFFICHAGE DES RÉPONSES */}
                         {review.replies && review.replies.length > 0 && (
                           <View style={styles.repliesList}>
-                            {review.replies.map((reply: any, rIndex: number) => {
+                            {review.replies.map((reply: Reply, rIndex: number) => {
                               
                               // 🔒 LOGIQUE DE MODÉRATION POUR LES RÉPONSES
-                              const isMyReply = reply.userid?._id === user._id || reply.userid === user._id;
+                              const isMyReply = reply.userid._id === user._id;
 
                               return (
                                 <View key={rIndex} style={styles.replyItem}>
@@ -897,7 +890,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                       <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
                     </View>
                   ) : (
-                    <Buttons title="Demander" onPress={onAskMovie} variant="primary" />
+                    typeof(onAskMovie) == 'function' ? <Buttons title="Demander" onPress={() => onAskMovie()} variant="primary" /> : <></>
                   )
                 ) : ownerId && ownerId !== user._id ? (
                   
@@ -945,15 +938,15 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           }
         }}
       />
-
-      <LoanDetailsModal
+      {currentLoan ? (<LoanDetailsModal
         visible={isLoanDetailsVisible}
         onClose={() => setIsLoanDetailsVisible(false)}
         movieName={datas?.title_fr || datas?.original_title || 'ce film'}
         movieTmdbId={datas?.tmdb_id}
         currentLoan={currentLoan}
         onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
-      />
+      />) : (<></>)}
+
 
     </KeyboardAvoidingView>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert} from 'react-native';
 import { CameraView, BarcodeScanningResult } from 'expo-camera';
 import { Buttons } from './buttons'; 
 

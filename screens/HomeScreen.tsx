@@ -1,27 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {Buttons} from '../components/buttons';
-import {
-  Image,
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
 
+import { useSelector } from 'react-redux';
+import { User } from '../components/types';
 
 type HomeScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   //Mettre ce useEffect en sourdine si on veut travailler sur la page SignIn ou SignUp
   useEffect(() => {
     if (user.token) {
@@ -33,9 +23,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   const handleSignIn = () => 
       navigation.navigate('SignIn');
-
-
-
     
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
@@ -48,13 +35,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Text style={styles.subtitle}>Prêt à partager un film ?</Text>
         </View>
         <View style={styles.buttonContainer}>
-         {/* <TouchableOpacity onPress={handleSignIn} style={styles.button}>
-            <Text style={styles.buttonText}>Se connecter</Text>
-          </TouchableOpacity> */}
           <Buttons title='Se connecter' onPress={handleSignIn} variant="actionButton" textStyle={{width: '100%'}}/>
-          {/*<TouchableOpacity onPress={handleSignUp} style={styles.button}>
-            <Text style={styles.buttonText}>S'inscrire</Text>
-          </TouchableOpacity> */}
           <Buttons title="S'inscrire" onPress={handleSignUp} variant="actionButton" textStyle={{width: '100%'}}/>
         </View>
 

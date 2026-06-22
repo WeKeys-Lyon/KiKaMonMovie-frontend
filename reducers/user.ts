@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type UserState = {
   value: {
-    _id: number | null;
+    _id: string | null;
     email: string | null;
     token: string | null;
     username: string | null;
@@ -23,7 +23,7 @@ export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{_id: number, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
+    login: (state, action: PayloadAction<{_id: string, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
       state.value._id = action.payload._id;
       state.value.email = action.payload.email;
       state.value.token = action.payload.token;
@@ -106,12 +106,15 @@ export const userSlice = createSlice({
     updateMovieInStore: (state, action) => {
       const updatedMovie = action.payload;
       // On cherche l'index du film dans la collection de l'utilisateur
-      const index = state.value.movies.findIndex((film) => film.tmdb_id === updatedMovie.tmdb_id);
+      if (state.value.movies) {
+         const index = state.value.movies.findIndex((film) => film.tmdb_id === updatedMovie.tmdb_id);
       
-      // Si le film existe, on écrase l'ancienne version par la nouvelle
-      if (index !== -1) {
-        state.value.movies[index] = updatedMovie;
+          // Si le film existe, on écrase l'ancienne version par la nouvelle
+          if (index !== -1) {
+            state.value.movies[index] = updatedMovie;
+          }
       }
+     
     },
 }});
 

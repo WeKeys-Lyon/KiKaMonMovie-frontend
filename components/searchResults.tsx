@@ -6,14 +6,18 @@ import { Checkbox } from 'expo-checkbox';
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {addMovieToStore} from '../reducers/user';
+import { movieProps, Review, PastLoans, Notifications, Friends, User } from './types';
 
+type movieEnhanced = movieProps & {
+  checked: boolean
+}
 type SearchResultsProps = {
   navigation: NavigationProp<ParamListBase>;
-  movieData: any[];
+  movieData: movieEnhanced[];
   queryAsked: string;
   drawStyle: boolean;
   backToSearch: () => void;
-  handleOpenModal: (movie: any) => void;
+  handleOpenModal: (movie: movieProps) => void;
 };
 
 export default function SearchResults({
@@ -24,10 +28,11 @@ export default function SearchResults({
   backToSearch,
   handleOpenModal,
 }: SearchResultsProps) {
-  const user = useSelector((state: any) => state.user.value);
+
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const [checkedMovies, setCheckedMovies] = useState<any[]>([]);
   const dispatch = useDispatch();
-  const checkThisBox= (item) => {
+  const checkThisBox = (item: movieProps) => {
     if (checkedMovies.find(movie => movie == item.tmdb_id)) {
       setCheckedMovies(checkedMovies.filter(movie => movie !== item.tmdb_id))
     } else {
@@ -55,7 +60,7 @@ export default function SearchResults({
       if (data.result) {
         data.answer.forEach((movie:any) => {
           if (movie) {
-            if (user.movies.find((film) => film.tmdb_id == movie.tmdb_id)) {
+            if (user.movies.find((film: movieProps) => film.tmdb_id == movie.tmdb_id)) {
               console.log('niet')
             } else {
               dispatch(addMovieToStore(movie));

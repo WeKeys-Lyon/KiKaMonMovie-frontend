@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Image, Dimensions, ImageBackground, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Dimensions, ImageBackground, RefreshControl } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import Header from '../components/header';
@@ -7,7 +7,7 @@ import MovieGrid from '../components/MovieGrid';
 import MovieCard from '../components/movieCard';
 import SettingsModal from '../components/settingsModal';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
-import { Buttons } from '../components/buttons';
+import { User, movieProps } from '../components/types';
 
 const { width } = Dimensions.get('window');
 
@@ -19,10 +19,11 @@ type FriendCollectionProps = {
 const BACKEND_URL = process.env.BACKEND_URL;
 
 export default function FriendCollection({ navigation, route }: FriendCollectionProps) {
-  const user = useSelector((state: any) => state.user.value);
+if (typeof(route.params) == 'object') {
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const { friendId, friendName } = route.params;
-
-  const [movies, setMovies] = useState<any[]>([]);
+  
+  const [movies, setMovies] = useState<movieProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
@@ -51,8 +52,8 @@ export default function FriendCollection({ navigation, route }: FriendCollection
       const data = await response.json();
 
       if (data.result) {
-       const bulletproofMovies = data.movies.map((m: any) => m.movieid ? m.movieid : m);
-        setMovies(bulletproofMovies);
+       //const bulletproofMovies = data.movies.map((m: movieProps[]) => m._id ? m._id : m);
+        setMovies(data.movies);
       } else {
         if (data.error && data.error.includes('restreint')) {
           setAccessDenied(true);
@@ -82,6 +83,7 @@ export default function FriendCollection({ navigation, route }: FriendCollection
   }
   //demander à emprunter un film:
   const handleAskForMovie = async () => {
+
     if (!selectedMovie) return;
 
     
@@ -118,7 +120,7 @@ export default function FriendCollection({ navigation, route }: FriendCollection
   // 1. Filtrage par recherche
   const filteredMovies = safeMovies
     // 1. LE FILTRE PAR CATÉGORIE (Genre, Réalisateur, etc.)
-    .filter((movie: any) => {
+    .filter((movie) => {
       if (!activeFilter) return true;
 
       if (activeFilter.type === 'genre') {
@@ -133,7 +135,7 @@ export default function FriendCollection({ navigation, route }: FriendCollection
       return false;
     })
     // 2. LE FILTRE DE LA RECHERCHE GLOBALE
-    .filter((movie: any) => {
+    .filter((movie) => {
       if (searchQuery.trim() === '') return true;
       const lowerQuery = searchQuery.toLowerCase();
 
@@ -143,19 +145,19 @@ export default function FriendCollection({ navigation, route }: FriendCollection
       const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
       if (year.includes(lowerQuery)) return true;
 
-      const hasDirector = movie.DirectedBy?.some((d: any) => d.name?.toLowerCase().includes(lowerQuery));
+      const hasDirector = movie.DirectedBy?.some((d) => d.name?.toLowerCase().includes(lowerQuery));
       if (hasDirector) return true;
 
-      const hasActor = movie.Cast?.some((a: any) => a.name?.toLowerCase().includes(lowerQuery));
+      const hasActor = movie.Cast?.some((a) => a.name?.toLowerCase().includes(lowerQuery));
       if (hasActor) return true;
 
-      const hasComposer = movie.MusicBy?.some((c: any) => c.name?.toLowerCase().includes(lowerQuery));
+      const hasComposer = movie.MusicBy?.some((c) => c.name?.toLowerCase().includes(lowerQuery));
       if (hasComposer) return true;
 
       return false;
     })
     // 3. Filtres optionnel
-   .filter((movie: any) => {
+   .filter((movie) => {
       // Affichage des favoris
       if (likedActivated) {
         if (movie.isLiked) return true;
@@ -163,18 +165,20 @@ export default function FriendCollection({ navigation, route }: FriendCollection
         return true;
       }
     })
-    .filter((movie:any) => {
+    .filter((movie) => {
       // Filtrer par année de sortie
       if (selectedYear > 0) {
-       if (parseInt(movie.release_date?.slice(0,4)) == selectedYear) {
-        return true
-       } else { return false}
+        if (movie.release_date) {
+          if (parseInt(movie.release_date.slice(0,4)) == selectedYear) {
+            return true
+          } else { return false}
+      }
       } else {
         return true
       }
     })
     // 4. LE TRI 
-    .sort((a: any, b: any) => {
+    .sort((a, b) => {
       // Tri Alphabétique (A-Z)
       if (sortOption === 'title_asc') {
         const titleA = (a.title_fr || a.original_title || '').toLowerCase();
@@ -210,6 +214,21 @@ export default function FriendCollection({ navigation, route }: FriendCollection
         const titleB = (b.original_title).toLowerCase();
         return titleB.localeCompare(titleA);
       }
+      // Tri par popularité :
+      if (sortOption === 'popularity_desc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popA - popB;
+        }
+      }
+      if (sortOption === 'popularity_asc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popB - popA;
+        }
+      }
       return 0;
     }); 
 
@@ -226,6 +245,8 @@ export default function FriendCollection({ navigation, route }: FriendCollection
     }
   }, [user.token, friendId]);
 
+  
+  
 return (
     <ImageBackground source={require('../assets/arriereplan.png')} style={styles.background}>
       <Header 
@@ -254,7 +275,7 @@ return (
           <FlatList
             key={columns} 
             data={filteredMovies} 
-            keyExtractor={(item, index) => item?.tmdb_id?.toString() || item?._id?.toString() || index.toString()}
+            keyExtractor={(item, index) => item?.tmdb_id?.toString() || index.toString()}
             numColumns={columns}
             refreshControl={
               <RefreshControl 
@@ -337,7 +358,7 @@ return (
     </ImageBackground>
   );
 }
-
+}
 const styles = StyleSheet.create({
    background: {
     flex: 1,

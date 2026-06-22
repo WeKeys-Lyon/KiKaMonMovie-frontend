@@ -6,6 +6,7 @@ import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
+import { User } from '../components/types';
 
 type MyFriendsProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -14,7 +15,7 @@ type MyFriendsProps = {
 const BACKEND_URL = process.env.BACKEND_URL;
 
 export default function MyFriends({ navigation }: MyFriendsProps) {
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
   // Variables d'état
   const [myCode, setMyCode] = useState<string>('CHARGEMENT...');

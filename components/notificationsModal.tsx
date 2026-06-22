@@ -2,27 +2,32 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from './buttons';
+import { Notifications } from './types';
 
 type NotificationModalProps = {
     visible: boolean;
     onClose: () => void;
-    notifications: any[];
-    onManageLoan?: (notification: any) => void;
-    onAcceptFriend?: (notification: any) => void;
+    notifications: Notifications[];
+    onManageLoan?: (notification: Notifications) => void;
+    onAcceptFriend?: (notification: Notifications) => void;
     onDeleteNotification?: (notificationId: string) => void;
     onMarkAllAsRead?: () => void;
-    onManageFriendRequest?: (notification: any, action: 'accept' | 'refuse') => void;
-    onRemindFriend?: (notification: any) => void;
+    onManageFriendRequest?: (notification: Notifications, action: 'accept' | 'refuse') => void;
+    onRemindFriend?: (notification: Notifications) => void;
     // 🌟 NOUVEAU : Fonctions pour gérer les avis
-    onLeaveReview?: (notification: any) => void;
-    onViewReview?: (notification: any) => void;
+    onLeaveReview?: (notification: Notifications) => void;
+    onViewReview?: (notification: Notifications) => void;
+};
+
+type NotificationsEnhanced = Notifications & {
+    _id: string
 };
 
 export default function NotificationModal({ 
     visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend, onLeaveReview, onViewReview 
 }: NotificationModalProps) {
 
-   const renderNotification = ({ item }: { item: any }) => {
+   const renderNotification = (item: Notifications) => {
         // 1️⃣ Cas : Demande de prêt
         if (item.type === 'loan_request') {
             return (
@@ -275,6 +280,8 @@ export default function NotificationModal({
                 </View>
             );
         }
+
+        return (<></>);
     };
 
     return (
@@ -308,7 +315,7 @@ export default function NotificationModal({
                         <FlatList
                             data={notifications}
                             keyExtractor={(item, index) => item._id?.toString() || index.toString()}
-                            renderItem={renderNotification}
+                            renderItem={({ item }) => renderNotification(item)}
                             contentContainerStyle={{ paddingBottom: 20 }}
                         />
                     )}
