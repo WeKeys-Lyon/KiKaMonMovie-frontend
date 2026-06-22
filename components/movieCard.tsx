@@ -591,13 +591,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               {(datas?.title_fr !== datas?.original_title) ? (<><Text style={styles.modalLabel}>Titre original : </Text><Text style={styles.modalText}>{datas?.original_title}</Text></>) : (<></>)}
               <Text style={styles.modalLabel}>Date de sortie : </Text><Text style={styles.modalText}>{datas?.release_date}</Text>
               <Text style={styles.modalLabel}>Réalisé par :</Text>
-              <Text>{(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}</Text>
+              {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
               <Text style={styles.modalLabel}>Genre :</Text>
-              <Text>{datas.Genres ? renderClickableNames(datas.Genres, 'genre') : 'Inconnu'}</Text>
+              {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : 'Inconnu'}
               <Text style={styles.modalLabel}>Compositeur : </Text>
-              <Text>{datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : 'Inconnu'}</Text>
+              {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : 'Inconnu'}
               <Text style={styles.modalLabel}>Casting :</Text>
-              <Text>{datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : 'Inconnu'}</Text>
+              {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : 'Inconnu'}
 
               {mode === 'collection' && (!ownerId || ownerId === user._id) && (
                 <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
