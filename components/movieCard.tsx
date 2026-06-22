@@ -531,7 +531,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       ]
     );
   };
-console.log(datas)
+
 
   return (
 
