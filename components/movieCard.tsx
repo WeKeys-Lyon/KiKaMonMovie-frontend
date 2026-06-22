@@ -346,7 +346,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const response = await fetch(`${BACKEND_URL}/users/like-review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId }),
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, ownerId: ownerId || user._id}),
       });
       const data = await response.json();
 
@@ -645,12 +645,28 @@ console.log(datas)
                 <View style={styles.reviewsList}>
                   {datas.reviews.map((review, index: number) => {
                     // 🔒 LOGIQUE DE MODÉRATION
-                    
                     const isMyReview = review.userid?._id  === user._id  
                     const isMyCollection = mode !== 'friend' && mode !== 'add';
-
-                    // Sommes-nous en train de modifier CE commentaire précis ?
                     const isEditingThisReview = isEditing && editingReviewId === review._id;
+                    // Calcul personnalisé du texte de "Like" avec le nom du prêteur
+                    let likeText = "J'aime"; // Texte par défaut (0 like)
+                    
+                    if (review.likes && review.likes.length > 0) {
+                      if (review.likes.includes(user._id)) {
+                        likeText = "Aimé par vous"; // C'est moi qui ai liké
+                      } else if (ownerId && review.likes.includes(ownerId)) {
+                        
+                        // On cherche le nom de l'ami dans la mémoire Redux
+                        const friend = user.friends?.find((f: any) => f._id === ownerId || f.userid === ownerId);
+                        const ownerName = friend?.username || "le prêteur"; 
+                        
+                        likeText = `Aimé par ${ownerName}`; 
+                        
+                      } else {
+                        likeText = "Aimé"; 
+                      }
+                    }
+
 
                     return (
                       <View key={index} style={styles.reviewItem}>
@@ -713,35 +729,46 @@ console.log(datas)
                         )}
 
                         {/* On cache ces boutons si on est en train de modifier */}
-                        {!isEditingThisReview && (
-                          <>
-                            {/* 🌟 BOUTONS LIKE ET RÉPONDRE */}
-                            {mode !== 'friend' && review._id && (
-                              <View style={styles.reviewActions}>
-                                <TouchableOpacity onPress={() => handleLikeReview(review._id)} style={styles.actionBtn}>
-                                  <FontAwesome
-                                    name={review.likes?.includes(user._id) ? "heart" : "heart-o"}
-                                    size={15}
-                                    color={review.likes?.includes(user._id) ? "#e8be4b" : "#aaa"}
-                                  />
-                                  <Text style={{ color: review.likes?.includes(user._id) ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
-                                    {review.likes?.length || 0}
-                                  </Text>
-                                </TouchableOpacity>
+                       {!isEditingThisReview && (
+                          <View style={styles.reviewActions}>
+                            
+                            {/* 🌟 GAUCHE : Boutons Like et Répondre */}
+                            <View style={{ flexDirection: 'row' }}>
+                              {review._id && (
+                                <>
+                                  {/* 1. L'icône Like : Visible pour tous, mais cliquable uniquement par le propriétaire ou l'auteur */}
+                                  <TouchableOpacity 
+                                    disabled={!(isMyCollection || isMyReview)} 
+                                    onPress={() => handleLikeReview(review._id)} 
+                                    style={styles.actionBtn}
+                                  >
+                                    <FontAwesome
+                                      name={review.likes?.length > 0 ? "heart" : "heart-o"}
+                                      size={15}
+                                      color={review.likes?.length > 0 ? "#e8be4b" : "#aaa"}
+                                    />
+                                    {/* 👇 On remplace le nombre par notre jolie phrase 👇 */}
+                                    <Text style={{ color: review.likes?.length > 0 ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
+                                      {likeText}
+                                    </Text>
+                                  </TouchableOpacity>
 
-                                <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
-                                  <FontAwesome name="comment-o" size={15} color="#aaa" />
-                                  <Text style={[styles.actionText, { marginLeft: 6 }]}>
-                                    Répondre
-                                  </Text>
-                                </TouchableOpacity>
-                              </View>
-                            )}
+                                  {/* 2. Le bouton Répondre : Totalement masqué pour les invités */}
+                                  {(isMyCollection || isMyReview) && (
+                                    <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
+                                      <FontAwesome name="comment-o" size={15} color="#aaa" />
+                                      <Text style={[styles.actionText, { marginLeft: 6 }]}>
+                                        Répondre
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </>
+                              )}
+                            </View>
 
-                            {/* 🌟 BOUTONS MODIFIER / SUPPRIMER POUR L'AVIS */}
+                            {/* 🌟 DROITE : Boutons Modifier / Supprimer */}
                             {(isMyReview || isMyCollection) && (
-                              <View style={{ flexDirection: 'row', marginLeft: 'auto', gap: 15, marginTop: 10 }}>
-                                {/* Le crayon n'est visible que pour l'auteur */}
+                              <View style={{ flexDirection: 'row', gap: 15 }}>
                                 {isMyReview && (
                                   <TouchableOpacity
                                     style={{ padding: 4 }}
@@ -756,13 +783,12 @@ console.log(datas)
                                   </TouchableOpacity>
                                 )}
 
-                                {/* La poubelle est visible pour l'auteur ET le proprio de la collection */}
                                 <TouchableOpacity style={{ padding: 4 }} onPress={() => handleDeleteReview(review._id)}>
                                   <FontAwesome name="trash-o" size={16} color="#d9534f" />
                                 </TouchableOpacity>
                               </View>
                             )}
-                          </>
+                            </View>
                         )}
 
                         {/* 🌟 CHAMP DE TEXTE POUR RÉPONDRE */}
@@ -1168,5 +1194,14 @@ const styles = StyleSheet.create({
     color: '#ddd',
     fontSize: 13,
     fontStyle: 'italic',
+  },
+  reviewActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'center',            // Centre verticalement
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 8,
   },
 });
