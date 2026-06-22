@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, ImageBackground, TextInput, FlatList,
-  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity, Alert
-} from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
-import { Buttons } from '../components/buttons';
 import MovieCard from '../components/movieCard';
 import SelectionMenu from '../components/selectionMenu';
 import ManualSearch from '../components/manualSearch';
 import SearchResults from '../components/searchResults';
 import BarcodeScanner from '../components/barcodeScanner';
-import { UseDispatch, useSelector } from 'react-redux';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useSelector } from 'react-redux';
+import { useCameraPermissions } from 'expo-camera';
+import { movieProps } from '../components/types';
 import { truncate } from 'node:fs';
 
 
@@ -31,9 +28,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [movieData, setMovieData] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<any>(null);
+  const [selectedMovie, setSelectedMovie] = useState<movieProps | null>(null);
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
-  const user = useSelector((state: any) => state.user.value);
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
@@ -44,14 +40,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
   const BACKEND_URL = process.env.BACKEND_URL;
 
-
-
-  const handleManualSearch = () => {
-    setIsSearchMode(true);
-    {/*navigation.navigate('ManualSearch');*/ }
-    console.log("Ouverture de la page de recherche manuelle");
-  };
-
   const cancelSearch = () => {
     setIsSearchMode(false);
     setShowResults(false);
@@ -59,12 +47,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setQueryPerson('');
     setMovieData([]);
   };
-
-  const backToSearch = () => {
-    setShowResults(false);
-    setMovieData([]);
-  };
-
 
   const launchSearch = async () => {
     if (!queryTitle) return;
@@ -89,6 +71,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       console.error("Erreur réseau :", error);
     }
   };
+
   const launchSearchPeople = async () => {
 
     if (!queryPerson) return;
@@ -114,7 +97,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     }
   };
 
-  const handleOpenModal = (movie: any) => {
+  const handleOpenModal = (movie : movieProps) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
@@ -214,10 +197,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setQueryPerson('');
     setShowResults(false); 
     if (searchOrigin === 'barcode') {
-      setIsSearchMode(false);
-      setIsCameraActive(true);
-    } else {
-      setIsSearchMode(true);
+        setIsSearchMode(false);
+        setIsCameraActive(true);
+      } else {
+        setIsSearchMode(true);
     }
     handleRescan();
   };
@@ -243,9 +226,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2.1 : La camera */}
         {isCameraActive && permission?.granted && (
           <BarcodeScanner
-            Scanning={isScanning}
-            scanTitle={scannedTitle}
-            onBarcodeScanned={handleBarCodeScanned}
             onRescan={handleRescan}
             onConfirm={handleConfirmScannedMovie}
             onClose={() => {
@@ -288,7 +268,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />
+          {(selectedMovie) ? (<MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />) : (<></>)}          
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>

@@ -106,12 +106,15 @@ export const userSlice = createSlice({
     updateMovieInStore: (state, action) => {
       const updatedMovie = action.payload;
       // On cherche l'index du film dans la collection de l'utilisateur
-      const index = state.value.movies.findIndex((film) => film.tmdb_id === updatedMovie.tmdb_id);
+      if (state.value.movies) {
+         const index = state.value.movies.findIndex((film) => film.tmdb_id === updatedMovie.tmdb_id);
       
-      // Si le film existe, on écrase l'ancienne version par la nouvelle
-      if (index !== -1) {
-        state.value.movies[index] = updatedMovie;
+          // Si le film existe, on écrase l'ancienne version par la nouvelle
+          if (index !== -1) {
+            state.value.movies[index] = updatedMovie;
+          }
       }
+     
     },
 }});
 

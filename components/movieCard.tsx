@@ -33,7 +33,7 @@ type MovieCardScreenProps = {
 
 export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
-
+  
   const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
   const setModalVisible = () => {

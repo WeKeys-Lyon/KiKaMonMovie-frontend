@@ -11,7 +11,7 @@ import NotificationModal from '../components/notificationsModal';
 import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-
+import { User, movieProps, notificationsProps } from '../components/types';
 
 import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort, setCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
@@ -44,8 +44,8 @@ const { width } = Dimensions.get('window');
 
 export default function MyCollection({ navigation }: MyCollectionProps) {
 
-  const user = useSelector((state: any) => state.user.value);
-  const movies = useSelector((state: any) => state.user.value.movies);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
+  const movies = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value.movies);
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [columns, setColumns] = useState(user.columns ? user.columns : 2);
@@ -69,11 +69,11 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       let ownerToPass = null;
 
       if (colData.result) {
-        targetMovie = colData.movies.find((m: any) => String(m.tmdb_id) === String(data.tmdb_id) || String(m.movieid?.tmdb_id) === String(data.tmdb_id));
+        targetMovie = colData.movies.find((m: movieProps) => String(m.tmdb_id) === String(data.tmdb_id));
       }
 
       if (!targetMovie && notifData.result) {
-        const notifItem = notifData.notifications.find((n: any) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
+        const notifItem = notifData.notifications.find((n: notificationsProps) => String(n.movieId?.tmdb_id) === String(data.tmdb_id));
         if (notifItem) {
           targetMovie = notifItem.movieId;
           ownerToPass = data.ownerId || notifItem.senderId?._id || notifItem.senderId;
@@ -192,7 +192,9 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       }
 
       console.log("📱 [2] Appareil physique détecté. Vérification des permissions...");
+
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      
       let finalStatus = existingStatus;
 
       if (existingStatus !== 'granted') {
@@ -210,6 +212,7 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       
       // 🌟 NOUVEAU : Récupération du Project ID (obligatoire sur Expo SDK 49+)
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      
       
       token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
       console.log("🎟️ [5] VICTOIRE ! Push Token généré :", token);
@@ -266,7 +269,7 @@ useFocusEffect(
   );
 
 //calcul des notifications: 
-const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 0;
+const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
 
 // 🧹 NOUVEAU : Nettoyage automatique de la notification quand on ferme la MovieCard
   useEffect(() => {
@@ -276,7 +279,7 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
     }
   }, [isModalVisible]);
 
-  const handleOpenMovie = (movie: any) => {
+  const handleOpenMovie = (movie: movieProps) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
     setMovieOwnerId(null); // On réinitialise l'ownerId à null pour les films de notre collection
@@ -293,22 +296,22 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
 
   const filtredMovies = safeMovies
     // 1. LE FILTRE PAR CATÉGORIE (Genre, Réalisateur, etc.)
-    .filter((movie: any) => {
+    .filter((movie) => {
       if (!activeFilter) return true;
 
       if (activeFilter.type === 'genre') {
-        return movie.Genres?.some((genre: { name: string; }) => genre.name === activeFilter.value);
+        return movie.Genres?.some((genre) => genre.name === activeFilter.value);
       } else if (activeFilter.type === 'director') {
-        return movie.DirectedBy?.some((director: { name: string; }) => director.name === activeFilter.value);
+        return movie.DirectedBy?.some((director) => director.name === activeFilter.value);
       } else if (activeFilter.type === 'actor') {
-        return movie.Cast?.some((actor: { name: string; }) => actor.name === activeFilter.value);
+        return movie.Cast?.some((actor) => actor.name === activeFilter.value);
       } else if (activeFilter.type === 'composer') {
-        return movie.MusicBy?.some((composer: { name: string; }) => composer.name === activeFilter.value);
+        return movie.MusicBy?.some((composer) => composer.name === activeFilter.value);
       }
       return false;
     })
     // 2. LE FILTRE DE LA RECHERCHE GLOBALE
-    .filter((movie: any) => {
+    .filter((movie) => {
       if (searchQuery.trim() === '') return true;
       const lowerQuery = searchQuery.toLowerCase();
 
@@ -318,19 +321,19 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
       const year = movie.release_date ? movie.release_date.substring(0, 4) : '';
       if (year.includes(lowerQuery)) return true;
 
-      const hasDirector = movie.DirectedBy?.some((d: any) => d.name?.toLowerCase().includes(lowerQuery));
+      const hasDirector = movie.DirectedBy?.some((d) => d.name?.toLowerCase().includes(lowerQuery));
       if (hasDirector) return true;
 
-      const hasActor = movie.Cast?.some((a: any) => a.name?.toLowerCase().includes(lowerQuery));
+      const hasActor = movie.Cast?.some((a) => a.name?.toLowerCase().includes(lowerQuery));
       if (hasActor) return true;
 
-      const hasComposer = movie.MusicBy?.some((c: any) => c.name?.toLowerCase().includes(lowerQuery));
+      const hasComposer = movie.MusicBy?.some((c) => c.name?.toLowerCase().includes(lowerQuery));
       if (hasComposer) return true;
 
       return false;
     })
     // 3. Filtres optionnel
-   .filter((movie: any) => {
+   .filter((movie) => {
       // Affichage des favoris
       if (likedActivated) {
         if (movie.isLiked) return true;
@@ -338,18 +341,20 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
         return true;
       }
     })
-    .filter((movie:any) => {
+    .filter((movie) => {
       // Filtrer par année de sortie
       if (selectedYear > 0) {
-       if (parseInt(movie.release_date?.slice(0,4)) == selectedYear) {
-        return true
-       } else { return false}
+        if (movie.release_date) {
+          if (parseInt(movie.release_date.slice(0,4)) == selectedYear) {
+            return true
+          } else { return false}
+      }
       } else {
         return true
       }
     })
     // 4. LE TRI 
-    .sort((a: any, b: any) => {
+    .sort((a, b) => {
       // Tri Alphabétique (A-Z)
       if (sortOption === 'title_asc') {
         const titleA = (a.title_fr || a.original_title || '').toLowerCase();
@@ -411,7 +416,7 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
       }
     };
 
-    const confirmDelete = (item: any) => {
+    const confirmDelete = (item: movieProps) => {
       const title = item.title_fr || item.original_title || '';
       if (item.isLoaned) {
         Alert.alert(
@@ -450,10 +455,10 @@ const unreadCount = user.notifications?.filter((n: any) => !n.isRead).length || 
   };
       
 //gérer le prêt dans notif
-const handleManageLoan = (notification: any) => {
+const handleManageLoan = (notification: notificationsProps) => {
   setIsNotificationModalVisible(false);
   setActiveNotification(notification);
-  const fullMovie = user.movies.find((m: any) =>  m.movieid?._id === notification.movieId?._id || m.tmdb_id === notification.movieId?.tmdb_id
+  const fullMovie = user.movies.find((m) => m.tmdb_id === notification.movieId?.tmdb_id
     );
     if (fullMovie) {
       setSelectedMovie(fullMovie);
@@ -478,7 +483,7 @@ const handleDeleteNotification = async (notificationId: string) => {
       const data = await response.json();
       
       if (data.result) {
-        const updatedNotifications = user.notifications.filter((n: any) => n._id !== notificationId);
+        const updatedNotifications = user.notifications.filter((n) => n._id !== notificationId);
         dispatch(updateNotifications(updatedNotifications));
       }
     } catch (error) {
@@ -489,7 +494,7 @@ const handleDeleteNotification = async (notificationId: string) => {
   //marquer toutes les notifs comme lues
   const handleMarkAllAsRead = async () => {
     // Sécurité : s'il n'y a pas de notifications non lues, inutile d'appeler le backend
-    const hasUnread = user.notifications.some((n: any) => !n.isRead);
+    const hasUnread = user.notifications.some((n) => !n.isRead);
     if (!hasUnread) return;
 
     try {
@@ -502,7 +507,7 @@ const handleDeleteNotification = async (notificationId: string) => {
 
       if (data.result) {
         // On met à jour Redux en clonant les notifs et en les passant à isRead: true
-        const updatedNotifications = user.notifications.map((n: any) => ({
+        const updatedNotifications = user.notifications.map((n) => ({
           ...n,
           isRead: true
         }));
@@ -514,7 +519,7 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   // Gérer les demandes d'amis (Accepter / Refuser)
-  const handleManageFriendRequest = async (notification: any, action: 'accept' | 'refuse') => {
+  const handleManageFriendRequest = async (notification: notificationsProps, action: 'accept' | 'refuse') => {
     try {
       // On choisit la bonne route selon le bouton cliqué
       const endpoint = action === 'accept' ? 'accept-friend' : 'refuse-friend';
@@ -533,7 +538,7 @@ const handleDeleteNotification = async (notificationId: string) => {
 
       if (data.result) {
         // Succès ! On retire la notification de la liste Redux pour l'effacer de l'écran
-        const updatedNotifications = user.notifications.filter((n: any) => n._id !== notification._id);
+        const updatedNotifications = user.notifications.filter((n) => n._id !== notification._id);
         dispatch(updateNotifications(updatedNotifications));
         
         // Un petit message pour confirmer à l'utilisateur
@@ -550,15 +555,16 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   // Gérer le clic sur "Réclamer"
-  const handleRemindFriend = async (notification: any) => {
+  const handleRemindFriend = async (notification: notificationsProps) => {
     try {
+
       const response = await fetch(`${process.env.BACKEND_URL}/users/remind-loan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: user.token,
-          borrowerId: notification.senderId._id,
-          movieId: notification.movieId._id
+          borrowerId: notification.senderId?._id ? notification.senderId._id : '',
+          movieId: notification.movieId?._id ? notification.movieId._id : ''
         })
       });
 
@@ -575,22 +581,21 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   //laisser une review
- const processReviewNotification = (notification: any) => {
+ const processReviewNotification = (notification: notificationsProps) => {
     // 1. On vérifie si on possède ce film dans notre propre collection
-    const isMyMovie = user.movies?.some((m: any) => 
-      String(m.tmdb_id) === String(notification.movieId?.tmdb_id) || 
-      String(m.movieid?.tmdb_id) === String(notification.movieId?.tmdb_id)
+    const isMyMovie = user.movies?.some((m) => 
+      String(m.tmdb_id) === String(notification.movieId?.tmdb_id)
     );
 
     // 2. On récupère toutes les infos du film (les nôtres, ou celles de la notif)
     const fullMovie = isMyMovie 
-      ? user.movies.find((m: any) => String(m.tmdb_id) === String(notification.movieId?.tmdb_id) || String(m.movieid?.tmdb_id) === String(notification.movieId?.tmdb_id))
+      ? user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId?.tmdb_id))
       : notification.movieId;
 
     setSelectedMovie(fullMovie);
     
     // 3. LA SÉCURITÉ : Si c'est mon film, ownerId est null. Sinon, c'est l'ID de l'ami.
-    setMovieOwnerId(isMyMovie ? null : (notification.senderId?._id || notification.senderId));
+    setMovieOwnerId(isMyMovie ? null : String(notification.senderId?._id || notification.senderId));
     
     setTargetTab('reviews');
     setIsNotificationModalVisible(false);
@@ -598,8 +603,8 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   // On relie tes deux fonctions à notre nouvelle logique blindée
-  const handleLeaveReview = (notification: any) => processReviewNotification(notification);
-  const handleViewReview = (notification: any) => processReviewNotification(notification);
+  const handleLeaveReview = (notification: notificationsProps) => processReviewNotification(notification);
+  const handleViewReview = (notification: notificationsProps) => processReviewNotification(notification);
 
   //rafraichir sa liste: 
   
@@ -669,7 +674,7 @@ const handleDeleteNotification = async (notificationId: string) => {
             <Text style={styles.filterText} numberOfLines={2}>
               Recherche : <Text style={{ fontWeight: 'bold' }}>{searchQuery}</Text>
             </Text>
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearFilterText}>
+            <TouchableOpacity onPress={() => setSearchQuery('')} >
               <FontAwesome name="times" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -689,7 +694,7 @@ const handleDeleteNotification = async (notificationId: string) => {
             <Text style={styles.filterText}>
               Résultats pour : {activeFilter.value} ({filtredMovies.length})
             </Text>
-            <TouchableOpacity onPress={() => setActiveFilter(null)} style={styles.clearFilterText}>
+            <TouchableOpacity onPress={() => setActiveFilter(null)} >
               <FontAwesome name="times" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -949,7 +954,7 @@ const styles = StyleSheet.create({
   },
   clearFilterText: {
     color: '#ff4d4d',
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
 
   //supprimer un film longpress

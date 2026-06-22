@@ -18,11 +18,11 @@ export type PastLoans = {
     Notification: boolean, 
     _id: string, 
     borrower?: string, 
-    dueDate?: Date, 
+    dueDate: Date, 
     isSharedToUser: boolean, 
-    movieid: number, 
+    movieid: string, 
     notes?: string, 
-    userid?: number
+    userid?: { _id: string, username: string };
 };
 
 export type movieProps = {
@@ -40,7 +40,8 @@ export type movieProps = {
         isLiked: boolean,
         isAsked?: number[],
         pastLoans?: PastLoans[],
-        reviews?: Review[]
+        reviews?: Review[],
+        popularity?: number
     };
 
 export type Friends = {
@@ -50,7 +51,7 @@ export type Friends = {
     canRate: boolean,
     canComment: boolean
 };
-export type Notifications = {
+export type notificationsProps = {
     _id: string,
     type: 'friend_request' | 'friend_accepted' | 'friend_refused' | 'loan_request' | 'loan_reminder' | 'loan_accepted' | 'loan_refused' | 'loan_expired' | 'loan_returned' | 'review_posted',
     senderId?: { _id: string, username: string, friendCode: string },
@@ -70,5 +71,7 @@ export type User = {
     friends?: Friends[],
     pendingRequests: number[],
     movies: movieProps[],
-    notifications: Notifications[]
+    notifications: Notifications[],
+    sort?: string,
+    columns?: number
 }

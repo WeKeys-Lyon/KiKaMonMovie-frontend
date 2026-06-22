@@ -8,7 +8,7 @@ import LoanDetailsModal from '../components/loanDetailsModale';
 import { FontAwesome } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { setMovieReturned } from '../reducers/user';
-
+import { User } from '../components/types';
 
 type MySharesProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -18,7 +18,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 const { width } = Dimensions.get('window');
 
 export default function MyShares({ navigation }: MySharesProps) {
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const isFocused = useIsFocused(); // Permet de recharger quand on revient sur l'écran
   const dispatch = useDispatch();
 
@@ -120,7 +120,7 @@ export default function MyShares({ navigation }: MySharesProps) {
               const data = await response.json();
               if (data.result) {
                 // 1. Mise à jour de ton Redux comme dans le Modal
-                const indexMovie = user.movies.findIndex((m: any) => m.tmdb_id == tmdb_id);
+                const indexMovie = user.movies.findIndex((m) => m.tmdb_id == tmdb_id);
                 if (indexMovie !== -1) {
                     dispatch(setMovieReturned({ index: indexMovie }));
                 }

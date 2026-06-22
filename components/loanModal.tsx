@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setMovieLoaned } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import {movieProps} from './types'
+import { User } from '../components/types';
 
 const { height } = Dimensions.get('window');
 
@@ -22,7 +23,7 @@ type loanModalProps = {
 
 export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSuccess, preselectedUser, notificationId}: loanModalProps) {
 
-    const user = useSelector((state: any) => state.user.value);
+    const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
     const dispatch = useDispatch();
     const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -119,9 +120,9 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 if (loanTo.trim().length <= 3) return [];
                 const lowerText = loanTo.toLowerCase();
                 const allSuggestions:{value: string, _id: any }[] = [];
-                    user.friends.forEach((friend: {_id: any, username: string}) => {
-                        if (friend.username && friend.username.toLowerCase().includes(lowerText)) {
-                            allSuggestions.push({ value: friend.username, _id: friend._id });
+                    user.friends.forEach((friend) => {
+                        if (friend.userid.username && friend.userid.username.toLowerCase().includes(lowerText)) {
+                            allSuggestions.push({ value: friend.userid.username, _id: friend.userid._id });
                         }
                 });
                 return allSuggestions.slice(0, 5); // On garde les 5 meilleurs
@@ -193,7 +194,7 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                             <DateTimePicker 
                                 mode="date" 
                                 display="default" 
-                                onValueChange={(selectedDate: any) => setLoanDate(selectedDate || loanDate)}
+                                onValueChange={(selectedDate: Date) => setLoanDate(selectedDate || loanDate)}
                                 value={loanDate} 
                                 style={styles.datepicker}
                                 minimumDate={new Date()}

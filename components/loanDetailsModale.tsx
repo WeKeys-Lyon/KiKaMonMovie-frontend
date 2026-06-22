@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableWithoutFeedback, Animated,
 import { Buttons } from '../components/buttons';
 import { useSelector, useDispatch } from 'react-redux';
 import { setMovieReturned } from '../reducers/user';
+import { User, PastLoans } from '../components/types';
 
 const { height } = Dimensions.get('window');
 const BACKEND_URL = process.env.BACKEND_URL;
@@ -12,7 +13,7 @@ type LoanDetailsModalProps = {
     onClose: () => void;
     movieName: string;
     movieTmdbId: number;
-    currentLoan: any; 
+    currentLoan: PastLoans; 
     onReturnSuccess: () => void;
     // 🌟 NOUVEAU : On ajoute ces propriétés pour adapter l'affichage
     shareType?: 'loaned' | 'borrowed'; 
@@ -20,7 +21,7 @@ type LoanDetailsModalProps = {
 }
 
 export default function LoanDetailsModal({ visible, onClose, movieName, movieTmdbId, currentLoan, onReturnSuccess, shareType = 'loaned', ownerName }: LoanDetailsModalProps) {
-    const user = useSelector((state: any) => state.user.value);
+    const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
     const dispatch = useDispatch();
 
     const [isRendered, setIsRendered] = useState(visible);
@@ -31,8 +32,8 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
     useEffect(() => {
         if (currentLoan?.isSharedToUser && shareType === 'loaned') {
             const targetId = currentLoan.userid?._id || currentLoan.userid;
-            const friend = user.friends.find((f: any) => f.userid == targetId || f._id == targetId);
-            if (friend) setFriendName(friend.username);
+            const friend = user.friends?.find((f) => f.userid._id == targetId);
+            if (friend) setFriendName(friend.userid.username);
         }
     }, [currentLoan, user.friends, shareType]);
 
@@ -53,7 +54,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
 
     if (!isRendered) return null;
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: Date) => {
         if (!dateString) return 'Date inconnue';
         const date = new Date(dateString);
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -79,7 +80,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                             const data = await response.json();
 
                             if (data.result) {
-                                const indexMovie = user.movies.findIndex((movie: any) => movie.tmdb_id == movieTmdbId);
+                                const indexMovie = user.movies.findIndex((movie) => movie.tmdb_id == movieTmdbId);
                                 if (indexMovie !== -1) {
                                     dispatch(setMovieReturned({ index: indexMovie }));
                                 }
@@ -110,7 +111,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                 body: JSON.stringify({
                     token: user.token,
                     borrowerId: currentLoan.userid?._id || currentLoan.userid,
-                    movieId: currentLoan.movieid?._id || currentLoan.movieid
+                    movieId: currentLoan.movieid
                 })
             });
 
@@ -154,7 +155,7 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
 
                         <View style={styles.infoBlock}>
                             <Text style={styles.label}>Retour prévu le :</Text>
-                            <Text style={styles.value}>{formatDate(currentLoan?.dueDate)}</Text>
+                            <Text style={styles.value}>{formatDate(currentLoan.dueDate)}</Text>
                         </View>
 
                         {currentLoan?.notes ? (

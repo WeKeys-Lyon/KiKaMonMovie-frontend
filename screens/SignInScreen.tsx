@@ -8,7 +8,6 @@ import {
   Text,
   TextInput,
   View,
-  Alert
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
