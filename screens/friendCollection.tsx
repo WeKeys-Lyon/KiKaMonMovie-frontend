@@ -214,6 +214,21 @@ if (typeof(route.params) == 'object') {
         const titleB = (b.original_title).toLowerCase();
         return titleB.localeCompare(titleA);
       }
+      // Tri par popularité :
+      if (sortOption === 'popularity_desc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popA - popB;
+        }
+      }
+      if (sortOption === 'popularity_asc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popB - popA;
+        }
+      }
       return 0;
     }); 
 

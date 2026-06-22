@@ -121,8 +121,8 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
                 const lowerText = loanTo.toLowerCase();
                 const allSuggestions:{value: string, _id: any }[] = [];
                     user.friends.forEach((friend) => {
-                        if (friend.userid.username && friend.userid.username.toLowerCase().includes(lowerText)) {
-                            allSuggestions.push({ value: friend.userid.username, _id: friend.userid._id });
+                        if (friend.username && friend.username.toLowerCase().includes(lowerText)) {
+                            allSuggestions.push({ value: friend.username, _id: friend._id });
                         }
                 });
                 return allSuggestions.slice(0, 5); // On garde les 5 meilleurs

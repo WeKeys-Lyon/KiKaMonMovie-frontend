@@ -286,11 +286,6 @@ const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
     setTargetTab('details');
   };
 
-  const handleLogout = () => {
-
-    dispatch(logout());
-    //navigation.navigate('Home');
-  }
   
   const safeMovies = movies || [];
 
@@ -389,6 +384,21 @@ const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
         const titleA = (a.original_title).toLowerCase();
         const titleB = (b.original_title).toLowerCase();
         return titleB.localeCompare(titleA);
+      }
+      // Tri par popularité :
+      if (sortOption === 'popularity_desc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popA - popB;
+        }
+      }
+      if (sortOption === 'popularity_asc') {
+        const popA = (a.popularity);
+        const popB = (b.popularity);
+        if (popA && popB) {
+          return popB - popA;
+        }
       }
       return 0;
     }); 
@@ -852,7 +862,7 @@ const handleDeleteNotification = async (notificationId: string) => {
             drawStyle={false}
             clickable={false}
             navigation={navigation}
-            ownerId={movieOwnerId}
+            ownerId={movieOwnerId ? movieOwnerId : ''}
             initialTab={targetTab}
 
           />

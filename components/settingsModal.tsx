@@ -240,6 +240,20 @@ export default function SettingsModal({
                                 <FontAwesome name="history" size={16} color={sortOption === 'year_asc' ? "#fff" : "#aaa"} />
                                 <Text style={[styles.displayBtnText, sortOption === 'year_asc' && { color: '#fff', fontSize: 13 }]}>Ancien</Text>
                             </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.sortBtn, sortOption === 'popularity_asc' && styles.displayBtnActive]}
+                                onPress={() => modSort('popularity_asc')}
+                            >
+                                <FontAwesome name="thumbs-up" size={16} color={sortOption === 'popularity_asc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'popularity_asc' && { color: '#fff', fontSize: 13 }]}>Popularité</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.sortBtn,  sortOption === 'popularity_desc' && styles.displayBtnActive]}
+                                onPress={() => modSort('popularity_desc')}
+                            >
+                                <FontAwesome name="thumbs-down" size={16} color={sortOption === 'popularity_desc' ? "#fff" : "#aaa"} />
+                                <Text style={[styles.displayBtnText, sortOption === 'popularity_desc' && { color: '#fff', fontSize: 13 }]}>Popularité</Text>
+                            </TouchableOpacity>
                         </View>
                              <YearCarousel movies={movies} visible={carouselVisible} selectedYear={selectedYear} modSelectedYear={(value) => handleYearCarousel(value)} onClose={() => setCarouselVisible(!carouselVisible)}/>
                         {/* 🏷️ SECTION 3 : FILTRES (Structure prête pour la suite) */}
