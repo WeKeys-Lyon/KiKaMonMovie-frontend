@@ -588,7 +588,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           {activeTab === 'details' ? (
             <View style={styles.modalInfoGrid}>
-              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={styles.modalLabel}>Titre original : </Text><Text style={styles.modalText}>{datas?.original_title}</Text></>) : (<></>)}
+              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={[styles.modalLabel, {color: '#fff'}]}>Titre original : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.original_title}</Text></>) : (<></>)}
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Date de sortie : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.release_date}</Text>
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Réalisé par :</Text>
               {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
