@@ -45,12 +45,13 @@ export default function BarcodeScanner({
     setTimeout(() => { lastScan.current = null; }, 2000);
     try {
       const response = await fetch(`${BACKEND_URL}/movies/searchean/${result.data}`);
+
       const json = await response.json();
       console.log("Réponse du serveur :", json)
       if (json.result && json.answer) {
         let rawTitle = json.answer; 
         let cleanTitle = rawTitle;
-        
+
         cleanTitle = cleanTitle.replace(/dvd|blu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr|vhs/gi, '');
         cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
         cleanTitle = cleanTitle.replace(/\s*-\s*$/g, '');
