@@ -597,9 +597,6 @@ const handleDeleteNotification = async (notificationId: string) => {
       String(m.tmdb_id) === String(notification.movieId)
     );
     
-    const myURL = `http://${BACKEND_URL}/movies/searchid/${notification._id}`;
-    fetch(encodeURI(myURL)).then(response => response.json()).then(data => console.log('HEY OH '));
-
     // 2. On récupère toutes les infos du film (les nôtres, ou celles de la notif)
     const fullMovie = isMyMovie 
       ? user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId))
