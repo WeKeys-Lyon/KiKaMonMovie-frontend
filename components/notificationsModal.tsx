@@ -2,24 +2,24 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { Buttons } from './buttons';
-import { Notifications } from './types';
+import { notificationsProps } from './types';
 
 type NotificationModalProps = {
     visible: boolean;
     onClose: () => void;
-    notifications: Notifications[];
-    onManageLoan?: (notification: Notifications) => void;
-    onAcceptFriend?: (notification: Notifications) => void;
+    notifications: notificationsProps[];
+    onManageLoan?: (notification: notificationsProps) => void;
+    onAcceptFriend?: (notification: notificationsProps) => void;
     onDeleteNotification?: (notificationId: string) => void;
     onMarkAllAsRead?: () => void;
-    onManageFriendRequest?: (notification: Notifications, action: 'accept' | 'refuse') => void;
-    onRemindFriend?: (notification: Notifications) => void;
+    onManageFriendRequest?: (notification: notificationsProps, action: 'accept' | 'refuse') => void;
+    onRemindFriend?: (notification: notificationsProps) => void;
     // 🌟 NOUVEAU : Fonctions pour gérer les avis
-    onLeaveReview?: (notification: Notifications) => void;
-    onViewReview?: (notification: Notifications) => void;
+    onLeaveReview?: (notification: notificationsProps) => void;
+    onViewReview?: (notification: notificationsProps) => void;
 };
 
-type NotificationsEnhanced = Notifications & {
+type NotificationsEnhanced = notificationsProps & {
     _id: string
 };
 
@@ -27,7 +27,7 @@ export default function NotificationModal({
     visible, onClose, notifications, onManageLoan, onAcceptFriend, onDeleteNotification, onMarkAllAsRead, onManageFriendRequest, onRemindFriend, onLeaveReview, onViewReview 
 }: NotificationModalProps) {
 
-   const renderNotification = (item: Notifications) => {
+   const renderNotification = (item: notificationsProps) => {
         // 1️⃣ Cas : Demande de prêt
         if (item.type === 'loan_request') {
             return (

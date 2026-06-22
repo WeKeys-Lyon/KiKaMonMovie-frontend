@@ -594,12 +594,15 @@ const handleDeleteNotification = async (notificationId: string) => {
  const processReviewNotification = (notification: notificationsProps) => {
     // 1. On vérifie si on possède ce film dans notre propre collection
     const isMyMovie = user.movies?.some((m) => 
-      String(m.tmdb_id) === String(notification.movieId?.tmdb_id)
+      String(m.tmdb_id) === String(notification.movieId)
     );
+    
+    const myURL = `http://${BACKEND_URL}/movies/searchid/${notification._id}`;
+    fetch(encodeURI(myURL)).then(response => response.json()).then(data => console.log('HEY OH '));
 
     // 2. On récupère toutes les infos du film (les nôtres, ou celles de la notif)
     const fullMovie = isMyMovie 
-      ? user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId?.tmdb_id))
+      ? user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId))
       : notification.movieId;
 
     setSelectedMovie(fullMovie);
