@@ -591,24 +591,50 @@ const handleDeleteNotification = async (notificationId: string) => {
   };
 
   //laisser une review
- const processReviewNotification = (notification: notificationsProps) => {
-    // 1. On vérifie si on possède ce film dans notre propre collection
+ const processReviewNotification = async (notification: notificationsProps) => {
+    setIsNotificationModalVisible(false);
+
     const isMyMovie = user.movies?.some((m) => 
-      String(m.tmdb_id) === String(notification.movieId)
+      String(m.tmdb_id) === String(notification.movieId?.tmdb_id)
     );
-    
-    // 2. On récupère toutes les infos du film (les nôtres, ou celles de la notif)
-    const fullMovie = isMyMovie 
-      ? user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId))
-      : notification.movieId;
+
+    let fullMovie = null;
+    const ownerIdForFetch = isMyMovie ? user._id : String(notification.senderId?._id || notification.senderId);
+
+    if (isMyMovie) {
+      // C'est mon film, on prend dans Redux
+      fullMovie = user.movies.find((m) => String(m.tmdb_id) === String(notification.movieId?.tmdb_id));
+    } else {
+      // L'APPEL BACKEND : On cible la nouvelle route 'get-one-movie'
+      try {
+        const response = await fetch(`${BACKEND_URL}/users/get-one-movie`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: user.token,
+            ownerId: ownerIdForFetch,
+            tmdb_id: notification.movieId?.tmdb_id
+          })
+        });
+        
+        const data = await response.json();
+
+        if (data.result) {
+          // Le film complet avec les reviews
+          fullMovie = data.movie; 
+        } else {
+          console.warn("Erreur renvoyée par le backend:", data.error);
+          fullMovie = notification.movieId;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la requête /get-one-movie :", error);
+        fullMovie = notification.movieId;
+      }
+    }
 
     setSelectedMovie(fullMovie);
-    
-    // 3. LA SÉCURITÉ : Si c'est mon film, ownerId est null. Sinon, c'est l'ID de l'ami.
-    setMovieOwnerId(isMyMovie ? null : String(notification.senderId?._id || notification.senderId));
-    
+    setMovieOwnerId(isMyMovie ? null : ownerIdForFetch);
     setTargetTab('reviews');
-    setIsNotificationModalVisible(false);
     setIsModalVisible(true);
   };
 
