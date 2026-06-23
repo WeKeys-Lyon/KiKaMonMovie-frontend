@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
 import { Buttons } from '../components/buttons';
-import { logout, removeCollection } from '../reducers/user';
+import { logout, removeCollection, updateAvatar } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { User } from '../components/types';
 import { avatars } from '../components/avatarMap';
@@ -45,8 +45,12 @@ export default function MyAccount({ navigation }: MyAccountProps) {
 
   // 1. Fonction pour sauvegarder les modifications
   const handleSaveChanges = async () => {
-    if (!newUsername && !newEmail && !newPassword) {
-      Alert.alert('Info', 'Veuillez remplir au moins un champ pour le modifier.');
+    // 🚀 AJOUT : On vérifie si l'avatar sélectionné est différent de celui qu'on a déjà
+    const isAvatarChanged = selectedAvatar !== (user.avatar || 'default');
+
+    // 🚀 MODIFICATION : On bloque SEULEMENT si aucun texte n'est rempli ET que l'avatar n'a pas changé
+    if (!newUsername && !newEmail && !newPassword && !isAvatarChanged) {
+      Alert.alert('Info', 'Veuillez modifier au moins un champ ou choisir un nouvel avatar.');
       return;
     }
 
@@ -84,6 +88,7 @@ export default function MyAccount({ navigation }: MyAccountProps) {
 
       if (data.result) {
         Alert.alert('Succès', 'Votre profil a bien été mis à jour !');
+        dispatch(updateAvatar(selectedAvatar));
         setNewUsername('');
         setNewEmail('');
         setNewPassword('');

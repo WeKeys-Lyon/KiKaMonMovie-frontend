@@ -9,7 +9,7 @@ import { Buttons } from '../components/buttons';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { User } from '../components/types';
 // 🚀 IMPORT DU DICTIONNAIRE D'AVATARS
-import { avatars } from '../avatarMap'; 
+import { avatars } from '../components/avatarMap'; 
 
 type MyFriendsProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -164,12 +164,8 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
     );
   };
 
-  // 🚀 NOUVELLE FONCTION : Trouver l'image d'avatar sécurisée
-  const getAvatarSource = (userObj: any) => {
-    if (userObj && userObj.avatar && avatars[userObj.avatar as keyof typeof avatars]) {
-      return avatars[userObj.avatar as keyof typeof avatars];
-    }
-    return avatars.default;
+  const hasValidAvatar = (userObj: any) => {
+    return userObj && userObj.avatar && userObj.avatar !== 'default' && avatars[userObj.avatar as keyof typeof avatars];
   };
 
   return (
@@ -219,10 +215,14 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     
                     {/* 🚀 MODIFICATION ICI : Avatar pour les demandes en attente */}
-                    <Image 
-                      source={getAvatarSource(req)} 
-                      style={[styles.friendAvatar, { opacity: 0.5 }]} 
-                    />
+                    {hasValidAvatar(req) ? (
+                      <Image 
+                        source={avatars[req.avatar as keyof typeof avatars]} 
+                        style={[styles.friendAvatar, { opacity: 0.5 }]} 
+                      />
+                    ) : (
+                      <FontAwesome name="user-circle" size={30} color="#888" style={{ marginRight: 15, opacity: 0.5 }} />
+                    )}
                     
                     <View>
                       <Text style={styles.pendingName}>{req.username}</Text>
@@ -255,10 +255,14 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
                   }}
                 >
                   {/* 🚀 MODIFICATION ICI : Avatar pour la liste d'amis principale */}
-                  <Image 
-                    source={getAvatarSource(item.userid)} 
-                    style={styles.friendAvatar} 
-                  />
+                  {hasValidAvatar(item.userid) ? (
+                    <Image 
+                      source={avatars[item.userid.avatar as keyof typeof avatars]} 
+                        style={styles.friendAvatar} 
+                    />
+                  ) : (
+                    <FontAwesome name="user-circle" size={30} color="#e8be4b" style={{ marginRight: 15 }} />
+                  )}
                   
                   <Text style={styles.friendName}>
                     {item.userid?.username || 'Utilisateur inconnu'}

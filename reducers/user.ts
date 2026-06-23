@@ -12,6 +12,7 @@ export type UserState = {
     friends: any[] | null;
     columns: number | null;
     sort: string | null;
+    avatar: 'default',
   };
 };
 
@@ -32,6 +33,7 @@ export const userSlice = createSlice({
       state.value.friendCode = action.payload.friendCode;
       state.value.friends = action.payload.friends;
       state.value.notifications = action.payload.notifications;
+      state.value.avatar = action.payload.avatar || 'default';
     },
     addMovieToStore: (state, action: PayloadAction<any>) => {
       state.value.movies?.push(action.payload);
@@ -116,7 +118,10 @@ export const userSlice = createSlice({
       }
      
     },
+    updateAvatar: (state, action) => {
+      state.value.avatar = action.payload;
+    },
 }});
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore, setCollection } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore, setCollection, updateAvatar } = userSlice.actions;
 export default userSlice.reducer;

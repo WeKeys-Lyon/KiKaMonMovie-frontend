@@ -15,7 +15,7 @@ import { iLikeThisMovie } from '../reducers/user';
 import { movieProps, Reply, Review, User } from './types';
 import { encode } from 'node:punycode';
 // 🚀 IMPORT DU DICTIONNAIRE D'AVATARS
-import { avatars } from '../avatarMap'; 
+import { avatars } from '../components/avatarMap'; 
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
@@ -397,12 +397,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     return reviewerId.username;
   };
 
-  // 🚀 NOUVELLE FONCTION : Trouver l'image d'avatar sécurisée
-  const getAvatarSource = (userObj: any) => {
-    if (userObj && userObj.avatar && avatars[userObj.avatar as keyof typeof avatars]) {
-      return avatars[userObj.avatar as keyof typeof avatars];
-    }
-    return avatars.default;
+  const hasValidAvatar = (userObj: any) => {
+    return userObj && userObj.avatar && userObj.avatar !== 'default' && avatars[userObj.avatar as keyof typeof avatars];
   };
 
   const getAverageRating = () => {
@@ -653,10 +649,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                         {/* 🚀 MODIFICATION ICI : Ajout de l'avatar dans l'en-tête de l'avis */}
                         <View style={styles.reviewHeader}>
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Image 
-                              source={getAvatarSource(review.userid)} 
-                              style={styles.reviewAvatarImage} 
-                            />
+                            {hasValidAvatar(review.userid) ? (
+                              <Image 
+                                source={avatars[review.userid.avatar as keyof typeof avatars]} 
+                                style={styles.reviewAvatarImage} 
+                              />
+                            ) : (
+                              <FontAwesome name="user-circle" size={24} color="#e8be4b" style={{ marginRight: 10 }} />
+                            )}
                             <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
                           </View>
                           <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
@@ -791,10 +791,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                                     
                                     {/* 🚀 MODIFICATION ICI : Ajout de l'avatar dans l'en-tête de la réponse */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                      <Image 
-                                        source={getAvatarSource(reply.userid)} 
-                                        style={styles.replyAvatarImage} 
-                                      />
+                                      {hasValidAvatar(reply.userid) ? (
+                                        <Image 
+                                          source={avatars[reply.userid.avatar as keyof typeof avatars]} 
+                                          style={styles.replyAvatarImage} 
+                                        />
+                                      ) : (
+                                        <FontAwesome name="user-circle" size={16} color="#e8be4b" style={{ marginRight: 6 }} />
+                                      )}
                                       <Text style={styles.replyAuthor}>{getReviewerName(reply.userid)} :</Text>
                                     </View>
                                     
