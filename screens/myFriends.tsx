@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, FlatList, TouchableOpacity, Share, KeyboardAvoidingView, Platform, Switch, Modal } from 'react-native';
+// 🚀 AJOUT DE L'IMPORT IMAGE
+import { View, Text, StyleSheet, TextInput, Alert, FlatList, TouchableOpacity, Share, KeyboardAvoidingView, Platform, Switch, Modal, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import {addFriend, removeFriend} from '../reducers/user';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
@@ -7,6 +8,8 @@ import Header from '../components/header';
 import { Buttons } from '../components/buttons';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { User } from '../components/types';
+// 🚀 IMPORT DU DICTIONNAIRE D'AVATARS
+import { avatars } from '../avatarMap'; 
 
 type MyFriendsProps = {
   navigation: NavigationProp<ParamListBase>;
@@ -29,9 +32,6 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
   // 1. Récupérer les données au chargement de l'écran
   useEffect(() => {
     fetchSocialData();
-/*     let toDispatch: any = [];
-    friendsList.forEach((friend: any) => {toDispatch.push(friend.userid)});
-    dispatch(refreshFriends(toDispatch)); */
   }, []);
 
   const fetchSocialData = async () => {
@@ -54,7 +54,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
     }
   };
 
-  // 2. Partager son code ami (Ouvre le menu de partage du téléphone)
+  // 2. Partager son code ami
   const handleShareCode = async () => {
     try {
       await Share.share({
@@ -149,9 +149,9 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
 
               const data = await response.json();
               if (data.result) {
-                setIsPermissionModalVisible(false); // On ferme la modale
+                setIsPermissionModalVisible(false); 
                 dispatch(removeFriend(selectedFriend.userid.username))
-                fetchSocialData(); // On recharge la liste d'amis
+                fetchSocialData(); 
               } else {
                 Alert.alert('Erreur', data.error);
               }
@@ -162,6 +162,14 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
         }
       ]
     );
+  };
+
+  // 🚀 NOUVELLE FONCTION : Trouver l'image d'avatar sécurisée
+  const getAvatarSource = (userObj: any) => {
+    if (userObj && userObj.avatar && avatars[userObj.avatar as keyof typeof avatars]) {
+      return avatars[userObj.avatar as keyof typeof avatars];
+    }
+    return avatars.default;
   };
 
   return (
@@ -202,14 +210,20 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
           </View>
         </View>
 
-        {/*SECTION DEMANDES EN ATTENTE (S'affiche uniquement s'il y en a) */}
+        {/*SECTION DEMANDES EN ATTENTE */}
           {pendingRequests.length > 0 && (
             <View style={{ marginBottom: 20 }}>
               <Text style={styles.sectionTitle}>Demandes envoyées ({pendingRequests.length})</Text>
               {pendingRequests.map((req, index) => (
                 <View key={index} style={styles.pendingCard}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <FontAwesome name="hourglass-half" size={20} color="#888" style={{ marginRight: 15 }} />
+                    
+                    {/* 🚀 MODIFICATION ICI : Avatar pour les demandes en attente */}
+                    <Image 
+                      source={getAvatarSource(req)} 
+                      style={[styles.friendAvatar, { opacity: 0.5 }]} 
+                    />
+                    
                     <View>
                       <Text style={styles.pendingName}>{req.username}</Text>
                       <Text style={styles.pendingSubtext}>En attente d'acceptation...</Text>
@@ -240,7 +254,12 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
                     });
                   }}
                 >
-                  <FontAwesome name="user-circle" size={30} color="#e8be4b" style={{ marginRight: 15 }} />
+                  {/* 🚀 MODIFICATION ICI : Avatar pour la liste d'amis principale */}
+                  <Image 
+                    source={getAvatarSource(item.userid)} 
+                    style={styles.friendAvatar} 
+                  />
+                  
                   <Text style={styles.friendName}>
                     {item.userid?.username || 'Utilisateur inconnu'}
                   </Text>
@@ -258,6 +277,7 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
           />
         )}
       </KeyboardAvoidingView>
+      
       {/* MODALE DE PERMISSIONS */}
       <Modal visible={isPermissionModalVisible} transparent={true} animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
@@ -287,14 +307,14 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
                 thumbColor={selectedFriend?.canAskForMovies ? "#fff" : "#f4f3f4"}
               />
             </View>
-            {/* BOUTON SUPPRIMER L'AMI */}
+            
             <TouchableOpacity 
               onPress={handleDeleteFriend}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'rgba(217, 83, 79, 0.2)', // Rouge transparent
+                backgroundColor: 'rgba(217, 83, 79, 0.2)',
                 borderColor: '#d9534f',
                 borderWidth: 1,
                 padding: 12,
@@ -346,6 +366,16 @@ const styles = StyleSheet.create({
   emptyText: { color: '#aaa', fontStyle: 'italic', textAlign: 'center', marginTop: 20 },
   friendCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: 15, borderRadius: 10, marginBottom: 10 },
   friendName: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+
+  // 🚀 NOUVEAU STYLE : L'avatar de l'ami
+  friendAvatar: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    marginRight: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)'
+  },
 
   // Styles pour les demandes en attente
   pendingCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: 15, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#333', borderStyle: 'dashed' },
