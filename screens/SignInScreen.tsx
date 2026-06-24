@@ -53,6 +53,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       const data = await response.json();
 
       if (data.result) {
+        console.log(data.answer.avatar)
         dispatch(login({
           _id: data.answer._id,
           email: data.answer.email,
@@ -120,11 +121,6 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           <View style={styles.buttonContainer}>
               <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
               <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
-          </View>
-          <View style={styles.separatorContainer}>
-            <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>OU</Text>
-            <View style={styles.separatorLine} />
           </View>
         </View>
       </KeyboardAvoidingView>
