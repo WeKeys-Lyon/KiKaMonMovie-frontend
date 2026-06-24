@@ -1,40 +1,137 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// 🚀 AJOUT DE IMAGE DANS LES IMPORTS REACT NATIVE
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Buttons } from '../components/buttons';
-import { addMovieToStore } from '../reducers/user';
+import { addMovieToStore, addReviewToStore, updateMovieInStore } from '../reducers/user';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import Poster from '../components/poster';
+import LoanModal from './loanModal';
+import LoanDetailsModal from './loanDetailsModale';
+import StarRating from '../components/starRating';
+import FontAwesome from '@react-native-vector-icons/fontawesome';
+import { iLikeThisMovie } from '../reducers/user';
+import { movieProps, Reply, Review, User } from './types';
 
-
+// 🚀 IMPORT DU DICTIONNAIRE D'AVATARS
+import { avatars } from '../components/avatarMap'; 
 
 type MovieCardScreenProps = {
   navigation: NavigationProp<ParamListBase>,
   clickable: boolean,
-  moviedata: any,
+  moviedata: movieProps,
   setIsModalVisible: any,
   drawStyle: boolean
-  mode?: 'add' | 'collection';
+  mode?: 'add' | 'collection' | 'friend' | 'manage_request';
+  requester?: any;
+  notificationId?: string;
   onFilterClick?: (type: string, value: string) => void;
-  onLendClick?: () => void;
   onDeleteClick?: () => void;
   onAddSuccess?: () => void;
+  onAskMovie?: () => void;
+  ownerId?: string;
+  initialTab?: string;
 };
 
-
-export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onLendClick, onDeleteClick, onAddSuccess }: MovieCardScreenProps) {
-
+export default function MovieCard({ navigation, clickable, moviedata, setIsModalVisible, drawStyle, mode = 'add', onFilterClick, onDeleteClick, onAddSuccess, onAskMovie, requester, notificationId, ownerId, initialTab }: MovieCardScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
 
-  const user = useSelector((state: any) => state.user.value);
+  const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
   const dispatch = useDispatch();
   const setModalVisible = () => {
     setIsModalVisible(false)
   }
-  const [datas, setDatas] = useState(moviedata)
+  
+  const [datas, setDatas] = useState<movieProps>(moviedata)
+  const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
+  const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
+  const [isLiked, setIsLiked] = useState<boolean>(moviedata.isLiked);
+  const [activeTab, setActiveTab] = useState<'details' | 'reviews'>('details');
+  useEffect(() => {
+    if (initialTab === 'reviews' || initialTab === 'details') {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
+  useEffect(() => {
+    if (mode === 'collection' && datas) {
+      dispatch(updateMovieInStore(datas));
+    }
+  }, [datas]);
+
+  //silent refresh
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      const fetchFreshReviews = async () => {
+        
+        try {
+          let freshMovies = [];
+          if (mode === 'collection') {
+            const myURL = `${BACKEND_URL}/users/collection/${user.token}`;
+            const response = await fetch(encodeURI(myURL));
+            const data = await response.json();
+            console.log(data)
+            if (data.result) freshMovies = data.movies;
+          } else if (mode === 'friend' && ownerId) {
+            const myURL = `${BACKEND_URL}/users/friend-collection`;
+            const response = await fetch(encodeURI(myURL), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: user.token, friendId: ownerId })
+            });
+            const data = await response.json();
+            
+            if (data.result) freshMovies = data.movies;
+            
+          }
+          const freshMovie = freshMovies.find((m: any) => m.tmdb_id === datas.tmdb_id);
+
+          if (freshMovie && freshMovie.reviews) {
+            setDatas((prevDatas: any) => ({
+              ...prevDatas,
+              reviews: freshMovie.reviews
+            }));
+          }
+
+        } catch (error) {
+          console.error("Erreur lors du silent refresh :", error);
+        }
+      };
+
+      fetchFreshReviews();
+    }
+  }, [activeTab]);
+
+  
+  const [rating, setRating] = useState<number>(0);
+  const [reviewText, setReviewText] = useState<string>('');
+
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editReplyText, setEditReplyText] = useState('');
+
+  const currentLoan = datas?.pastLoans && datas.pastLoans.length > 0
+    ? datas.pastLoans[datas.pastLoans.length - 1]
+    : null;
+
+  const didIMakeAReview = () => {
+    if (datas.reviews) {
+      const myReview = datas.reviews.find((avis) => typeof(avis.userid) == 'object' ? avis.userid._id == user._id : avis.userid == user._id );
+      if (myReview) {
+        return true
+      } else {
+        return false
+      }
+    } else {
+      return false
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -43,21 +140,18 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         const response = await fetch(encodeURI(myURL));
         const data = await response.json();
         if (data.result) {
-          setDatas(data.answer);
+          setDatas(prevDatas => ({ ...prevDatas, ...data.answer }));
         }
       }
     }
     init()
   }, [])
 
-
-
   const handleAddMovie = async () => {
     const BACKEND_URL = process.env.BACKEND_URL;
-    console.log(datas?.title_fr || datas?.original_title)
-
     try {
-      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
+      const myURL = `${BACKEND_URL}/users/add-movie`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -67,12 +161,14 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       });
 
       const data = await response.json();
-      console.log(data)
+
       if (data.result) {
         setIsModalVisible(false);
+        datas.isLoaned = false;
+        datas.isLiked = false;
         dispatch(addMovieToStore(datas));
         if (onAddSuccess) onAddSuccess();
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {
         console.log("Erreur lors de l'ajout", data.error);
       }
@@ -81,12 +177,12 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     }
   };
 
-  const renderClickableNames = (items: any[], type: string, maxItems?: number) => {
+  const renderClickableNames = (items: {name: string, popularity?: number}[], type: string, maxItems?: number) => {
     if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
     const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
-        {displayedItems.map((item: any, index: number) => (
+     <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+         {displayedItems.map((item: any, index: number) => (
           <TouchableOpacity
             key={index}
             disabled={mode === 'add'}
@@ -103,70 +199,776 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           </Text>
         )}
       </View>
+    
     );
   };
 
-  const imageUrl = datas.poster_path ? `https://image.tmdb.org/t/p/w500${datas.poster_path}` : 'https://via.placeholder.com/500x750?text=Pas+d%27affiche';
+  let imageUrl: string | boolean = '';
+  if (mode == 'add') {
+    datas.poster_path ? imageUrl = `https://image.tmdb.org/t/p/w500${datas.poster_path}` : imageUrl = false;
+  } else {
+    datas.poster_path ? imageUrl = `https://res.cloudinary.com/dj5fkdyn8/image/upload/v1781111174${datas.poster_path}` : imageUrl = false;
+  }
+
+  const indexMovie = user.movies.findIndex((film: any) => moviedata.tmdb_id == film.tmdb_id);
+
+  const handleLike = async () => {
+    setIsLiked(!isLiked);
+    const myURL = `${BACKEND_URL}/users/isLiked`;
+    const response = await fetch(encodeURI(myURL), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: user.token,
+        tmdb_id: moviedata.tmdb_id
+      }),
+    });
+    const data = await response.json();
+    dispatch(iLikeThisMovie({ index: indexMovie }))
+  }
+
+  const drawHeart = () => {
+    if (mode == 'add') {
+      return (<></>)
+    } else {
+      return ((isLiked) ? <FontAwesome name="heart" size={20} color='#ff0000' /> : <FontAwesome name="heart" size={20} color='#bebebe' />)
+    }
+  }
+
+  const handleRefuse = async () => {
+    try {
+      const myURL = `${BACKEND_URL}/users/refuse-loan`;
+      const response = await fetch(encodeURI(myURL), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          tmdb_id: moviedata.tmdb_id,
+          notificationId: notificationId,
+          requesterId: requester._id
+        })
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        Alert.alert("Refusé", "La demande a été refusée.");
+        setIsModalVisible(false);
+      }
+    } catch (error) {
+      console.error("Erreur lors du refus :", error);
+    }
+  };
+
+  const handlePublishReview = async () => {
+    if (rating === 0 && reviewText.trim() === '') {
+      Alert.alert("Oups", "Veuillez laisser une note ou un commentaire.");
+      return;
+    }
+
+    try {
+      const url = isEditing ? `${BACKEND_URL}/users/edit-review` : `${BACKEND_URL}/users/add-review`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(encodeURI(url), {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: user.token,
+          ownerId: ownerId || user._id, 
+          tmdb_id: datas.tmdb_id,
+          reviewId: editingReviewId, 
+          newRating: rating,         
+          newComment: reviewText,    
+          rating: rating,            
+          comment: reviewText        
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.result) {
+        Alert.alert("Succès", data.message);
+
+        if (isEditing) {
+          const updatedReviews = datas.reviews?.map((r) => {
+            if (r._id === editingReviewId) {
+              return { ...r, rating: rating, comment: reviewText };
+            }
+            return r;
+          });
+          setDatas({ ...datas, reviews: updatedReviews });
+          setIsEditing(false);
+          setEditingReviewId(null);
+          setRating(0);
+          setReviewText('');
+
+        } else {
+          const newReview = {
+            _id: data.reviewId,
+            // 🚀 AJOUT DE L'AVATAR LOCAL POUR L'AFFICHAGE INSTANTANÉ
+            userid: { _id: user._id, username: user.username, avatar: (user as any).avatar },
+            rating: rating,
+            comment: reviewText,
+            createdAt: new Date(),
+            like: [],
+            replies: []
+          };
+
+          setDatas({
+            ...datas,
+            reviews: [...(datas.reviews as Review[] || []), newReview]
+          });
+
+          if (mode === 'collection' && indexMovie !== -1) {
+            dispatch(addReviewToStore({ index: indexMovie, review: newReview }));
+          }
+
+          setRating(0);
+          setReviewText('');
+        }
+      } else {
+        Alert.alert("Accès refusé", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Impossible de contacter le serveur.");
+    }
+  };
+
+  const handleLikeReview = async (reviewId: string) => {
+    if (!reviewId) return; 
+    try {
+      const myURL = `${BACKEND_URL}/users/like-review`;
+      const response = await fetch(encodeURI(myURL), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, ownerId: ownerId || user._id}),
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        const updatedReviews = datas.reviews?.map((r: Review) => {
+          if (r._id === reviewId) {
+            const hasLiked = r.likes?.includes(user._id);
+            return {
+              ...r,
+              likes: hasLiked ? r.likes?.filter((id: string) => id !== user._id) : [...(r.likes || []), user._id]
+            };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleReplyReview = async (reviewId: string) => {
+    if (!replyText.trim() || !reviewId) return;
+    try {
+      const myURL = `${BACKEND_URL}/users/reply-review`;
+      const response = await fetch(encodeURI(myURL), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, text: replyText }),
+      });
+      const data = await response.json();
+
+      if (data.result) {
+        // 🚀 AJOUT DE L'AVATAR LOCAL POUR L'AFFICHAGE INSTANTANÉ DE LA RÉPONSE
+        const newReply = {_id: data.answer._id, userid: {_id :user._id, username: user.username, avatar: (user as any).avatar}, text: replyText, createdAt: new Date() };
+        const updatedReviews = datas.reviews?.map((r: Review) => {
+          if (r._id === reviewId) {
+            return { ...r, replies: [...(r.replies as []), newReply] };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+        setReplyingTo(null);
+        setReplyText('');
+      } else {
+        Alert.alert("Erreur", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const formatReviewDate = (dateString: Date) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const getReviewerName = (reviewerId: {_id: string, username: string}) => {
+    if (!reviewerId) return 'Inconnu';
+    if (reviewerId.username === user.username) return 'Moi';
+    return reviewerId.username;
+  };
+
+  const hasValidAvatar = (userObj: any) => {
+    return userObj && userObj.avatar && userObj.avatar !== 'default' && avatars[userObj.avatar as keyof typeof avatars];
+  };
+
+  const getAverageRating = () => {
+    if (!datas.reviews || datas.reviews.length === 0) return 0;
+    const ratedReviews = datas.reviews.filter((r: any) => r.rating && r.rating > 0);
+    if (ratedReviews.length === 0) return 0;
+    const total = ratedReviews.reduce((sum: number, r: any) => sum + r.rating, 0);
+    return total / ratedReviews.length;
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    Alert.alert(
+      "Supprimer l'avis",
+      "Êtes-vous sûr de vouloir supprimer cet avis ?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const myURL = `${BACKEND_URL}/users/delete-review`;
+              const response = await fetch(encodeURI(myURL), {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  token: user.token,
+                  tmdb_id: datas.tmdb_id,
+                  reviewId: reviewId
+                }),
+              });
+              const data = await response.json();
+              if (data.result) {
+                const updatedReviews = datas.reviews?.filter((r: any) => r._id !== reviewId);
+                setDatas({ ...datas, reviews: updatedReviews });
+                Alert.alert("Succès", "L'avis a été supprimé avec succès.");
+              } else {
+                Alert.alert("Erreur", "Impossible de supprimer l'avis.");
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const submitEditReply = async (reviewId: string, replyId: string) => {
+    if (!editReplyText.trim()) return;
+    try {
+      const myURL = `${BACKEND_URL}/users/edit-reply`;
+      const response = await fetch(encodeURI(myURL), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId, newText: editReplyText }),
+      });
+      const data = await response.json();
+      if (data.result) {
+        const updatedReviews = datas.reviews?.map((r: any) => {
+          if (r._id === reviewId) {
+            const updatedReplies = r.replies.map((rep: any) => {
+              if (rep._id === replyId) return { ...rep, text: editReplyText };
+              return rep;
+            });
+            return { ...r, replies: updatedReplies };
+          }
+          return r;
+        });
+        setDatas({ ...datas, reviews: updatedReviews });
+        setEditingReplyId(null);
+        setEditReplyText('');
+      } else {
+        Alert.alert("Erreur", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteReply = async (reviewId: string, replyId: string) => {
+    Alert.alert(
+      "Supprimer la réponse",
+      "Confirmez-vous la suppression de cette réponse ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const myURL = `${BACKEND_URL}/users/delete-reply`;
+              const response = await fetch(encodeURI(myURL), {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId }),
+              });
+              const data = await response.json();
+              if (data.result) {
+                const updatedReviews = datas.reviews?.map((r: any) => {
+                  if (r._id === reviewId) {
+                    return { ...r, replies: r.replies.filter((rep: any) => rep._id !== replyId) };
+                  }
+                  return r;
+                });
+                setDatas({ ...datas, reviews: updatedReviews });
+              } else {
+                Alert.alert("Erreur", data.error);
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
-    <View style={styles.modalOverlay}>
+
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : 'height'}
+      keyboardVerticalOffset={-110} style={styles.modalOverlay}>
       <View style={styles.modalContent}>
+
         <ScrollView contentContainerStyle={styles.modalScroll} style={{ flexShrink: 1 }}>
+          <TouchableOpacity onPress={() => handleLike()} disabled={(mode == 'friend') ? (true) : (false)} style={{ marginLeft: '90%' }}>
+            {drawHeart()}
+          </TouchableOpacity>
           <View style={styles.posterContainer}>
             <Poster
               imageUrl={imageUrl}
               isLoaned={datas.isLoaned}
-              columns={2} 
+              columns={2}
             />
           </View>
-          {/* TODO S'il title_fr !== original_title inscrire sur une ligne en dessous original_title en plus petit et en moins clair*/}
+
           <Text style={styles.modalTitle}>{datas?.title_fr || datas?.original_title}</Text>
-
-          <View style={styles.modalInfoGrid}>
-            {/* TODO Faire en sorte que les genres, le cast, le compositeur, le réal soient clickables */}
-            <Text style={styles.modalLabel}>Date de sortie : <Text style={styles.modalText}>{datas?.release_date}</Text></Text>
-            <Text style={styles.modalLabel}>Réalisé par :</Text>
-            {renderClickableNames(datas?.DirectedBy, 'director')}
-            <Text style={styles.modalLabel}>Genre :</Text>
-            {renderClickableNames(datas?.Genres, 'genre')}
-            <Text style={styles.modalLabel}>Compositeur : </Text>
-            {renderClickableNames(datas?.MusicBy, 'composer')}
-
-            <Text style={styles.modalLabel}>Casting :</Text>
-            {renderClickableNames(datas?.Cast, 'actor', 15)}
-            {mode === 'collection' && (
-              <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
-                <Buttons
-                  title="🗑️ Supprimer le film"
-                  onPress={onDeleteClick}
-                  variant="primary"
-                  style={{ backgroundColor: '#d9534f', width: '80%' }}
-                />
-              </View>
+          <View style={{ alignItems: 'center', marginBottom: 15, marginTop: -10 }}>
+            {getAverageRating() > 0 ? (
+              <>
+                <Text style={{ color: '#e8be4b', fontSize: 13, fontWeight: 'bold', marginBottom: 4 }}>
+                  Note des utilisateurs ({datas.reviews?.length} avis)
+                </Text>
+                <StarRating rating={Math.round(getAverageRating() * 2) / 2} size={16} disabled={true} />
+              </>
+            ) : (
+              <Text style={{ color: '#aaa', fontSize: 13, fontStyle: 'italic' }}>
+                Aucune note pour le moment
+              </Text>
             )}
           </View>
+
+          {mode !== 'add' && (
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
+                style={[styles.tabButton, activeTab === 'details' && styles.activeTabButton]}
+                onPress={() => setActiveTab('details')}
+              >
+                <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>Détails</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.tabButton, activeTab === 'reviews' && styles.activeTabButton]}
+                onPress={() => setActiveTab('reviews')}
+              >
+                <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>Avis</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {activeTab === 'details' ? (
+            <View style={styles.modalInfoGrid}>
+              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={[styles.modalLabel, {color: '#fff'}]}>Titre original : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.original_title}</Text></>) : (<></>)}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Date de sortie : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.release_date}</Text>
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Réalisé par :</Text>
+              {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : <Text>Inconnu</Text>}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Genre :</Text>
+              {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : <Text>Inconnu</Text>}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Compositeur : </Text>
+              {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : <Text>Inconnu</Text>}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Casting :</Text>
+              {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : <Text>Inconnu</Text>}
+
+              {mode === 'collection' && (!ownerId || ownerId === user._id) && (
+                <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
+                  <Buttons
+                    title="🗑️ Supprimer le film"
+                    onPress={() => onDeleteClick}
+                    variant="primary"
+                    style={{ backgroundColor: '#d9534f', width: '80%' }}
+                  />
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.reviewsContainer}>
+              
+              {didIMakeAReview() ? null : (
+                <View style={styles.reviewFormContainer}>
+                  <Text style={styles.modalLabel}>Laissez votre avis :</Text>
+
+                  <StarRating
+                    rating={rating}
+                    onRatingPress={(newRating) => setRating(newRating)}
+                  />
+                  
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Qu'avez-vous pensé de ce film ?"
+                    placeholderTextColor="#888"
+                    multiline={true}
+                    numberOfLines={4}
+                    value={reviewText}
+                    onChangeText={setReviewText}
+                  />
+                  
+                  <Buttons
+                    title="Publier mon avis"
+                    onPress={handlePublishReview}
+                    variant="outline"
+                  />
+                </View>
+              )}
+
+              {datas.reviews && datas.reviews.length > 0 ? (
+                <View style={styles.reviewsList}>
+                  {datas.reviews.map((review, index: number) => {
+                    const isMyReview = review.userid?._id  === user._id  
+                    const isMyCollection = mode !== 'friend' && mode !== 'add';
+                    const isEditingThisReview = isEditing && editingReviewId === review._id;
+                    let likeText = "J'aime"; 
+                    
+                    if (review.likes && review.likes.length > 0) {
+                      if (review.likes.includes(user._id)) {
+                        likeText = "Aimé par vous";
+                      } else if (ownerId && review.likes.includes(ownerId)) {
+                        const friend = user.friends?.find((f: any) => f._id === ownerId || f.userid === ownerId);
+                        const ownerName = friend?.username || "le prêteur"; 
+                        likeText = `Aimé par ${ownerName}`; 
+                      } else {
+                        likeText = "Aimé"; 
+                      }
+                    }
+
+                    return (
+                      <View key={index} style={styles.reviewItem}>
+
+                        {/* 🚀 MODIFICATION ICI : Ajout de l'avatar dans l'en-tête de l'avis */}
+                        <View style={styles.reviewHeader}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            {hasValidAvatar(review.userid) ? (
+                              <Image 
+                                source={avatars[review.userid.avatar as keyof typeof avatars]} 
+                                style={styles.reviewAvatarImage} 
+                              />
+                            ) : (
+                              <FontAwesome name="user-circle" size={24} color="#e8be4b" style={{ marginRight: 10 }} />
+                            )}
+                            <Text style={styles.reviewAuthor}>{getReviewerName(review.userid)}</Text>
+                          </View>
+                          <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
+                        </View>
+
+                        {isEditingThisReview ? (
+                          <View style={{ marginTop: 10 }}>
+                            <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
+                              <StarRating rating={rating} onRatingPress={(newRating) => setRating(newRating)} />
+                            </View>
+                            
+                            <TextInput
+                              style={styles.textInput}
+                              multiline={true}
+                              value={reviewText}
+                              onChangeText={setReviewText}
+                              autoFocus={true}
+                            />
+                            
+                            <View style={{ flexDirection: 'row', gap: 10, marginTop: 5 }}>
+                              <View style={{ flex: 1 }}>
+                                <Buttons title="Enregistrer" onPress={handlePublishReview} variant="outline" />
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Buttons
+                                  title="Annuler"
+                                  onPress={() => {
+                                    setIsEditing(false);
+                                    setEditingReviewId(null);
+                                    setRating(0);
+                                    setReviewText('');
+                                  }}
+                                  variant="primary"
+                                  style={{ backgroundColor: '#555' }}
+                                />
+                              </View>
+                            </View>
+                          </View>
+
+                        ) : (
+                          <>
+                            <View style={{ alignItems: 'flex-start', marginVertical: -5 }}>
+                              <StarRating rating={review.rating ? review.rating : 0} size={14} disabled={true} />
+                            </View>
+
+                            {review.comment ? (
+                              <Text style={styles.reviewText}>{review.comment}</Text>
+                            ) : null}
+                          </>
+                        )}
+
+                       {!isEditingThisReview && (
+                          <View style={styles.reviewActions}>
+                            <View style={{ flexDirection: 'row' }}>
+                              {review._id && (
+                                <>
+                                  <TouchableOpacity 
+                                    disabled={!(isMyCollection || isMyReview)} 
+                                    onPress={() => handleLikeReview(review._id)} 
+                                    style={styles.actionBtn}
+                                  >
+                                    <FontAwesome
+                                      name={review.likes ? review.likes?.length > 0 ? "heart" : "heart-o" : 'heart-o'}
+                                      size={15}
+                                      color={review.likes  ? review.likes?.length > 0 ? "#e8be4b" : "#aaa" : '#aaa'}
+                                    />
+                                    <Text style={{ color: review.likes ? review.likes?.length > 0 ? '#e8be4b' : '#aaa' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
+                                      {likeText}
+                                    </Text>
+                                  </TouchableOpacity>
+
+                                  {(isMyCollection || isMyReview) && (
+                                    <TouchableOpacity onPress={() => setReplyingTo(replyingTo === review._id ? null : review._id)} style={styles.actionBtn}>
+                                      <FontAwesome name="comment-o" size={15} color="#aaa" />
+                                      <Text style={[styles.actionText, { marginLeft: 6 }]}>
+                                        Répondre
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </>
+                              )}
+                            </View>
+
+                            {(isMyReview || isMyCollection) && (
+                              <View style={{ flexDirection: 'row', gap: 15 }}>
+                                {isMyReview && (
+                                  <TouchableOpacity
+                                    style={{ padding: 4 }}
+                                    onPress={() => {
+                                      setIsEditing(true);
+                                      setEditingReviewId(review._id);
+                                      setRating(review.rating || 0);  
+                                      setReviewText(review.comment || ''); 
+                                    }}
+                                  >
+                                    <FontAwesome name="pencil" size={16} color="#aaa" />
+                                  </TouchableOpacity>
+                                )}
+
+                                <TouchableOpacity style={{ padding: 4 }} onPress={() => handleDeleteReview(review._id)}>
+                                  <FontAwesome name="trash-o" size={16} color="#d9534f" />
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                            </View>
+                        )}
+
+                        {replyingTo === review._id && (
+                          <View style={styles.replyInputBox}>
+                            <TextInput
+                              style={styles.replyInput}
+                              placeholder="Écrivez votre réponse..."
+                              placeholderTextColor="#888"
+                              value={replyText}
+                              onChangeText={setReplyText}
+                              autoFocus={true}
+                            />
+                            <TouchableOpacity onPress={() => handleReplyReview(review._id)} style={styles.replySendBtn}>
+                              <Text style={styles.replySendText}>OK</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+
+                        {review.replies && review.replies.length > 0 && (
+                          <View style={styles.repliesList}>
+                            {review.replies.map((reply: Reply, rIndex: number) => {
+                              const isMyReply = reply.userid._id === user._id;
+
+                              return (
+                                <View key={rIndex} style={styles.replyItem}>
+                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    
+                                    {/* 🚀 MODIFICATION ICI : Ajout de l'avatar dans l'en-tête de la réponse */}
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                      {hasValidAvatar(reply.userid) ? (
+                                        <Image 
+                                          source={avatars[reply.userid.avatar as keyof typeof avatars]} 
+                                          style={styles.replyAvatarImage} 
+                                        />
+                                      ) : (
+                                        <FontAwesome name="user-circle" size={16} color="#e8be4b" style={{ marginRight: 6 }} />
+                                      )}
+                                      <Text style={styles.replyAuthor}>{getReviewerName(reply.userid)} :</Text>
+                                    </View>
+                                    
+                                    {(isMyReply || isMyCollection) && (
+                                      <View style={{ flexDirection: 'row', gap: 18, paddingLeft: 10 }}>
+                                        {isMyReply && (
+                                          <TouchableOpacity 
+                                            style={{ padding: 4 }}
+                                            onPress={() => {
+                                              setEditingReplyId(reply._id);
+                                              setEditReplyText(reply.text);
+                                            }}
+                                          >
+                                            <FontAwesome name="pencil" size={18} color="#aaa" />
+                                          </TouchableOpacity>
+                                        )}
+                                        <TouchableOpacity 
+                                          style={{ padding: 4 }}
+                                          onPress={() => handleDeleteReply(review._id, reply._id)}
+                                        >
+                                          <FontAwesome name="trash-o" size={18} color="#d9534f" />
+                                        </TouchableOpacity>
+                                      </View>
+                                    )}
+                                  </View>
+
+                                  {editingReplyId === reply._id ? (
+                                    <View style={{ flexDirection: 'row', marginTop: 5, alignItems: 'center' }}>
+                                      <TextInput
+                                        style={[styles.replyInput, { flex: 1, paddingVertical: 4 }]}
+                                        value={editReplyText}
+                                        onChangeText={setEditReplyText}
+                                        autoFocus={true}
+                                      />
+                                      <TouchableOpacity onPress={() => submitEditReply(review._id, reply._id)} style={[styles.replySendBtn, { paddingHorizontal: 8, paddingVertical: 6 }]}>
+                                        <Text style={styles.replySendText}>OK</Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity onPress={() => setEditingReplyId(null)} style={[styles.replySendBtn, { backgroundColor: '#555', paddingHorizontal: 8, paddingVertical: 6 }]}>
+                                        <Text style={[styles.replySendText, { color: '#fff' }]}>X</Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  ) : (
+                                    <Text style={styles.replyTextContent}>{reply.text}</Text>
+                                  )}
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text style={styles.reviewPlaceholder}>
+                  Aucun avis pour le moment. Soyez le premier !
+                </Text>
+              )}
+            </View>
+          )}
         </ScrollView>
 
         <View style={styles.modalButtonsRow}>
-          {/* TODO jouer sur le CSS des boutons, ils se touchent actuellement */}
-          <View style={{ flex: 1 }}>
-            <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
-          </View>
-          <View style={{ flex: 1 }}>
-            {mode === 'add' ? (
-              <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
-            ) : (
-              <Buttons title="Prêter" onPress={onLendClick} variant="primary" />
-            )}
-          </View>
+          {mode === 'manage_request' ? (
+            <>
+              <View style={{ flex: 1 }}>
+                <Buttons
+                  title="Refuser"
+                  onPress={handleRefuse}
+                  variant="primary"
+                  style={{ backgroundColor: '#d9534f' }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Buttons
+                  title={`Prêter à ${requester?.username}`}
+                  onPress={() => setIsLoanModalVisible(true)}
+                  variant="primary"
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={{ flex: 1 }}>
+                <Buttons title="Retour" onPress={() => setModalVisible()} variant="primary" />
+              </View>
+              <View style={{ flex: 1 }}>
+                {mode === 'add' ? (
+                  <Buttons title="Ajouter" onPress={handleAddMovie} variant="primary" />
+                ) : mode === 'friend' ? (
+                  datas?.isLoaned ? (
+                    <View style={{ backgroundColor: 'rgba(217, 83, 79, 0.2)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#d9534f', alignItems: 'center' }}>
+                      <Text style={{ color: '#d9534f', fontWeight: 'bold' }}>Indisponible</Text>
+                    </View>
+                  ) : (
+                    typeof(onAskMovie) == 'function' ? <Buttons title="Demander" onPress={() => onAskMovie()} variant="primary" /> : <></>
+                  )
+                ) : ownerId && ownerId !== user._id ? (
+                  
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#aaa', alignItems: 'center' }}>
+                    <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Film emprunté</Text>
+                  </View>
+                  
+                ) : (
+                  
+                  datas?.isLoaned ? (
+                    <Buttons title="Détails du prêt" onPress={() => setIsLoanDetailsVisible(true)} variant="primary" style={{ backgroundColor: '#e8be4b' }} />
+                  ) : (
+                    <Buttons title="Prêter" onPress={() => setIsLoanModalVisible(true)} variant="primary" />
+                  )
+                  
+                )}
+              </View>
+            </>
+          )}
         </View>
+
       </View>
-    </View>
+
+      <LoanModal
+        visible={isLoanModalVisible}
+        onClose={() => setIsLoanModalVisible(false)}
+        movie={datas}
+        movieTmdbId={datas?.tmdb_id}
+        preselectedUser={requester}
+        notificationId={notificationId}
+        onSuccess={(updatedPastLoans) => {
+          setDatas({
+            ...datas,
+            isLoaned: true,
+            pastLoans: updatedPastLoans
+          });
+
+          setIsLoanModalVisible(false);
+          if (typeof setIsModalVisible === 'function') {
+            setIsModalVisible(false);
+          } else if (typeof setModalVisible === 'function') {
+            setModalVisible();
+          }
+        }}
+      />
+      {currentLoan ? (<LoanDetailsModal
+        visible={isLoanDetailsVisible}
+        onClose={() => setIsLoanDetailsVisible(false)}
+        movieName={datas?.title_fr || datas?.original_title || 'ce film'}
+        movieTmdbId={datas?.tmdb_id}
+        currentLoan={currentLoan}
+        onReturnSuccess={() => setDatas({ ...datas, isLoaned: false })}
+      />) : (<></>)}
+
+
+    </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  // Styles de la Modale
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -224,5 +1026,178 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  activeTabButton: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#e8be4b',
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  activeTabText: {
+    color: '#e8be4b',
+  },
+  reviewsContainer: {
+    width: '100%',
+    paddingVertical: 10,
+  },
+  reviewPlaceholder: {
+    color: '#aaa',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  reviewFormContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  textInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    color: '#fff',
+    borderRadius: 8,
+    padding: 15,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 190, 75, 0.3)',
+  },
+  reviewsList: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  reviewItem: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  
+  // 🚀 NOUVEAUX STYLES POUR LES AVATARS
+  reviewAvatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 10,
+  },
+  replyAvatarImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+  },
+
+  reviewAuthor: {
+    color: '#e8be4b',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  reviewDate: {
+    color: '#aaa',
+    fontSize: 12,
+  },
+  reviewText: {
+    color: '#fff',
+    fontSize: 15,
+    fontStyle: 'italic',
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  actionBtn: {
+    marginRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionText: {
+    color: '#aaa',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  replyInputBox: {
+    flexDirection: 'row',
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  replyInput: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    color: '#fff',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 13,
+  },
+  replySendBtn: {
+    marginLeft: 10,
+    backgroundColor: '#e8be4b',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  replySendText: {
+    color: '#111',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  repliesList: {
+    marginTop: 10,
+    paddingLeft: 15,
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(232, 190, 75, 0.5)',
+  },
+  replyItem: {
+    marginTop: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    padding: 8,
+    borderRadius: 5,
+  },
+  replyAuthor: {
+    color: '#e8be4b',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  replyTextContent: {
+    color: '#ddd',
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+  reviewActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 8,
   },
 });

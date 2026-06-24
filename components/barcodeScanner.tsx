@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { CameraView } from 'expo-camera';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert} from 'react-native';
+import { CameraView, BarcodeScanningResult } from 'expo-camera';
 import { Buttons } from './buttons'; 
 
 
@@ -16,6 +16,9 @@ export default function BarcodeScanner({
   onClose,
 }: BarcodeScannerProps) {
 
+  const cameraRef = useRef<CameraView | null>(null);
+  const lastScan = useRef<string | null>(null);
+  const [scanCount, setScanCount] = useState(0);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,20 +33,26 @@ export default function BarcodeScanner({
     }
   }, [scannedTitle]);
 
-  const handleBarCodeScanned = async ({ type, data }: { type: string, data: string }) => {
-    console.log("Code-barres détecté :", data, "de type", type);
+  const handleBarCodeScanned = async (result : BarcodeScanningResult) => {
+    console.log("Code-barres détecté :", result.data, "de type", result.type);
     
     if (!isScanning) return;
     setIsScanning(false); 
-
+    if (result.data === lastScan.current) return;
+    lastScan.current = result.data;
+    setScanCount(c => c + 1);
+    console.log(`Scan #${scanCount}: ${result.data}`);
+    setTimeout(() => { lastScan.current = null; }, 2000);
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
+      const myURL = `${BACKEND_URL}/movies/searchean/${result.data}`; 
+      const response = await fetch(encodeURI(myURL));
+
       const json = await response.json();
       console.log("Réponse du serveur :", json)
       if (json.result && json.answer) {
         let rawTitle = json.answer; 
         let cleanTitle = rawTitle;
-        
+
         cleanTitle = cleanTitle.replace(/dvd|blu-ray|bluray|achat|pas cher|ean|cd|édition|edition|collector|neuf|occasion|dvdfr|vhs/gi, '');
         cleanTitle = cleanTitle.replace(/[\[\]\(\)]/g, '');
         cleanTitle = cleanTitle.replace(/\s*-\s*$/g, '');
@@ -82,9 +91,12 @@ export default function BarcodeScanner({
           autofocus="on"
           zoom={0.15}
           barcodeScannerSettings={{
-            barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"], 
+            barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"],
           }}
-          onBarcodeScanned={handleBarCodeScanned}
+          ref={(cameraRef)}
+          onBarcodeScanned={(data) => {handleBarCodeScanned(data)}
+          } 
+
         />
       ) : !scannedTitle ? (
         

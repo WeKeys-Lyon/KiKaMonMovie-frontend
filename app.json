@@ -34,7 +34,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "plugins": [
       [
         "expo-camera",
@@ -44,7 +44,14 @@
           "recordAudioAndroid": true,
           "barcodeScannerEnabled": true
         }
-      ]
-    ]
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c45583bf-f474-48e7-ad6c-93b734af25be"
+      }
+    },
+    "owner": "torad"
   }
 }

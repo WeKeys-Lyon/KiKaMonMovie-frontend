@@ -8,7 +8,6 @@ import {
   Text,
   TextInput,
   View,
-  Alert
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -29,6 +28,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
   const dispatch = useDispatch();
 
+
   
 
   const handleSubmit = async () => {
@@ -37,8 +37,10 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setError('Veuillez remplir tous les champs');
       return;
     }
+    
     try {
       const myURL = `${BACKEND_URL}/users/signin`;
+
       const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {
@@ -52,13 +54,19 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       const data = await response.json();
 
       if (data.result) {
+        console.log(data.answer.avatar)
         dispatch(login({
+          _id: data.answer._id,
           email: data.answer.email,
           username: data.answer.username,
           token: data.answer.token,
-          movies: data.answer.movies
+          movies: data.answer.movies,
+          friends: data.answer.friends,
+          friendCode: data.answer.friendCode,
+          notifications: data.answer.notifications,
+          avatar: data.answer.avatar
         }));
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+        navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {
         setError(data.answer);
       }
@@ -114,11 +122,6 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           <View style={styles.buttonContainer}>
               <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
               <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
-          </View>
-          <View style={styles.separatorContainer}>
-            <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>OU</Text>
-            <View style={styles.separatorLine} />
           </View>
         </View>
       </KeyboardAvoidingView>

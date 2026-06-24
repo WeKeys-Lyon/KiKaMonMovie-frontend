@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { Buttons } from '../components/buttons';
 import {
-  Image,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/header';
 
 
@@ -38,22 +35,37 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const BACKEND_URL = process.env.BACKEND_URL;
 
 
+    const isValidPassword = (password: string) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
+    return passwordRegex.test(password);
+  };
+
+
 
   const handleSubmit = async () => {
     setError('');
     
+    // 1. Vérification des champs vides
     if (!email || !username || !password || !confirmPassword) {
       setError('Veuillez remplir tous les champs');
-    
       return;
     }
+
+    // 🛡️ 2. Vérification de la complexité du mot de passe
+    if (!isValidPassword(password)) {
+      setError('Le mot de passe doit contenir au moins 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.');
+      return;
+    }
+
+    // 3. Vérification de la correspondance
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
-    try {
 
-      const myURL = `${BACKEND_URL}/users/signup`
+    try {
+      // (Petit rappel : encodeURI n'est pas nécessaire ici 😉)
+      const myURL = `${BACKEND_URL}/users/signup`;
       const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {
@@ -68,24 +80,27 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       const data = await response.json();
       
       if (data.result) {
-        
         const userMovies = (data.answer.movies) ? data.answer.movies : [];
 
         dispatch(login({
+          _id: data.answer._id,
           email: email, 
           username: username, 
           token: data.answer.token,
-          movies: userMovies
+          movies: userMovies,
+          friendCode: data.answer.friendCode, // 🐛 CORRECTION DE LA FAUTE DE FRAPPE ICI
+          friends: data.answer.friends,
+          notifications: data.answer.notifications,
+          avatar: data.answer.avatar
         }));
+        
         if (userMovies.length < 1) {
-          
           navigation.navigate('OnboardingAddAMovie');
         } else {
-          
-        navigation.navigate('TabNavigator', { screen: 'MyCollection' });
+          navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
         } 
       } else {
-        setError(data.answer);
+        setError(data.answer); // Affiche l'erreur du backend (ex: "Email déjà utilisé")
       }
     } catch (error) {
       console.error(error);
@@ -96,6 +111,12 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const handleReturn = () => {
     navigation.navigate('Home');
   };
+
+  const isLengthValid = password.length >= 8;
+  const isUpperValid = /[A-Z]/.test(password);
+  const isLowerValid = /[a-z]/.test(password);
+  const isNumberValid = /\d/.test(password);
+  const isSpecialValid = /[^\da-zA-Z]/.test(password) && password.length > 0;
 
 
   return (
@@ -135,6 +156,24 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
               style={styles.input}
               secureTextEntry
             />
+            <Text style={{color: '#fff', fontSize: 16, marginBottom: 5}}>Au moins :</Text>
+            <View style={styles.rulesContainer}>
+              <Text style={[styles.ruleText, isLengthValid ? styles.ruleValid : styles.ruleInvalid]}>
+                {isLengthValid ? '✅' : '❌'} 8 caractères
+              </Text>
+              <Text style={[styles.ruleText, isUpperValid ? styles.ruleValid : styles.ruleInvalid]}>
+                {isUpperValid ? '✅' : '❌'} 1 Majuscule
+              </Text>
+              <Text style={[styles.ruleText, isLowerValid ? styles.ruleValid : styles.ruleInvalid]}>
+                {isLowerValid ? '✅' : '❌'} 1 Minuscule
+              </Text>
+              <Text style={[styles.ruleText, isNumberValid ? styles.ruleValid : styles.ruleInvalid]}>
+                {isNumberValid ? '✅' : '❌'} 1 Chiffre
+              </Text>
+              <Text style={[styles.ruleText, isSpecialValid ? styles.ruleValid : styles.ruleInvalid]}>
+                {isSpecialValid ? '✅' : '❌'} 1 Charactère Spécial
+              </Text>
+            </View>
             <TextInput
               placeholder="Confirmez votre mot de passe"
               placeholderTextColor="#ccc"
@@ -200,6 +239,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 8,
     paddingHorizontal: 15,
+    minWidth: '80%',
     height: 50,
     color: '#fff',
     marginBottom: 15,
@@ -226,6 +266,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  rulesContainer: {
+    width: '90%',
+    flexDirection: 'row', 
+    flexWrap: 'wrap',    
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    gap: 3
+  },
+  ruleText: {
+    width: '48%',         
+    fontSize: 11,
+    marginBottom: 4,
+    fontWeight: 'bold',
+  },
+  ruleValid: {
+    color: '#4caf50',    
+  },
+  ruleInvalid: {
+    color: '#ff4d4d',     
   },
 
 });

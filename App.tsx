@@ -8,7 +8,10 @@ import SignUpScreen from './screens/SignUpScreen';
 import SignInScreen from './screens/SignInScreen';
 import MyCollection from './screens/MyCollection';
 import AddAMovie from './screens/AddAMovie';
-/*import MyShares from './screens/MyShares'; */
+import MyAccount from './screens/MyAccount';
+import MyFriends from './screens/myFriends';
+import FriendCollection from './screens/friendCollection';
+import MyShares from './screens/MyShares';
 
 // redux imports
 import { Provider } from 'react-redux';
@@ -38,13 +41,20 @@ const Tab = createBottomTabNavigator();
 const TabNavigator = () => {
   return (
     <Tab.Navigator screenOptions={({ route }) => ({
+      tabBarStyle: {
+        borderTopWidth: 1,
+        borderTopColor: 'black',
+        backgroundColor: '#1C2942',
+      },
       tabBarIcon: ({ color, size }) => {
         let iconName: string = '';
 
-        if (route.name === 'Snap') {
-          iconName = 'camera';
-        } else if (route.name === 'Gallery') {
-          iconName = 'image';
+        if (route.name === 'Ma Collection') {
+          iconName = 'home';
+        } else if (route.name === 'Ajouter un Film') {
+          iconName = 'plus';
+        } else if (route.name === 'Mes Partages') {
+          iconName = 'share-alt';
         }
 
         return <FontAwesome name={iconName} size={size} color={color} />;
@@ -53,12 +63,14 @@ const TabNavigator = () => {
       tabBarInactiveTintColor: '#b2b2b2',
       headerShown: false,
     })}>
-      <Tab.Screen name="MyCollection" component={MyCollection} options={{ headerShown: false }} />
-      <Tab.Screen name="AddAMovie" component={AddAMovie} />
-      {/*<Tab.Screen name="MyShares" component={MyShares} /> */}
+      <Tab.Screen name="Ma Collection" component={MyCollection} options={{ headerShown: false }} />
+      <Tab.Screen name="Ajouter un Film" component={AddAMovie} />
+      <Tab.Screen name="Mes Partages" component={MyShares} /> 
     </Tab.Navigator>
   );
 };
+
+
 
 export default function App() {
   return (
@@ -71,6 +83,9 @@ export default function App() {
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="TabNavigator" component={TabNavigator} />
           <Stack.Screen name="OnboardingAddAMovie" component={AddAMovie} />
+          <Stack.Screen name="MyAccount" component={MyAccount} />
+          <Stack.Screen name="MyFriends" component={MyFriends} />
+          <Stack.Screen name="FriendCollection" component={FriendCollection} />
         </Stack.Navigator>
       </NavigationContainer>
       </PersistGate>

@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, ImageBackground, TextInput, FlatList,
-  KeyboardAvoidingView, Platform, Image, Modal, ScrollView, TouchableOpacity, Alert
-} from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
-import { Buttons } from '../components/buttons';
 import MovieCard from '../components/movieCard';
 import SelectionMenu from '../components/selectionMenu';
 import ManualSearch from '../components/manualSearch';
 import SearchResults from '../components/searchResults';
 import BarcodeScanner from '../components/barcodeScanner';
-import { UseDispatch, useSelector } from 'react-redux';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { truncate } from 'node:fs';
+
+import { useCameraPermissions } from 'expo-camera';
+import { movieProps } from '../components/types';
+
 
 
 type AddAMovieScreenProps = {
@@ -31,24 +28,17 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
   const [movieData, setMovieData] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMovie, setSelectedMovie] = useState<any>(null);
+  const [selectedMovie, setSelectedMovie] = useState<movieProps | null>(null);
   const [drawStyle, setDrawStyle] = useState<boolean>(false);
-  const user = useSelector((state: any) => state.user.value);
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedTitle, setScannedTitle] = useState<string | null>(null);
   const [searchOrigin, setSearchOrigin] = useState('manual');
+  const [error, setError] = useState<string>('')
+  const [error2, setError2] = useState<string>('')
 
   const BACKEND_URL = process.env.BACKEND_URL;
-
-
-
-  const handleManualSearch = () => {
-    setIsSearchMode(true);
-    {/*navigation.navigate('ManualSearch');*/ }
-    console.log("Ouverture de la page de recherche manuelle");
-  };
 
   const cancelSearch = () => {
     setIsSearchMode(false);
@@ -58,33 +48,31 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setMovieData([]);
   };
 
-  const backToSearch = () => {
-    setShowResults(false);
-    setMovieData([]);
-  };
-
-
   const launchSearch = async () => {
     if (!queryTitle) return;
 
     console.log('Recherche lancée pour :', queryTitle);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/search/${queryTitle}`);
+      const myURL = `${BACKEND_URL}/movies/search/${queryTitle}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
+        setDrawStyle(false);
         setQueryAsked(queryTitle);
         setSearchOrigin('manual');
       } else {
+        setError(data.error)
         console.log("Erreur backend", data.error);
       }
     } catch (error) {
       console.error("Erreur réseau :", error);
     }
   };
+
   const launchSearchPeople = async () => {
 
     if (!queryPerson) return;
@@ -92,16 +80,17 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log('Recherche de personnalité lancée pour :', queryPerson);
 
     try {
-
-      const response = await fetch(`${BACKEND_URL}/movies/searchpeople/${queryPerson}`);
+      const myURL = `${BACKEND_URL}/movies/searchpeople/${queryPerson}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result) {
         setMovieData(data.answer);
         setShowResults(true);
-        setDrawStyle(true)
+        setDrawStyle(true);
         setQueryAsked(data.people)
       } else {
+        setError2(data.error)
         console.log("Erreur backend", data.error);
       }
     } catch (error) {
@@ -109,7 +98,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     }
   };
 
-  const handleOpenModal = (movie: any) => {
+  const handleOpenModal = (movie : movieProps) => {
     setSelectedMovie(movie);
     setIsModalVisible(true);
   };
@@ -130,7 +119,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log(`code barre: ${data}`)
 
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
+      const myURL = `${BACKEND_URL}/movies/searchean/${data}`;
+      const response = await fetch(encodeURI(myURL));
       const json = await response.json();
 
       if (json.result && json.answer) {
@@ -175,7 +165,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       const safeUrlTitle = encodeURIComponent(cleanTitle);
 
       // 3. LE FETCH
-      const response = await fetch(`${BACKEND_URL}/movies/search/${safeUrlTitle}`);
+      const myURL = `${BACKEND_URL}/movies/search/${safeUrlTitle}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result && data.answer.length > 0) {
@@ -196,7 +187,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         handleRescan();
 
       } else {
-        Alert.alert("Film introuvable", `TMDB n'a pas reconnu : "${cleanTitle}"`);
+        Alert.alert("Film introuvable", `Le service de TheMovieDataBase n'a pas reconnu : "${cleanTitle}"`);
       }
     } catch (error) {
       console.error("Erreur lors de la confirmation :", error);
@@ -209,10 +200,10 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     setQueryPerson('');
     setShowResults(false); 
     if (searchOrigin === 'barcode') {
-      setIsSearchMode(false);
-      setIsCameraActive(true);
-    } else {
-      setIsSearchMode(true);
+        setIsSearchMode(false);
+        setIsCameraActive(true);
+      } else {
+        setIsSearchMode(true);
     }
     handleRescan();
   };
@@ -238,9 +229,6 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
         {/* VUE 2.1 : La camera */}
         {isCameraActive && permission?.granted && (
           <BarcodeScanner
-            isScanning={isScanning}
-            scannedTitle={scannedTitle}
-            onBarcodeScanned={handleBarCodeScanned}
             onRescan={handleRescan}
             onConfirm={handleConfirmScannedMovie}
             onClose={() => {
@@ -252,6 +240,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
         {/* VUE 2.2 : LE MODE RECHERCHE MANUELLE */}
         {isSearchMode && !showResults && (
+          <View style={{flex:1, justifyContent: 'center', alignItems: 'center', width: '100%'}}>
+          <Text style={[styles.text, {textShadowColor: '#000', textShadowOffset: {width: 2, height: 2}, textShadowRadius: 1, marginBottom: 50, marginTop: 0}]}>Veuillez rechercher un film en indiquant son titre exact (titre original ou français){"\n"} ou bien en indiquant le nom d'une personnalité ayant participé au film. </Text>
           <ManualSearch
             queryTitle={queryTitle}
             setQueryTitle={setQueryTitle}
@@ -260,12 +250,16 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
             launchSearchTitle={launchSearch}
             launchSearchPeople={launchSearchPeople}
             cancelSearch={cancelSearch}
+            error={error}
+            error2={error2}
           />
+          </View>
         )}
 
         {/* VUE 3 : LES RÉSULTATS DE RECHERCHE */}
         {isSearchMode && showResults && (
           <SearchResults
+            navigation={navigation}
             movieData={movieData}
             queryAsked={queryAsked}
             drawStyle={drawStyle}
@@ -277,7 +271,7 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
 
         {/* modale */}
         <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />
+          {(selectedMovie) ? (<MovieCard navigation={navigation} clickable={false} moviedata={selectedMovie} setIsModalVisible={setIsModalVisible} drawStyle={drawStyle} mode="add" onAddSuccess={clearSearch} />) : (<></>)}          
         </Modal>
       </KeyboardAvoidingView>
     </ImageBackground>
