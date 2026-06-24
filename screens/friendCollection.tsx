@@ -246,17 +246,16 @@ if (typeof(route.params) == 'object') {
     }
   }, [user.token, friendId]);
 
-  
+  let leftIcon = friendAvatar == 'default' ?  <FontAwesome name="home" size={24} color="#e8be4b" /> : <Image 
+          source={avatars[friendAvatar as keyof typeof avatars]}
+          style={{width: 40, height: 40, borderRadius: 20}} />;
   //console.log(avatars[user.avatar as keyof typeof avatars])
 return (
     <ImageBackground source={require('../assets/arriereplan.png')} style={styles.background}>
       <Header 
         title={`Collection de ${friendName}`} 
-        //leftIcon={<FontAwesome name="home" size={24} color="#e8be4b" />}
-        leftIcon={<Image 
-          source={avatars[friendAvatar as keyof typeof avatars]}
-          style={{width: 40, height: 40, borderRadius: 20}} />
-        }
+        //leftIcon={}
+        leftIcon={leftIcon}
         onPressLeft={() => navigation.goBack()}
         rightIcon={<FontAwesome name="cog" size={24} color="#e8be4b" />}
         onPressRight={() => setIsSettingsModalVisible(true)}
