@@ -70,5 +70,6 @@ export type User = {
     movies: movieProps[],
     notifications: Notifications[],
     sort?: string,
-    columns?: number
+    columns?: number,
+    avatar: string
 }

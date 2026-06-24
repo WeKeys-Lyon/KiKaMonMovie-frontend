@@ -61,7 +61,8 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
           movies: data.answer.movies,
           friends: data.answer.friends,
           friendCode: data.answer.friendCode,
-          notifications: data.answer.notifications
+          notifications: data.answer.notifications,
+          avatar: data.answer.avatar
         }));
         navigation.navigate('TabNavigator', { screen: 'Ma Collection' });
       } else {

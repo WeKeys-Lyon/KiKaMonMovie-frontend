@@ -90,7 +90,8 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           movies: userMovies,
           friendCode: data.answer.friendCode, // 🐛 CORRECTION DE LA FAUTE DE FRAPPE ICI
           friends: data.answer.friends,
-          notifications: data.answer.notifications
+          notifications: data.answer.notifications,
+          avatar: data.answer.avatar
         }));
         
         if (userMovies.length < 1) {

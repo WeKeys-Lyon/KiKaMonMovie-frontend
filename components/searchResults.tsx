@@ -6,7 +6,7 @@ import { Checkbox } from 'expo-checkbox';
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {addMovieToStore} from '../reducers/user';
-import { movieProps, Review, PastLoans, Notifications, Friends, User } from './types';
+import { movieProps, User } from './types';
 
 type movieEnhanced = movieProps & {
   checked: boolean
