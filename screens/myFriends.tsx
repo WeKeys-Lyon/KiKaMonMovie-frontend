@@ -250,7 +250,8 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
                   onPress={() => {
                     navigation.navigate('FriendCollection', { 
                       friendId: item.userid._id, 
-                      friendName: item.userid.username 
+                      friendName: item.userid.username,
+                      friendAvatar: item.userid.avatar
                     });
                   }}
                 >

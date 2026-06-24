@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, FlatList, TouchableOpacity, Dimensions, Modal, Alert, RefreshControl, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import Header from '../components/header';
@@ -12,6 +12,7 @@ import SettingsModal from '../components/settingsModal';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { User, movieProps, notificationsProps } from '../components/types';
+import { avatars } from '../components/avatarMap';
 
 import { removedMovieFromStore, logout, updateNotifications, settingColumns, settingSort, setCollection } from '../reducers/user';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
@@ -674,7 +675,11 @@ const handleDeleteNotification = async (notificationId: string) => {
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
-        leftIcon={<FontAwesome name="user-circle" size={24} color="#e8be4b" />}
+        //leftIcon={<FontAwesome name="user-circle" size={24} color="#e8be4b" />}
+        leftIcon={<Image 
+          source={avatars[user.avatar as keyof typeof avatars]}
+          style={{width: 40, height: 40, borderRadius: 20}} />
+        }
         onPressLeft={() => setIsProfileMenuVisible(true)}
         rightIcon={<View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
             {/* La Cloche */}
