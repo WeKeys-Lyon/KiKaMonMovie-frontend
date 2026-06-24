@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Dimensions, ImageBackground, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, Modal, Dimensions, ImageBackground, RefreshControl, Image } from 'react-native';
 import { useSelector } from 'react-redux';
 import { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import Header from '../components/header';
@@ -8,6 +8,7 @@ import MovieCard from '../components/movieCard';
 import SettingsModal from '../components/settingsModal';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { User, movieProps } from '../components/types';
+import { avatars } from '../components/avatarMap';
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +22,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 export default function FriendCollection({ navigation, route }: FriendCollectionProps) {
 if (typeof(route.params) == 'object') {
   const user = useSelector((state: {_persist: any, user: {value: User}}) => state.user.value);
-  const { friendId, friendName } = route.params;
+  const { friendId, friendName, friendAvatar } = route.params;
   
   const [movies, setMovies] = useState<movieProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,12 +247,16 @@ if (typeof(route.params) == 'object') {
   }, [user.token, friendId]);
 
   
-  
+  //console.log(avatars[user.avatar as keyof typeof avatars])
 return (
     <ImageBackground source={require('../assets/arriereplan.png')} style={styles.background}>
       <Header 
         title={`Collection de ${friendName}`} 
-        leftIcon={<FontAwesome name="home" size={24} color="#e8be4b" />}
+        //leftIcon={<FontAwesome name="home" size={24} color="#e8be4b" />}
+        leftIcon={<Image 
+          source={avatars[friendAvatar as keyof typeof avatars]}
+          style={{width: 40, height: 40, borderRadius: 20}} />
+        }
         onPressLeft={() => navigation.goBack()}
         rightIcon={<FontAwesome name="cog" size={24} color="#e8be4b" />}
         onPressRight={() => setIsSettingsModalVisible(true)}

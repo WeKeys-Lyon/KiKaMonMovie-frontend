@@ -12,18 +12,19 @@ export type UserState = {
     friends: any[] | null;
     columns: number | null;
     sort: string | null;
+    avatar: string,
   };
 };
 
 const initialState: UserState = {
-  value: { _id: null, email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [], columns: null, sort: null }, 
+  value: { _id: null, email: null, token: null, username: null, movies: [], friendCode: null, notifications: [], friends: [], columns: null, sort: null, avatar: 'default' }, 
 };
 
 export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{_id: string, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any}>) => {
+    login: (state, action: PayloadAction<{_id: string, email: string, token: string, username: string, movies: any, friendCode: string, friends: any, notifications: any, avatar: string}>) => {
       state.value._id = action.payload._id;
       state.value.email = action.payload.email;
       state.value.token = action.payload.token;
@@ -32,6 +33,7 @@ export const userSlice = createSlice({
       state.value.friendCode = action.payload.friendCode;
       state.value.friends = action.payload.friends;
       state.value.notifications = action.payload.notifications;
+      state.value.avatar = action.payload.avatar ;
     },
     addMovieToStore: (state, action: PayloadAction<any>) => {
       state.value.movies?.push(action.payload);
@@ -116,7 +118,10 @@ export const userSlice = createSlice({
       }
      
     },
+    updateAvatar: (state, action) => {
+      state.value.avatar = action.payload;
+    },
 }});
 
-export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore, setCollection } = userSlice.actions;
+export const { login, addMovieToStore, removedMovieFromStore, setMovieLoaned, setMovieReturned, updateNotifications, logout, iLikeThisMovie, removeCollection, removeFriend, addFriend, addReviewToStore, settingColumns, settingSort, updateMovieInStore, setCollection, updateAvatar } = userSlice.actions;
 export default userSlice.reducer;

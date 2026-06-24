@@ -225,7 +225,7 @@ export default function NotificationModal({
             );
         }
 
-        // 🌟 NOUVEAU 1 : Le film a été récupéré par le propriétaire, l'emprunteur peut laisser un avis
+        // Le film a été récupéré par le propriétaire, l'emprunteur peut laisser un avis
         if (item.type === 'loan_returned') {
             return (
                 <View style={styles.notificationCard}>
@@ -253,7 +253,7 @@ export default function NotificationModal({
             );
         }
 
-        // 🌟 NOUVEAU 2 : Un avis a été publié par l'emprunteur
+        // Un avis a été publié par l'emprunteur
         if (item.type === 'review_posted') {
             return (
                 <View style={styles.notificationCard}>
@@ -263,6 +263,33 @@ export default function NotificationModal({
                     <View style={styles.textContainer}>
                         <Text style={styles.notificationText}>
                             <Text style={styles.bold}>{item.senderId?.username}</Text> a laissé un avis sur son emprunt de <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title}</Text>.
+                        </Text>
+                        <Buttons 
+                            title="Voir l'avis" 
+                            onPress={() => onViewReview && onViewReview(item)} 
+                            variant="primary" 
+                            style={{ marginTop: 10, paddingVertical: 8 }} 
+                        />
+                    </View>
+                    <TouchableOpacity 
+                        style={{ marginLeft: 10, padding: 5, alignSelf: 'flex-start' }} 
+                        onPress={() => onDeleteNotification && onDeleteNotification(item._id)}
+                    >
+                        <FontAwesome name="trash" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+        // Quelqu'un a aimé mon avis
+        if (item.type === 'review_liked') {
+            return (
+                <View style={styles.notificationCard}>
+                    <View style={styles.iconContainer}>
+                        <FontAwesome name="heart" size={22} color="#e8be4b" />
+                    </View>
+                    <View style={styles.textContainer}>
+                        <Text style={styles.notificationText}>
+                            <Text style={styles.bold}>{item.senderId?.username}</Text> a aimé votre avis sur <Text style={styles.bold}>{item.movieId?.title_fr || item.movieId?.original_title || 'ce film'}</Text>.
                         </Text>
                         <Buttons 
                             title="Voir l'avis" 

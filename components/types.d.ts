@@ -1,6 +1,6 @@
 export type Reply = {
     _id: string,
-    userid: { _id: string, username: string };
+    userid: { _id: string, username: string, avatar: string };
     text: string;
     createdAt: Date;
 }
@@ -70,5 +70,6 @@ export type User = {
     movies: movieProps[],
     notifications: Notifications[],
     sort?: string,
-    columns?: number
+    columns?: number,
+    avatar: string
 }

@@ -40,7 +40,7 @@ export default function ShareGrid({ item, cardWidth, columns = 2, onPressImage, 
   // 🌟 NOUVEAU : MODE LISTE (1 colonne)
   if (columns === 1) {
     return (
-      <View style={[styles.listCard, { width: cardWidth }]}>
+      <View style={[styles.listCard, { width:  typeof(cardWidth) == 'string' ? ('100%') : (cardWidth)}]}>
         
         {/* L'affiche à gauche */}
         <TouchableOpacity activeOpacity={0.8} onPress={onPressImage} style={styles.listPosterContainer}>
@@ -92,7 +92,7 @@ export default function ShareGrid({ item, cardWidth, columns = 2, onPressImage, 
 
   // --- MODE GRILLE CLASSIQUE (2 colonnes) ---
   return (
-    <View style={[styles.shareCard, { width: cardWidth }]}>
+    <View style={[styles.shareCard,  { width : typeof(cardWidth) == 'string' ? ('100%') : (cardWidth)}]}>
       <TouchableOpacity activeOpacity={0.8} onPress={onPressImage}>
         <Poster imageUrl={imageUrl} isLoaned={item.shareType === 'loaned'} shareType={item.shareType} />
       </TouchableOpacity>
