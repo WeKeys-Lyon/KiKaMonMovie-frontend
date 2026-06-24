@@ -671,15 +671,14 @@ const handleDeleteNotification = async (notificationId: string) => {
       setRefreshing(false); 
     }
   }, [user.token, dispatch]);
-
+  let leftIcon = (user.avatar == 'default' ? (<FontAwesome name="user-circle" size={24} color="#e8be4b" />) : (<Image 
+          source={avatars[user.avatar as keyof typeof avatars]}
+          style={{width: 40, height: 40, borderRadius: 20}} />) )
   return (
     <ImageBackground source={require('../assets/Partager.png')} style={styles.background}>
       <Header title="Ma Collection"
         //leftIcon={<FontAwesome name="user-circle" size={24} color="#e8be4b" />}
-        leftIcon={<Image 
-          source={avatars[user.avatar as keyof typeof avatars]}
-          style={{width: 40, height: 40, borderRadius: 20}} />
-        }
+        leftIcon={leftIcon}
         onPressLeft={() => setIsProfileMenuVisible(true)}
         rightIcon={<View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
             {/* La Cloche */}
