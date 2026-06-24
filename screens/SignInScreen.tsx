@@ -53,6 +53,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       const data = await response.json();
 
       if (data.result) {
+        console.log(data.answer.avatar)
         dispatch(login({
           _id: data.answer._id,
           email: data.answer.email,
