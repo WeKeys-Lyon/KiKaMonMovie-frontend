@@ -6,7 +6,7 @@ export type Reply = {
 }
 export type Review = {
   _id: string;
-  userid: { _id: string, username: string };
+  userid: { _id: string, username: string, avatar: string };
   rating?: number;
   comment?: string;
   likes?: string[];

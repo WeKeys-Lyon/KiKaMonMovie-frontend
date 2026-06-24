@@ -575,13 +575,13 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
               {(datas?.title_fr !== datas?.original_title) ? (<><Text style={[styles.modalLabel, {color: '#fff'}]}>Titre original : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.original_title}</Text></>) : (<></>)}
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Date de sortie : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.release_date}</Text>
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Réalisé par :</Text>
-              {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
+              {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : <Text>Inconnu</Text>}
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Genre :</Text>
-              {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : 'Inconnu'}
+              {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : <Text>Inconnu</Text>}
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Compositeur : </Text>
-              {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : 'Inconnu'}
+              {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : <Text>Inconnu</Text>}
               <Text style={[styles.modalLabel, {color: '#fff'}]}>Casting :</Text>
-              {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : 'Inconnu'}
+              {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : <Text>Inconnu</Text>}
 
               {mode === 'collection' && (!ownerId || ownerId === user._id) && (
                 <View style={{ marginTop: 15, width: '100%', alignItems: 'center' }}>
@@ -720,11 +720,11 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
                                     style={styles.actionBtn}
                                   >
                                     <FontAwesome
-                                      name={review.likes?.length > 0 ? "heart" : "heart-o"}
+                                      name={review.likes ? review.likes?.length > 0 ? "heart" : "heart-o" : 'heart-o'}
                                       size={15}
-                                      color={review.likes?.length > 0 ? "#e8be4b" : "#aaa"}
+                                      color={review.likes  ? review.likes?.length > 0 ? "#e8be4b" : "#aaa" : '#aaa'}
                                     />
-                                    <Text style={{ color: review.likes?.length > 0 ? '#e8be4b' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
+                                    <Text style={{ color: review.likes ? review.likes?.length > 0 ? '#e8be4b' : '#aaa' : '#aaa', fontWeight: 'bold', marginLeft: 6 }}>
                                       {likeText}
                                     </Text>
                                   </TouchableOpacity>
