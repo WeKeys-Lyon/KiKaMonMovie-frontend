@@ -440,7 +440,6 @@ const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
             style: 'destructive',
             onPress: () => {
               deleteMovie(item.tmdb_id);
-              setIsDeleteMode(false);
             },
           },
         ]
@@ -457,7 +456,6 @@ const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
             style: 'destructive',
             onPress: () => {
               deleteMovie(item.tmdb_id);
-              setIsDeleteMode(false);
             },
           },
         ]
