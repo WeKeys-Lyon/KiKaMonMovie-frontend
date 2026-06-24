@@ -175,8 +175,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
     if (!items || items.length === 0) return <Text style={styles.modalText}>Inconnu</Text>;
     const displayedItems = maxItems ? items.slice(0, maxItems) : items;
     return (
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
-        {displayedItems.map((item: any, index: number) => (
+     <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+         {displayedItems.map((item: any, index: number) => (
           <TouchableOpacity
             key={index}
             disabled={mode === 'add'}
@@ -193,6 +193,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           </Text>
         )}
       </View>
+    
     );
   };
 
@@ -571,15 +572,15 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
           {activeTab === 'details' ? (
             <View style={styles.modalInfoGrid}>
-              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={styles.modalLabel}>Titre original : </Text><Text style={styles.modalText}>{datas?.original_title}</Text></>) : (<></>)}
-              <Text style={styles.modalLabel}>Date de sortie : </Text><Text style={styles.modalText}>{datas?.release_date}</Text>
-              <Text style={styles.modalLabel}>Réalisé par :</Text>
-              {datas.DirectedBy ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
-              <Text style={styles.modalLabel}>Genre :</Text>
+              {(datas?.title_fr !== datas?.original_title) ? (<><Text style={[styles.modalLabel, {color: '#fff'}]}>Titre original : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.original_title}</Text></>) : (<></>)}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Date de sortie : </Text><Text style={[styles.modalText, {color: '#e8be4b', marginBottom: 5}]}>{datas?.release_date}</Text>
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Réalisé par :</Text>
+              {(datas.DirectedBy) ? renderClickableNames(datas.DirectedBy , 'director') : 'Inconnu'}
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Genre :</Text>
               {datas.Genres ? renderClickableNames(datas.Genres, 'genre') : 'Inconnu'}
-              <Text style={styles.modalLabel}>Compositeur : </Text>
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Compositeur : </Text>
               {datas.MusicBy ? renderClickableNames(datas.MusicBy, 'composer') : 'Inconnu'}
-              <Text style={styles.modalLabel}>Casting :</Text>
+              <Text style={[styles.modalLabel, {color: '#fff'}]}>Casting :</Text>
               {datas.Cast ? renderClickableNames(datas.Cast, 'actor', 15) : 'Inconnu'}
 
               {mode === 'collection' && (!ownerId || ownerId === user._id) && (
