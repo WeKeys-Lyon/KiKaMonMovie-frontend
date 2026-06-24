@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {Buttons} from '../components/buttons';
-import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Image } from 'react-native';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 
 import { useSelector } from 'react-redux';
@@ -38,6 +38,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Buttons title='Se connecter' onPress={handleSignIn} variant="actionButton" textStyle={{width: '100%'}}/>
           <Buttons title="S'inscrire" onPress={handleSignUp} variant="actionButton" textStyle={{width: '100%'}}/>
         </View>
+        <View style={{flex:1, alignItems: 'center',  justifyContent: 'center' }}>
+          <Text style={styles.subtitle}>Comment utiliser l'application ?</Text>
+          <Image 
+          source={require('../assets/youtube.png')}
+          style={{width: 110, height: 110, borderRadius: 8}}
+          
+          />
+        </View>
 
       </KeyboardAvoidingView>
     </ImageBackground>
@@ -48,18 +56,21 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    //flex: 1,
+    //alignItems: 'center',
+    //justifyContent: 'center',
   },
   background: {
     flex: 1,
     resizeMode: 'cover',
     justifyContent: 'center',
+    alignItems: 'center'
   },
   textContainer: {
+    flex:1,
     alignItems: 'center',
-    marginBottom: 30,
+    justifyContent: 'center',
+    marginTop: 120,
   },
   title: {
     fontSize: 40,
@@ -70,17 +81,19 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontWeight: 'bold',
+    fontSize: 22,
     marginBottom: 10,
     color: 'white',
     textAlign: 'center',
   },
   buttonContainer: {
+    flex:1,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100 %',
     paddingHorizontal: 20,
-    marginTop: 30,
+    marginTop: -50,
     gap: 10,
   },
   actionButton: {

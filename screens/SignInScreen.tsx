@@ -121,11 +121,6 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
               <Buttons title="Retour" onPress={handleReturn} variant="actionButton" />
               <Buttons title="Valider" onPress={handleSubmit} variant="actionButton" />
           </View>
-          <View style={styles.separatorContainer}>
-            <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>OU</Text>
-            <View style={styles.separatorLine} />
-          </View>
         </View>
       </KeyboardAvoidingView>
     </ImageBackground>
