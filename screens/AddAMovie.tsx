@@ -7,10 +7,10 @@ import SelectionMenu from '../components/selectionMenu';
 import ManualSearch from '../components/manualSearch';
 import SearchResults from '../components/searchResults';
 import BarcodeScanner from '../components/barcodeScanner';
-import { useSelector } from 'react-redux';
+
 import { useCameraPermissions } from 'expo-camera';
 import { movieProps } from '../components/types';
-import { truncate } from 'node:fs';
+
 
 
 type AddAMovieScreenProps = {
@@ -54,7 +54,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log('Recherche lancée pour :', queryTitle);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/search/${queryTitle}`);
+      const myURL = `${BACKEND_URL}/movies/search/${queryTitle}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result) {
@@ -79,8 +80,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log('Recherche de personnalité lancée pour :', queryPerson);
 
     try {
-
-      const response = await fetch(`${BACKEND_URL}/movies/searchpeople/${queryPerson}`);
+      const myURL = `${BACKEND_URL}/movies/searchpeople/${queryPerson}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result) {
@@ -118,7 +119,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
     console.log(`code barre: ${data}`)
 
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/searchean/${data}`);
+      const myURL = `${BACKEND_URL}/movies/searchean/${data}`;
+      const response = await fetch(encodeURI(myURL));
       const json = await response.json();
 
       if (json.result && json.answer) {
@@ -163,7 +165,8 @@ export default function MyCollectionScreen({ navigation }: AddAMovieScreenProps)
       const safeUrlTitle = encodeURIComponent(cleanTitle);
 
       // 3. LE FETCH
-      const response = await fetch(`${BACKEND_URL}/movies/search/${safeUrlTitle}`);
+      const myURL = `${BACKEND_URL}/movies/search/${safeUrlTitle}`;
+      const response = await fetch(encodeURI(myURL));
       const data = await response.json();
 
       if (data.result && data.answer.length > 0) {

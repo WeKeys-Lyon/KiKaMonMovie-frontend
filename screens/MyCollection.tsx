@@ -59,11 +59,12 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
   const processDeepLink = async (data: any) => {
     navigation.navigate('Ma Collection'); 
     try {
-      const notifResponse = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+      const myURL = `${BACKEND_URL}/users/notifications/${user.token}`;
+      const notifResponse = await fetch(encodeURI(myURL));
       const notifData = await notifResponse.json();
       if (notifData.result) dispatch(updateNotifications(notifData.notifications));
-
-      const colResponse = await fetch(`${BACKEND_URL}/users/collection/${user.token}`);
+      const myURL2 = `${BACKEND_URL}/users/collection/${user.token}`;
+      const colResponse = await fetch(encodeURI(myURL2));
       const colData = await colResponse.json();
       
       let targetMovie = null;
@@ -219,7 +220,8 @@ export default function MyCollection({ navigation }: MyCollectionProps) {
       console.log("🎟️ [5] VICTOIRE ! Push Token généré :", token);
 
       if (token && user.token) {
-        await fetch(`${process.env.BACKEND_URL}/users/save-push-token`, {
+        const myURL = `${BACKEND_URL}/users/save-push-token`;
+        await fetch(encodeURI(myURL), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: user.token, pushToken: token })
@@ -254,7 +256,8 @@ useFocusEffect(
           return;
         }
         try {
-          const response = await fetch(`${BACKEND_URL}/users/notifications/${user.token}`);
+          const myURL = `${BACKEND_URL}/users/notifications/${user.token}`;
+          const response = await fetch(encodeURI(myURL));
           const data = await response.json();
 
           if (data.result) {
@@ -406,7 +409,8 @@ const unreadCount = user.notifications?.filter((n) => !n.isRead).length || 0;
 
     const deleteMovie = async (tmdb_id: number) =>{
       try {
-        const response = await fetch(`${BACKEND_URL}/users/delete-movie`, {
+        const myURL = `${BACKEND_URL}/users/delete-movie`;
+        const response = await fetch(encodeURI(myURL), {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -480,7 +484,8 @@ const handleManageLoan = (notification: notificationsProps) => {
 //supprimer une notif$
 const handleDeleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/users/delete-notification`, {
+      const myURL = `${BACKEND_URL}/users/delete-notification`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

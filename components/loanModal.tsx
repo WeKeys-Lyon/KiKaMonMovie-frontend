@@ -78,7 +78,8 @@ export default function LoanModal({ movie, onClose, visible, movieTmdbId, onSucc
         }
 
         try {
-            const response = await fetch(`${BACKEND_URL}/users/add-loan`, { 
+            const myURL = `${BACKEND_URL}/users/add-loan`
+            const response = await fetch(encodeURI(myURL), { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

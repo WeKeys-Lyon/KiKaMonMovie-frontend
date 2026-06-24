@@ -44,7 +44,8 @@ export default function BarcodeScanner({
     console.log(`Scan #${scanCount}: ${result.data}`);
     setTimeout(() => { lastScan.current = null; }, 2000);
     try {
-      const response = await fetch(`${BACKEND_URL}/movies/searchean/${result.data}`);
+      const myURL = `${BACKEND_URL}/movies/searchean/${result.data}`; 
+      const response = await fetch(encodeURI(myURL));
 
       const json = await response.json();
       console.log("Réponse du serveur :", json)

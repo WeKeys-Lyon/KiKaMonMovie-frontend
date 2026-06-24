@@ -43,7 +43,8 @@ export default function MyShares({ navigation }: MySharesProps) {
   const fetchMyShares = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/users/my-shares`, {
+      const myURL = `${BACKEND_URL}/users/my-shares`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: user.token }),
@@ -79,7 +80,8 @@ export default function MyShares({ navigation }: MySharesProps) {
           text: "Oui", 
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/remind-loan`, {
+              const myURL = `${BACKEND_URL}/users/remind-loan`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: user.token, borrowerId, movieId }),
@@ -111,7 +113,8 @@ export default function MyShares({ navigation }: MySharesProps) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
+              const myURL = `${BACKEND_URL}/users/remove-loan`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: user.token, tmdb_id }),

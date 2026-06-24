@@ -45,7 +45,8 @@ if (typeof(route.params) == 'object') {
 
   const fetchFriendCollection = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/users/friend-collection`, {
+      const myURL = `${BACKEND_URL}/users/friend-collection`; 
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: user.token, friendId: friendId }),
@@ -92,7 +93,8 @@ if (typeof(route.params) == 'object') {
     console.log("L'ID envoyé est :", selectedMovie.tmdb_id || selectedMovie.id);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/ask-movie`, {
+      const myURL = `${BACKEND_URL}/users/ask-movie`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

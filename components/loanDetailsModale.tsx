@@ -72,7 +72,8 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            const response = await fetch(`${BACKEND_URL}/users/remove-loan`, {
+                            const myURL = `${BACKEND_URL}/users/remove-loan`;
+                            const response = await fetch(encodeURI(myURL), {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ token: user.token, tmdb_id: movieTmdbId }),
@@ -106,7 +107,8 @@ export default function LoanDetailsModal({ visible, onClose, movieName, movieTmd
         }
 
         try {
-            const response = await fetch(`${process.env.BACKEND_URL}/users/remind-loan`, {
+            const myURL = `${BACKEND_URL}/users/remind-loan`
+            const response = await fetch(encodeURI(myURL), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

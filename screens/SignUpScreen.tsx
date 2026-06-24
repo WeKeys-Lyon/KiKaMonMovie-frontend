@@ -66,7 +66,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
     try {
       // (Petit rappel : encodeURI n'est pas nécessaire ici 😉)
       const myURL = `${BACKEND_URL}/users/signup`;
-      const response = await fetch(myURL, {
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

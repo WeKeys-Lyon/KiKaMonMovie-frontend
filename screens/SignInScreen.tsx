@@ -40,6 +40,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
     
     try {
       const myURL = `${BACKEND_URL}/users/signin`;
+
       const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: {

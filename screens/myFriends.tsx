@@ -36,10 +36,11 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
 
   const fetchSocialData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/users/my-social-data`, {
+      const myURL = `${BACKEND_URL}/users/my-social-data`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: user.token }),
+        body: JSON.stringify({ token: user.token.toString() }),
       });
       const data = await response.json();
       if (data.result) {
@@ -73,7 +74,8 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/add-friend`, {
+      const myURL = `${BACKEND_URL}/users/add-friend`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +103,8 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
     if (!selectedFriend) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/update-friend-permissions`, {
+      const myURL = `${BACKEND_URL}/users/update-friend-permissions`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,7 +141,8 @@ export default function MyFriends({ navigation }: MyFriendsProps) {
           style: "destructive", 
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/remove-friend`, {
+              const myURL = `${BACKEND_URL}/users/remove-friend`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -13,7 +13,7 @@ import StarRating from '../components/starRating';
 import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { iLikeThisMovie } from '../reducers/user';
 import { movieProps, Reply, Review, User } from './types';
-import { encode } from 'node:punycode';
+
 // 🚀 IMPORT DU DICTIONNAIRE D'AVATARS
 import { avatars } from '../components/avatarMap'; 
 
@@ -42,6 +42,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const setModalVisible = () => {
     setIsModalVisible(false)
   }
+  
   const [datas, setDatas] = useState<movieProps>(moviedata)
   const [isLoanModalVisible, setIsLoanModalVisible] = useState(false);
   const [isLoanDetailsVisible, setIsLoanDetailsVisible] = useState(false);
@@ -67,16 +68,20 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
         try {
           let freshMovies = [];
           if (mode === 'collection') {
-            const response = await fetch(`${process.env.BACKEND_URL}/users/collection/${user.token}`);
+            const myURL = `${BACKEND_URL}/users/collection/${user.token}`;
+            const response = await fetch(encodeURI(myURL));
             const data = await response.json();
+            console.log(data)
             if (data.result) freshMovies = data.movies;
           } else if (mode === 'friend' && ownerId) {
-            const response = await fetch(`${process.env.BACKEND_URL}/users/friend-collection`, {
+            const myURL = `${BACKEND_URL}/users/friend-collection`;
+            const response = await fetch(encodeURI(myURL), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ token: user.token, friendId: ownerId })
             });
             const data = await response.json();
+            
             if (data.result) freshMovies = data.movies;
             
           }
@@ -145,7 +150,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const handleAddMovie = async () => {
     const BACKEND_URL = process.env.BACKEND_URL;
     try {
-      const response = await fetch(`${BACKEND_URL}/users/add-movie`, {
+      const myURL = `${BACKEND_URL}/users/add-movie`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -231,7 +237,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
 
   const handleRefuse = async () => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/users/refuse-loan`, {
+      const myURL = `${BACKEND_URL}/users/refuse-loan`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -262,7 +269,7 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
       const url = isEditing ? `${BACKEND_URL}/users/edit-review` : `${BACKEND_URL}/users/add-review`;
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await fetch(encodeURI(url), {
         method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -331,7 +338,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const handleLikeReview = async (reviewId: string) => {
     if (!reviewId) return; 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/like-review`, {
+      const myURL = `${BACKEND_URL}/users/like-review`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, ownerId: ownerId || user._id}),
@@ -359,7 +367,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const handleReplyReview = async (reviewId: string) => {
     if (!replyText.trim() || !reviewId) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/users/reply-review`, {
+      const myURL = `${BACKEND_URL}/users/reply-review`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, text: replyText }),
@@ -424,7 +433,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/delete-review`, {
+              const myURL = `${BACKEND_URL}/users/delete-review`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -453,7 +463,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
   const submitEditReply = async (reviewId: string, replyId: string) => {
     if (!editReplyText.trim()) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/users/edit-reply`, {
+      const myURL = `${BACKEND_URL}/users/edit-reply`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId, newText: editReplyText }),
@@ -492,7 +503,8 @@ export default function MovieCard({ navigation, clickable, moviedata, setIsModal
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/delete-reply`, {
+              const myURL = `${BACKEND_URL}/users/delete-reply`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: user.token, tmdb_id: datas.tmdb_id, reviewId, replyId }),

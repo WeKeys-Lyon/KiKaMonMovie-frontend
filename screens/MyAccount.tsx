@@ -72,7 +72,8 @@ export default function MyAccount({ navigation }: MyAccountProps) {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users/update-profile`, {
+      const myURL = `${BACKEND_URL}/users/update-profile`;
+      const response = await fetch(encodeURI(myURL), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +114,8 @@ export default function MyAccount({ navigation }: MyAccountProps) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/delete-account`, {
+              const myURL = `${BACKEND_URL}/users/delete-account`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: user.token }),
@@ -146,7 +148,8 @@ export default function MyAccount({ navigation }: MyAccountProps) {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await fetch(`${BACKEND_URL}/users/user-collection`, {
+              const myURL = `${BACKEND_URL}/users/user-collection`;
+              const response = await fetch(encodeURI(myURL), {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: user.token }),
